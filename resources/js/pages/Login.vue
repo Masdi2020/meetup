@@ -66,9 +66,9 @@ const login = () => {
 
 .login-card {
     width: 360px;
-    background: #dce9ff;
-    border-radius: 18px;
-    padding: 35px;
+    background: #cfe2ff;
+    border-radius: 10px;
+    padding: 28px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     text-align: center;
 }

@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::inertia('/', 'Dashboard')->name('home');
 Route::inertia('/login', 'Login')->name('login');
-Route::inertia('/calendar', 'Calendar')->name('calendar');
+Route::inertia('/kalender', 'Calendar')->name('kalender');
+Route::inertia('/pinjam', 'Booking')->name('pinjam');
+Route::inertia('/riwayat', 'History')->name('riwayat');
