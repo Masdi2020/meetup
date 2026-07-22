@@ -93,21 +93,21 @@
 const rooms = [
     {
         id: 1,
-        name: "Ruang Rapat A (Besar)",
+        name: 'Ruang Rapat A (Besar)',
         calendar:
-            "https://calendar.google.com/calendar/embed?src=CALENDAR_A&ctz=Asia%2FMakassar",
+            'https://calendar.google.com/calendar/embed?src=CALENDAR_A&ctz=Asia%2FMakassar',
     },
     {
         id: 2,
-        name: "Ruang Rapat B (Besar)",
+        name: 'Ruang Rapat B (Besar)',
         calendar:
-            "https://calendar.google.com/calendar/embed?src=CALENDAR_B&ctz=Asia%2FMakassar",
+            'https://calendar.google.com/calendar/embed?src=CALENDAR_B&ctz=Asia%2FMakassar',
     },
     {
         id: 3,
-        name: "Ruang Rapat C (Sedang)",
+        name: 'Ruang Rapat C (Sedang)',
         calendar:
-            "https://calendar.google.com/calendar/embed?src=CALENDAR_C&ctz=Asia%2FMakassar",
+            'https://calendar.google.com/calendar/embed?src=CALENDAR_C&ctz=Asia%2FMakassar',
         full: true,
     },
 ];
