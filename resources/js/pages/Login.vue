@@ -35,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
 
 const form = reactive({
@@ -43,7 +44,8 @@ const form = reactive({
 });
 
 const login = () => {
-    console.log(form);
+    // console.log(form);
+    router.visit('/');
 
     // Contoh:
     // axios.post('/login', form)
