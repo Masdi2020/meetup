@@ -1,11 +1,20 @@
 <template>
     <div class="login-page">
         <div class="login-card">
-            <!-- <img src="@/assets/logo.png" alt="Logo" class="logo" /> -->
+            <h1 class="title">Daftar</h1>
 
-            <h1 class="title">Masuk</h1>
+            <form @submit.prevent="register">
+                <div class="form-group">
+                    <label for="name">Nama Lengkap</label>
+                    <input
+                        id="name"
+                        v-model="form.name"
+                        type="text"
+                        placeholder="Masukkan nama lengkap"
+                        required
+                    />
+                </div>
 
-            <form @submit.prevent="login">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input
@@ -13,6 +22,17 @@
                         v-model="form.username"
                         type="text"
                         placeholder="Masukkan username"
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                        id="email"
+                        v-model="form.email"
+                        type="email"
+                        placeholder="Masukkan email"
                         required
                     />
                 </div>
@@ -28,12 +48,12 @@
                     />
                 </div>
 
-                <button type="submit" class="login-btn">Login</button>
+                <button type="submit" class="login-btn">Daftar</button>
             </form>
 
             <p class="extra-text">
-                Belum punya akun?
-                <a href="/register">Daftar sekarang</a>
+                Sudah punya akun?
+                <a href="/login">Masuk sekarang</a>
             </p>
         </div>
     </div>
@@ -44,16 +64,15 @@ import { router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
 
 const form = reactive({
+    name: '',
     username: '',
+    email: '',
     password: '',
 });
 
-const login = () => {
-    // console.log(form);
-    router.visit('/');
-
-    // Contoh:
-    // axios.post('/login', form)
+const register = () => {
+    // TODO: Kirim data pendaftaran ke server
+    router.visit('/login');
 };
 </script>
 
@@ -79,11 +98,6 @@ const login = () => {
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     text-align: center;
 }
-
-/* .logo {
-  width: 95px;
-  margin-bottom: 16px;
-} */
 
 .title {
     font-size: 2rem;
@@ -141,5 +155,21 @@ const login = () => {
 
 .login-btn:active {
     transform: scale(0.98);
+}
+
+.extra-text {
+    margin-top: 18px;
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+.extra-text a {
+    color: #1d4ed8;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.extra-text a:hover {
+    text-decoration: underline;
 }
 </style>
