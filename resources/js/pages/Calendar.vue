@@ -89,7 +89,7 @@
 }
 </style>
 
-<script setup>
+<script setup lang="ts">
 const rooms = [
     {
         id: 1,
