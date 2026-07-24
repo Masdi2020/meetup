@@ -12,7 +12,8 @@ class RoomService
     }
 
     public function calendar() {
-        return Room::select([
+        return Room::with('facilities:id,name')
+        ->select([
             'id', 'name', 'capacity', 'floor',
             'calendar_url'
         ])->get();
