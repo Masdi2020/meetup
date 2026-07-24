@@ -69,7 +69,7 @@ function booking (roomId: number) {
 
         <div class="meta">
           <span>👥 {{ selectedRoom.capacity }} orang</span>
-          <span>📍 {{ selectedRoom.floor }}</span>
+          <span>📍 Lantai {{ selectedRoom.floor }}</span>
           <span>
             🎥
             <template

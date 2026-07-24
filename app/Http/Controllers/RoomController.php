@@ -14,13 +14,8 @@ class RoomController extends Controller
     ) {}
 
     public function index() {
-        $rooms = Room::select([
-            'id', 'name', 'capacity', 'floor',
-            'calendar_url'
-        ])->get();
-
         return Inertia::render('Calendar', [
-            'rooms' => $this->roomService->list(),
+            'rooms' => $this->roomService->calendar(),
         ]);
     }
 }
