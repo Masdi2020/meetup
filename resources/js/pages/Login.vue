@@ -40,20 +40,15 @@
 </template>
 
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 
-const form = reactive({
+const form = useForm({
     username: '',
     password: '',
 });
 
 const login = () => {
-    // console.log(form);
-    router.visit('/');
-
-    // Contoh:
-    // axios.post('/login', form)
+    form.post('/login');
 };
 </script>
 

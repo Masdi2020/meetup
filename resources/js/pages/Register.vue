@@ -13,6 +13,8 @@
                         placeholder="Masukkan nama lengkap"
                         required
                     />
+
+                    <small v-if="form.errors.name" class="error">{{ form.errors.name }}</small>
                 </div>
 
                 <div class="form-group">
@@ -24,6 +26,7 @@
                         placeholder="Masukkan username"
                         required
                     />
+                    <small v-if="form.errors.username" class="error">{{ form.errors.username }}</small>
                 </div>
 
                 <div class="form-group">
@@ -35,6 +38,7 @@
                         placeholder="Masukkan email"
                         required
                     />
+                    <small v-if="form.errors.email">{{ form.errors.email }}</small>
                 </div>
 
                 <div class="form-group">
@@ -46,6 +50,7 @@
                         placeholder="Masukkan password"
                         required
                     />
+                    <small v-if="form.errors.password" class="error">{{ form.errors.password }}</small>
                 </div>
 
                 <button type="submit" class="login-btn">Daftar</button>
@@ -60,10 +65,9 @@
 </template>
 
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 
-const form = reactive({
+const form = useForm({
     name: '',
     username: '',
     email: '',
@@ -71,8 +75,7 @@ const form = reactive({
 });
 
 const register = () => {
-    // TODO: Kirim data pendaftaran ke server
-    router.visit('/login');
+    form.post('/register');
 };
 </script>
 
@@ -171,5 +174,10 @@ const register = () => {
 
 .extra-text a:hover {
     text-decoration: underline;
+}
+
+.error {
+    color: red;
+    font-size: 12px;
 }
 </style>

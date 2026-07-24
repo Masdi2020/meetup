@@ -1,25 +1,27 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { useForm } from "@inertiajs/vue3";
 
-const selectedRoom = ref("Ruang Rapat A (Besar)");
+interface Room {
+    id: number;
+    name: string;
+}
 
-const rooms = [
-    "Ruang Rapat A (Besar)",
-    "Ruang Rapat B (Sedang)",
-    "Ruang Meeting C (Kecil)",
-];
+const { rooms } = defineProps<{
+    rooms: Room[];
+}>();
 
-const form = ref({
+const form = useForm({
+    room_id: null as number | null,
     date: "",
-    startTime: "",
-    endTime: "",
+    start_time: "",
+    end_time: "",
     title: "",
-    participants: "",
+    participants: null as number | null,
     request: "",
     banner: null as File | null,
 });
 
-const times = [];
+const times: string[] = [];
 
 for (let hour = 7; hour <= 21; hour++) {
     times.push(`${hour.toString().padStart(2, "0")}:00`);
@@ -32,18 +34,13 @@ for (let hour = 7; hour <= 21; hour++) {
 const handleFile = (event: Event) => {
     const target = event.target as HTMLInputElement;
 
-    if (target.files && target.files.length > 0) {
-        form.value.banner = target.files[0];
+    if (target.files?.length) {
+        form.banner = target.files[0];
     }
 };
 
 const submitBooking = () => {
-    console.log({
-        room: selectedRoom.value,
-        ...form.value,
-    });
-
-    alert("Booking berhasil dikirim.");
+    form.post('/booking');
 };
 </script>
 
@@ -55,13 +52,16 @@ const submitBooking = () => {
         <div class="page-card">
 
             <div class="room-selector">
-            <select v-model="selectedRoom">
+            <select v-model.number="form.room_id">
+                <option :value="null" disabled hidden>
+                    Pilih Ruangan
+                </option>
                 <option
                     v-for="room in rooms"
-                    :key="room"
-                    :value="room"
+                    :key="room.id"
+                    :value="room.id"
                 >
-                    {{ room }}
+                    {{ room.name }}
                 </option>
             </select>
             </div>
@@ -78,12 +78,12 @@ const submitBooking = () => {
 
             <div class="form-group">
                 <label>Dari Jam</label>
-                <select v-model="form.startTime">
-                    <option value="">Pilih Jam</option>
-
+                <select v-model="form.start_time">
                     <option
                         v-for="time in times"
                         :key="time"
+                        :value="time"
+                        placeholder="Pilih Ruangan"
                     >
                         {{ time }}
                     </option>
@@ -92,12 +92,13 @@ const submitBooking = () => {
 
             <div class="form-group">
                 <label>Sampai Jam</label>
-                <select v-model="form.endTime">
+                <select v-model="form.end_time">
                     <option value="">Pilih Jam</option>
 
                     <option
                         v-for="time in times"
                         :key="time"
+                        :value="time"
                     >
                         {{ time }}
                     </option>
@@ -117,7 +118,7 @@ const submitBooking = () => {
                 <input
                     type="number"
                     min="1"
-                    v-model="form.participants"
+                    v-model.number="form.participants"
                 >
             </div>
 
@@ -141,9 +142,11 @@ const submitBooking = () => {
             </div>
 
             <div class="button-wrapper">
-                <button @click="submitBooking">
-                    Booking
-                </button>
+                <form @submit.prevent="submitBooking">
+                    <button type="submit" :disabled="form.processing">
+                        {{ form.processing ? "Menyimpan..." : "Booking" }}
+                    </button>
+                </form>
             </div>
 
             </div>

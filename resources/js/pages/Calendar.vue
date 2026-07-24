@@ -1,44 +1,34 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3';
 import { ref, computed } from "vue";
 
-const rooms = [
-  {
-    id: 1,
-    name: "Ruang Rapat A (Besar)",
-    capacity: 50,
-    floor: "Lantai 2",
-    facilities: "Proyektor, Pengeras suara",
-    booking: "/booking/1",
-    calendar:
-      "https://calendar.google.com/calendar/embed?src=b0f1240608432f2604de0db604fc56f731423a248b3620fd49a407ed014c202e%40group.calendar.google.com&ctz=Asia%2FMakassar",
-  },
-  {
-    id: 2,
-    name: "Ruang Rapat B (Besar)",
-    capacity: 40,
-    floor: "Lantai 1",
-    facilities: "TV, Whiteboard",
-    booking: "/booking/2",
-    calendar:
-      "https://calendar.google.com/calendar/embed?src=b0f1240608432f2604de0db604fc56f731423a248b3620fd49a407ed014c202e%40group.calendar.google.com&ctz=Asia%2FMakassar",
-  },
-  {
-    id: 3,
-    name: "Ruang Rapat C (Sedang)",
-    capacity: 20,
-    floor: "Lantai 3",
-    facilities: "TV",
-    booking: "/booking/3",
-    calendar:
-      "https://calendar.google.com/calendar/embed?src=b0f1240608432f2604de0db604fc56f731423a248b3620fd49a407ed014c202e%40group.calendar.google.com&ctz=Asia%2FMakassar",
-  },
-];
+interface Facility {
+    id: number;
+    name: string;
+}
 
-const selectedRoomId = ref(1);
+interface Room {
+    id: number;
+    name: string;
+    capacity: number;
+    floor: string;
+    calendar_url: string;
+    facilities: Facility[];
+}
+
+const { rooms } = defineProps<{
+    rooms: Room[];
+}>();
+
+const selectedRoomId = ref<number>(rooms[0]?.id ?? 1);
 
 const selectedRoom = computed(() =>
-  rooms.find((r) => r.id === selectedRoomId.value)
+  rooms.find(room => room.id === selectedRoomId.value)
 );
+
+function booking (roomId: number) {
+    router.get(`/booking/${roomId}`);
+}
 </script>
 
 <template>
@@ -65,7 +55,12 @@ const selectedRoom = computed(() =>
     <div class="room-card" v-if="selectedRoom">
 
       <div class="room-image">
-        🖼️
+        <img
+            v-if="selectedRoom.image"
+            :src="`/storage/${selectedRoom.image}`"
+            :alt="selectedRoom.name"
+        >
+        <span v-else>🖼️</span>
       </div>
 
       <div class="room-info">
@@ -75,10 +70,18 @@ const selectedRoom = computed(() =>
         <div class="meta">
           <span>👥 {{ selectedRoom.capacity }} orang</span>
           <span>📍 {{ selectedRoom.floor }}</span>
-          <span>🎥 {{ selectedRoom.facilities }}</span>
+          <span>
+            🎥
+            <template
+                v-for="(facility, index) in selectedRoom.facilities"
+                :key="facility.id"
+            >
+                {{ facility.name }}<span v-if="index < selectedRoom.facilities.length - 1">, </span>
+            </template>
+          </span>
         </div>
 
-        <button class="booking">
+        <button class="booking" @click="booking(selectedRoom.id)">
           Booking
         </button>
 
@@ -89,7 +92,7 @@ const selectedRoom = computed(() =>
     <div class="calendar-card" v-if="selectedRoom">
       <iframe
         class="calendar-frame"
-        :src="`${selectedRoom.calendar}&showPrint=0&showTz=0`"
+        :src="`${selectedRoom.calendar_url}&showPrint=0&showTz=0`"
         frameborder="0"
         scrolling="no"
       ></iframe>
