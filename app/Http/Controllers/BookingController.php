@@ -10,6 +10,8 @@ use App\Services\RoomService;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Http\Requests\UpdateBookingRequest;
+use App\Models\BookingStatus;
 
 class BookingController extends Controller
 {
@@ -61,7 +63,7 @@ class BookingController extends Controller
                     'old_status_id' => null,
                     'new_status_id' => 1,
                     'changed_by'    => auth()->id(),
-                    'comment'       => $request->request,
+                    'comment'       => $request->input('request'),
                 ]);
             }
 
@@ -82,5 +84,49 @@ class BookingController extends Controller
         });
 
         return back()->with('success', 'Booking berhasil dibuat.');
+    }
+
+    public function update(
+        UpdateBookingRequest $request,
+        Booking $booking
+    ) {
+        if ($booking->status->code !== 'PENDING') {
+            abort(403);
+        }
+
+        $booking->update(
+            $request->validated()
+        );
+
+        return back()->with(
+            'success',
+            'Peminjaman berhasil diperbarui.'
+        );
+    }
+
+    public function cancel(Booking $booking) {
+        DB::transaction(function () use ($booking) {
+            $booking->load('status');
+
+            if ($booking->status->code !== 'PENDING') {
+                abort(403, 'Booking tidak dapat dibatalkan.');
+            }
+
+            $oldStatusId = $booking->status_id;
+
+            $cancelled = BookingStatus::where('code', 'CANCELLED')->firstOrFail();
+
+            $booking->update([
+                'status_id' => $cancelled->id,
+            ]);
+
+            BookingAudit::create([
+                'booking_id'    => $booking->id,
+                'old_status_id' => $oldStatusId,
+                'new_status_id' => $cancelled->id,
+                'changed_by'    => auth()->id(),
+                'comment'       => 'Dibatalkan oleh peminjam',
+            ]);
+        });
     }
 }

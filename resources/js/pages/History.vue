@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3';
 import { computed, ref } from "vue";
 
 type Status = "Approved" | "Pending" | "Rejected" | "Cancelled";
@@ -12,53 +13,64 @@ interface BookingHistory {
     status: Status;
 }
 
+const showEditModal = ref(false);
+
+const editForm = ref({
+    id: 0,
+    title: "",
+    date: "",
+    start_time: "",
+    end_time: "",
+});
+
+const openEditModal = (booking: BookingHistory) => {
+    const [start, end] = booking.time.split(" - ");
+
+    editForm.value = {
+        id: booking.id,
+        title: booking.title,
+        date: booking.date,
+        start_time: start,
+        end_time: end,
+    };
+
+    showEditModal.value = true;
+};
+
+const closeEditModal = () => {
+    showEditModal.value = false;
+};
+
+const submitEdit = () => {
+    router.put(`/booking/${editForm.value.id}`, editForm.value, {
+        onSuccess: () => {
+            closeEditModal();
+        },
+    });
+};
+
 const filterStatus = ref("Semua");
 
-const histories = ref<BookingHistory[]>([
-    {
-        id: 1,
-        room: "Ruang Rapat A",
-        date: "10 Juli 2026",
-        time: "07.30-09.30",
-        title: "Neraca",
-        status: "Approved",
-    },
-    {
-        id: 2,
-        room: "Ruang Rapat B",
-        date: "18 Juli 2026",
-        time: "12.30-14.30",
-        title: "Monev SE2026",
-        status: "Pending",
-    },
-]);
+const { histories } = defineProps<{
+    histories: BookingHistory[];
+}>();
 
 const filteredHistory = computed(() => {
     if (filterStatus.value === "Semua") {
-        return histories.value;
+        return histories;
     }
 
-    return histories.value.filter(
-        (item) => item.status === filterStatus.value
-    );
+    return histories.filter(history => history.status === filterStatus.value);
 });
-
-const editBooking = (booking: BookingHistory) => {
-    console.log("Edit", booking);
-
-    // Contoh jika menggunakan Inertia
-    // router.visit(`/booking/${booking.id}/edit`);
-};
 
 const cancelBooking = (id: number) => {
     if (!confirm("Batalkan peminjaman ini?")) {
         return;
     }
 
-    console.log("Cancel", id);
-
-    // Contoh Inertia
-    // router.delete(`/booking/${id}`);
+    router.put(`/booking/${id}/cancel`, {}, {
+        preserveScroll: true,
+    });
 };
 </script>
 
@@ -123,7 +135,7 @@ const cancelBooking = (id: number) => {
                             >
                                 <button
                                     class="edit-btn"
-                                    @click="editBooking(item)"
+                                    @click="openEditModal(item)"
                                 >
                                     Edit
                                 </button>
@@ -156,6 +168,64 @@ const cancelBooking = (id: number) => {
         </div>
 
     </div>
+
+    <div
+        v-if="showEditModal"
+        class="modal-overlay"
+    >
+        <div class="modal">
+            <h3>Edit Booking</h3>
+
+            <div class="form-group">
+                <label>Judul</label>
+                <input
+                    type="text"
+                    v-model="editForm.title"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Tanggal</label>
+                <input
+                    type="text"
+                    v-model="editForm.date"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Jam Mulai</label>
+                <input
+                    type="time"
+                    v-model="editForm.start_time"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Jam Selesai</label>
+                <input
+                    type="time"
+                    v-model="editForm.end_time"
+                >
+            </div>
+
+            <div class="modal-actions">
+                <button
+                    class="cancel-btn"
+                    @click="closeEditModal"
+                >
+                    Batal
+                </button>
+
+                <button
+                    class="edit-btn"
+                    @click="submitEdit"
+                >
+                    Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <style scoped>
@@ -245,6 +315,10 @@ tbody tr:hover {
     background: #d62828;
 }
 
+.cancelled {
+    background: #6c757d;
+}
+
 .empty {
     text-align: center;
     color: gray;
@@ -295,5 +369,62 @@ tbody tr:hover {
 
 .cancel-btn:hover {
     background: #b52b38;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 999;
+}
+
+.modal {
+    width: 500px;
+    max-width: 95%;
+
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.form-group input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.save-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.close-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
 }
 </style>

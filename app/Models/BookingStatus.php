@@ -15,7 +15,7 @@ class BookingStatus extends Model
     use HasFactory;
 
     public function bookings() {
-        return $this->hasMany(Booking::class);
+        return $this->hasMany(Booking::class, 'status_id');
     }
 
     public function oldStatusAudits() {

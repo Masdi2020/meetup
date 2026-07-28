@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { useForm } from "@inertiajs/vue3";
+import { ref } from "vue";
 
 interface Room {
     id: number;
     name: string;
 }
+
+const preview = ref<string | null>(null);
 
 const { rooms } = defineProps<{
     rooms: Room[];
@@ -34,13 +37,25 @@ for (let hour = 7; hour <= 21; hour++) {
 const handleFile = (event: Event) => {
     const target = event.target as HTMLInputElement;
 
-    if (target.files?.length) {
-        form.banner = target.files[0];
+    if (!target.files?.length) {
+        return;
     }
+
+    const file = target.files[0];
+    form.banner = file;
+    preview.value = URL.createObjectURL(file);
 };
 
 const submitBooking = () => {
-    form.post('/booking');
+    form.post('/booking', {
+        forceFormData: true,
+        onSuccess: () => {
+            console.log("Berhasil");
+        },
+        onError: (err) => {
+            console.log(err)
+        }
+    });
 };
 </script>
 
@@ -139,6 +154,22 @@ const submitBooking = () => {
                     accept=".jpg,.jpeg,.png"
                     @change="handleFile"
                 >
+
+                <small>Format yang didukung: JPG, JPEG, PNG</small>
+
+                <div
+                    v-if="preview"
+                    class="banner-preview"
+                >
+                    <img :src="preview" alt="Preview Banner">
+                </div>
+
+                <div
+                    v-if="form.errors.banner"
+                    class="error"
+                >
+                    {{ form.errors.banner }}
+                </div>
             </div>
 
             <div class="button-wrapper">
@@ -248,5 +279,23 @@ button:hover {
     .booking-card {
         padding: 20px;
     }
+}
+
+.banner-preview {
+    margin-top: 15px;
+}
+
+.banner-preview img {
+    width: 100%;
+    max-width: 350px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    object-fit: cover;
+}
+
+.error {
+    margin-top: 5px;
+    color: #dc3545;
+    font-size: 13px;
 }
 </style>

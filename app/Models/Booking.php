@@ -20,6 +20,14 @@ class Booking extends Model
 {
     use HasFactory;
 
+    protected function casts(): array {
+        return [
+            'date' => 'date',
+            'start_time' => 'datetime:H:i',
+            'end_time' => 'datetime:H:i',
+        ];
+    }
+
     public function room() {
         return $this->belongsTo(Room::class);
     }

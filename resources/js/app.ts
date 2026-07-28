@@ -15,6 +15,7 @@ createInertiaApp({
         const withoutLayout = [
             "Login",
             "Register",
+            "Banner"
         ];
 
         if (!withoutLayout.includes(name)) {

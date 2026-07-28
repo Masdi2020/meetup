@@ -19,7 +19,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->foreignId('old_status_id')
-                ->constrained('booking_statuses');
+                ->constrained('booking_statuses')->nullable();
 
             $table->foreignId('new_status_id')
                 ->constrained('booking_statuses');
