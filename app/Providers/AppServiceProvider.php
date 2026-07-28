@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -24,6 +26,21 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        // Redirect authenticated users to appropriate dashboard based on role
+        RedirectIfAuthenticated::redirectUsing(function ($request) {
+            $user = auth()->user();
+
+            if ($user && $user->role === 'admin') {
+                return route('admin.dashboard');
+            }
+
+            if (Route\has('home')) {
+                return route('home');
+            }
+
+            return '/';
+        });
     }
 
     /**
