@@ -12,8 +12,36 @@ interface Stats {
     pending: number;
 }
 
+interface TodayBooking {
+    id: number;
+    title: string;
+    start_time: string;
+    room: {
+        name: string;
+    };
+}
+
+interface Activity {
+    id: number;
+    booking: {
+        title: string;
+    };
+    changed_by: {
+        name: string;
+    }
+    old_status: {
+        label: string;
+    } | null;
+    new_status: {
+        label: string;
+    };
+    created_at: string;
+}
+
 defineProps<{
     stats: Stats;
+    todayBookings: TodayBooking[];
+    activities: Activity[];
 }>();
 </script>
 
@@ -85,41 +113,30 @@ defineProps<{
                 <div class="space-y-3">
 
                     <div
+                        v-for="booking in todayBookings"
+                        :key="booking.id"
                         class="flex justify-between border rounded-lg p-3"
                     >
                         <div>
                             <p class="font-medium">
-                                Meeting Internal
+                                {{ booking.title }}
                             </p>
-
                             <p class="text-sm text-gray-500">
-                                Ruang A
+                                {{ booking.room.name }}
                             </p>
                         </div>
 
                         <span>
-                            09.00
+                            {{ booking.start_time.substring(0, 5) }}
                         </span>
                     </div>
 
-                    <div
-                        class="flex justify-between border rounded-lg p-3"
+                    <p
+                        v-if="todayBookings.length === 0"
+                        class="text-gray-500"
                     >
-                        <div>
-                            <p class="font-medium">
-                                Presentasi
-                            </p>
-
-                            <p class="text-sm text-gray-500">
-                                Ruang B
-                            </p>
-                        </div>
-
-                        <span>
-                            13.00
-                        </span>
-                    </div>
-
+                        Tidak ada booking hari ini.
+                    </p>
                 </div>
 
             </div>
@@ -131,19 +148,25 @@ defineProps<{
                 </h2>
 
                 <ul class="space-y-3">
+                    <li
+                        v-for="activity in activities"
+                        :key="activity.id"
+                        class="border-b pb-2"
+                    >
+                        <strong>{{ activity.changed_by.name }}</strong>
 
-                    <li class="border-b pb-2">
-                        Admin menyetujui booking Ruang A
+                        mengubah status
+
+                        <strong>{{ activity.booking.title }}</strong>
+
+                        dari
+
+                        {{ activity.old_status?.label ?? "-" }}
+
+                        menjadi
+
+                        {{ activity.new_status.label }}
                     </li>
-
-                    <li class="border-b pb-2">
-                        User melakukan booking Ruang C
-                    </li>
-
-                    <li>
-                        User membatalkan booking
-                    </li>
-
                 </ul>
 
             </div>

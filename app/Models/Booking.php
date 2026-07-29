@@ -37,7 +37,7 @@ class Booking extends Model
     }
 
     public function status() {
-        return $this->belongsTo(BookingStatus::class);
+        return $this->belongsTo(BookingStatus::class, 'status_id');
     }
 
     public function attachments() {

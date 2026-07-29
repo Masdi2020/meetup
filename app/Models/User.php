@@ -15,11 +15,6 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -29,5 +24,9 @@ class User extends Authenticatable
 
     public function bookings() {
         return $this->hasMany(Booking::class);
+    }
+
+    public function bookingAudits() {
+        return $this->hasMany(BookingAudit::class, 'changed_by');
     }
 }
