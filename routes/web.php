@@ -27,6 +27,12 @@ Route::middleware(['auth'])->group(function () {
         ->prefix('admin')
         ->group(function () {
             Route::get('/', AdminDashboardController::class)->name('admin.dashboard');
+            Route::inertia('/bookings', 'Admin/Booking')->name('admin.booking');
+            Route::inertia('/rooms', 'Admin/Room')->name('admin.room');
+            Route::inertia('/facilities', 'Admin/Facility')->name('admin.facility');
+            Route::inertia('/users', 'Admin/User')->name('admin.user');
+            Route::inertia('/audits', 'Admin/Audit')->name('admin.audit');
+            Route::inertia('/settings', 'Admin/Setting')->name('admin.setting');
         });
 
     Route::middleware('role:user')
@@ -36,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
             Route::get('/kalender', [RoomController::class, 'index'])->name('calendar.index');
             Route::get('/riwayat', [HistoryController::class, 'index'])->name('history.index');
+
 
             Route::put('/booking/{booking}', [
                 BookingController::class,

@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import AdminSidebar from "@/components/admin/Sidebar.vue";
+import { ref } from "vue";
+import Sidebar from "@/components/admin/Sidebar.vue";
+
+const isOpen = ref(true);
 </script>
 
 <template>
   <div class="admin-layout">
-    <AdminSidebar />
+    <Sidebar
+      :is-open="isOpen"
+      @toggle="isOpen = !isOpen"
+    />
 
-    <main class="admin-content">
+    <main
+      class="admin-content"
+      :class="{ collapsed: !isOpen }"
+    >
       <slot />
     </main>
   </div>
@@ -14,13 +23,18 @@ import AdminSidebar from "@/components/admin/Sidebar.vue";
 
 <style scoped>
 .admin-layout {
-  display: flex;
   min-height: 100vh;
 }
 
 .admin-content {
-  flex: 1;
-  padding: 32px;
-  background: #f5f7fb;
+  margin-left: 230px;
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 30px;
+  transition: margin-left 0.3s ease;
+}
+
+.admin-content.collapsed {
+  margin-left: 72px;
 }
 </style>
