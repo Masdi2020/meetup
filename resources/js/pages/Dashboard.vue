@@ -24,10 +24,10 @@
 }
 
 h2 {
-        font-size: 24px;
-        margin-bottom: 15px;
-        color: #173b7a;
-        border-bottom: 2px solid #d9d9d9;
-        width: fit-content;
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #173b7a;
+    border-bottom: 2px solid #d9d9d9;
+    width: fit-content;
 }
 </style>

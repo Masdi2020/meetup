@@ -27,7 +27,7 @@ const isOpen = ref(true);
 }
 
 .content {
-  margin-left: 200px;
+  margin-left: 230px;
   min-height: 100vh;
   background: #f5f5f5;
   padding: 30px;

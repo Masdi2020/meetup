@@ -10,7 +10,7 @@ const emit = defineEmits<{
 }>();
 
 const menus = [
-  { name: "Halaman Utama", icon: "🏠", to: "/" },
+  { name: "Halaman Utama", icon: "🏠", to: "/dashboard" },
   { name: "Ruangan", icon: "🗓️", to: "/kalender" },
   { name: "Peminjaman", icon: "📝", to: "/pinjam" },
   { name: "Riwayat", icon: "📋", to: "/riwayat" },
