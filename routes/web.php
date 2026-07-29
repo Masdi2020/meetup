@@ -8,6 +8,7 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminBookingController;
 
 Route::get('/meeting/banner', [BannerController::class, 'index'])->name('meeting.banner');
 
@@ -27,7 +28,8 @@ Route::middleware(['auth'])->group(function () {
         ->prefix('admin')
         ->group(function () {
             Route::get('/', AdminDashboardController::class)->name('admin.dashboard');
-            Route::inertia('/bookings', 'Admin/Booking')->name('admin.booking');
+            // Route::inertia('/bookings', 'Admin/Booking')->name('admin.booking');
+            Route::get('/bookings', [AdminBookingController::class, 'index'])->name('admin.bookings.index');
             Route::inertia('/rooms', 'Admin/Room')->name('admin.room');
             Route::inertia('/facilities', 'Admin/Facility')->name('admin.facility');
             Route::inertia('/users', 'Admin/User')->name('admin.user');

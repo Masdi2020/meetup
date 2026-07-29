@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { router } from '@inertiajs/vue3';
+import {  ref, watch } from "vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
 
 defineOptions({
@@ -25,62 +26,56 @@ interface Booking {
     status: BookingStatus;
 }
 
-const search = ref("");
-const statusFilter = ref("");
-const roomFilter = ref("");
+interface Room {
+    id: number;
+    name: string;
+}
 
-const bookings = ref<Booking[]>([
-    {
-        id: 1,
-        code: "BK-0001",
-        room: "Ruang Rapat A",
-        borrower: "Dimas",
-        activity: "Rapat Mingguan",
-        date: "2026-07-29",
-        start: "09:00",
-        end: "10:30",
-        status: "pending",
-    },
-    {
-        id: 2,
-        code: "BK-0002",
-        room: "Ruang Rapat B",
-        borrower: "Andi",
-        activity: "Presentasi",
-        date: "2026-07-29",
-        start: "13:00",
-        end: "15:00",
-        status: "approved",
-    },
-    {
-        id: 3,
-        code: "BK-0003",
-        room: "Lab Komputer",
-        borrower: "Budi",
-        activity: "Pelatihan",
-        date: "2026-07-30",
-        start: "08:00",
-        end: "11:00",
-        status: "finished",
-    },
-]);
+interface Stats {
+    total: number;
+    pending: number;
+    approved: number;
+    finished: number;
+}
 
-const filteredBookings = computed(() => {
-    return bookings.value.filter((booking) => {
-        const keyword =
-            booking.borrower.toLowerCase().includes(search.value.toLowerCase()) ||
-            booking.room.toLowerCase().includes(search.value.toLowerCase()) ||
-            booking.code.toLowerCase().includes(search.value.toLowerCase());
+interface Pagination<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+}
 
-        const status =
-            !statusFilter.value || booking.status === statusFilter.value;
+const props = defineProps<{
+    bookings?: Pagination<Booking>;
+    rooms?: Room[];
+    stats?: Stats;
+    filters?: {
+        search?: string;
+        status?: string;
+        room?: string;
+    };
+}>();
 
-        const room =
-            !roomFilter.value || booking.room === roomFilter.value;
+const search = ref(props.filters?.search ?? "");
+const statusFilter = ref(props.filters?.status ?? "");
+const roomFilter = ref(props.filters?.room ?? "");
 
-        return keyword && status && room;
-    });
-});
+watch(
+    [search, statusFilter, roomFilter],
+    () => {
+        router.get(
+            "/admin/bookings",
+            {
+                search: search.value,
+                status: statusFilter.value,
+                room: roomFilter.value,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            }
+        );
+    }
+);
 
 function badgeClass(status: BookingStatus) {
     return {
@@ -123,7 +118,7 @@ function badgeClass(status: BookingStatus) {
                 </p>
 
                 <h2 class="mt-2 text-3xl font-bold">
-                    {{ bookings.length }}
+                    {{ stats?.total }}
                 </h2>
             </div>
 
@@ -133,7 +128,7 @@ function badgeClass(status: BookingStatus) {
                 </p>
 
                 <h2 class="mt-2 text-3xl font-bold text-yellow-600">
-                    {{ bookings.filter(b => b.status === "pending").length }}
+                    {{ stats?.pending }}
                 </h2>
             </div>
 
@@ -143,7 +138,7 @@ function badgeClass(status: BookingStatus) {
                 </p>
 
                 <h2 class="mt-2 text-3xl font-bold text-green-600">
-                    {{ bookings.filter(b => b.status === "approved").length }}
+                    {{ stats?.approved }}
                 </h2>
             </div>
 
@@ -153,7 +148,7 @@ function badgeClass(status: BookingStatus) {
                 </p>
 
                 <h2 class="mt-2 text-3xl font-bold text-blue-600">
-                    {{ bookings.filter(b => b.status === "finished").length }}
+                    {{ stats?.finished }}
                 </h2>
             </div>
 
@@ -189,9 +184,13 @@ function badgeClass(status: BookingStatus) {
                     class="rounded-lg border px-4 py-2"
                 >
                     <option value="">Semua Ruangan</option>
-                    <option>Ruang Rapat A</option>
-                    <option>Ruang Rapat B</option>
-                    <option>Lab Komputer</option>
+                    <option
+                        v-for="room in rooms"
+                        :key="room.id"
+                        :value="room.id"
+                    >
+                        {{ room.name }}
+                    </option>
                 </select>
 
             </div>
@@ -223,7 +222,7 @@ function badgeClass(status: BookingStatus) {
                 <tbody>
 
                     <tr
-                        v-for="booking in filteredBookings"
+                        v-for="booking in bookings?.data"
                         :key="booking.id"
                         class="border-t hover:bg-gray-50"
                     >
@@ -304,12 +303,34 @@ function badgeClass(status: BookingStatus) {
 
             <button
                 class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                :disabled="bookings?.current_page === 1"
+                @click="
+                    router.get(
+                        '/admin/bookings', {
+                            page: bookings?.current_page - 1,
+                            search,
+                            status: statusFilter,
+                            room: roomFilter,
+                        }
+                    )
+                "
             >
                 Previous
             </button>
 
             <button
                 class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                :disabled="bookings?.current_page === bookings?.last_page"
+                @click="
+                    router.get(
+                        '/admin/bookings', {
+                            page: bookings?.current_page + 1,
+                            search,
+                            status: statusFilter,
+                            room: roomFilter,
+                        }
+                    )
+                "
             >
                 Next
             </button>
