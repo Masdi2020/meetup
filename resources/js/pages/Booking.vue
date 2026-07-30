@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useForm } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 interface Room {
     id: number;
@@ -15,22 +15,22 @@ const { rooms } = defineProps<{
 
 const form = useForm({
     room_id: null as number | null,
-    date: "",
-    start_time: "",
-    end_time: "",
-    title: "",
+    date: '',
+    start_time: '',
+    end_time: '',
+    title: '',
     participants: null as number | null,
-    request: "",
+    request: '',
     banner: null as File | null,
 });
 
 const times: string[] = [];
 
 for (let hour = 7; hour <= 21; hour++) {
-    times.push(`${hour.toString().padStart(2, "0")}:00`);
+    times.push(`${hour.toString().padStart(2, '0')}:00`);
 
     if (hour !== 21) {
-        times.push(`${hour.toString().padStart(2, "0")}:30`);
+        times.push(`${hour.toString().padStart(2, '0')}:30`);
     }
 }
 
@@ -50,140 +50,116 @@ const submitBooking = () => {
     form.post('/booking', {
         forceFormData: true,
         onSuccess: () => {
-            console.log("Berhasil");
+            console.log('Berhasil');
         },
         onError: (err) => {
-            console.log(err)
-        }
+            console.log(err);
+        },
     });
 };
 </script>
 
 <template>
     <div class="booking-page">
-
         <h2>Formulir Peminjaman</h2>
 
         <div class="page-card">
-
             <div class="room-selector">
-            <select v-model.number="form.room_id">
-                <option :value="null" disabled hidden>
-                    Pilih Ruangan
-                </option>
-                <option
-                    v-for="room in rooms"
-                    :key="room.id"
-                    :value="room.id"
-                >
-                    {{ room.name }}
-                </option>
-            </select>
+                <select v-model.number="form.room_id">
+                    <option :value="null" disabled hidden>Pilih Ruangan</option>
+                    <option
+                        v-for="room in rooms"
+                        :key="room.id"
+                        :value="room.id"
+                    >
+                        {{ room.name }}
+                    </option>
+                </select>
             </div>
 
             <div class="booking-card">
-
-            <div class="form-group">
-                <label>Tanggal</label>
-                <input
-                    type="date"
-                    v-model="form.date"
-                >
-            </div>
-
-            <div class="form-group">
-                <label>Dari Jam</label>
-                <select v-model="form.start_time">
-                    <option
-                        v-for="time in times"
-                        :key="time"
-                        :value="time"
-                        placeholder="Pilih Ruangan"
-                    >
-                        {{ time }}
-                    </option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Sampai Jam</label>
-                <select v-model="form.end_time">
-                    <option value="">Pilih Jam</option>
-
-                    <option
-                        v-for="time in times"
-                        :key="time"
-                        :value="time"
-                    >
-                        {{ time }}
-                    </option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Judul Rapat</label>
-                <input
-                    type="text"
-                    v-model="form.title"
-                >
-            </div>
-
-            <div class="form-group">
-                <label>Jumlah Orang</label>
-                <input
-                    type="number"
-                    min="1"
-                    v-model.number="form.participants"
-                >
-            </div>
-
-            <div class="form-group">
-                <label>Permintaan Khusus</label>
-                <textarea
-                    rows="3"
-                    placeholder="contoh: penataan meja dan kursi"
-                    v-model="form.request"
-                ></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Unggah Banner Rapat</label>
-
-                <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png"
-                    @change="handleFile"
-                >
-
-                <small>Format yang didukung: JPG, JPEG, PNG</small>
-
-                <div
-                    v-if="preview"
-                    class="banner-preview"
-                >
-                    <img :src="preview" alt="Preview Banner">
+                <div class="form-group">
+                    <label>Tanggal</label>
+                    <input type="date" v-model="form.date" />
                 </div>
 
-                <div
-                    v-if="form.errors.banner"
-                    class="error"
-                >
-                    {{ form.errors.banner }}
+                <div class="form-group">
+                    <label>Dari Jam</label>
+                    <select v-model="form.start_time">
+                        <option
+                            v-for="time in times"
+                            :key="time"
+                            :value="time"
+                            placeholder="Pilih Ruangan"
+                        >
+                            {{ time }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Sampai Jam</label>
+                    <select v-model="form.end_time">
+                        <option value="">Pilih Jam</option>
+
+                        <option v-for="time in times" :key="time" :value="time">
+                            {{ time }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Judul Rapat</label>
+                    <input type="text" v-model="form.title" />
+                </div>
+
+                <div class="form-group">
+                    <label>Jumlah Orang</label>
+                    <input
+                        type="number"
+                        min="1"
+                        v-model.number="form.participants"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>Permintaan Khusus</label>
+                    <textarea
+                        rows="3"
+                        placeholder="contoh: penataan meja dan kursi"
+                        v-model="form.request"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Unggah Banner Rapat</label>
+
+                    <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png"
+                        @change="handleFile"
+                    />
+
+                    <small>Format yang didukung: JPG, JPEG, PNG</small>
+
+                    <div v-if="preview" class="banner-preview">
+                        <img :src="preview" alt="Preview Banner" />
+                    </div>
+
+                    <div v-if="form.errors.banner" class="error">
+                        {{ form.errors.banner }}
+                    </div>
+                </div>
+
+                <div class="button-wrapper">
+                    <form @submit.prevent="submitBooking">
+                        <button type="submit" :disabled="form.processing">
+                            {{ form.processing ? 'Menyimpan...' : 'Booking' }}
+                        </button>
+                    </form>
                 </div>
             </div>
-
-            <div class="button-wrapper">
-                <form @submit.prevent="submitBooking">
-                    <button type="submit" :disabled="form.processing">
-                        {{ form.processing ? "Menyimpan..." : "Booking" }}
-                    </button>
-                </form>
-            </div>
-
-            </div>
-
         </div>
-
     </div>
 </template>
 
@@ -264,7 +240,7 @@ button {
     padding: 10px 28px;
     cursor: pointer;
     font-weight: bold;
-    transition: .2s;
+    transition: 0.2s;
 }
 
 button:hover {

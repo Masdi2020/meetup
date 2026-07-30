@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBookingRequest;
+use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
 use App\Models\BookingAttachment;
 use App\Models\BookingAudit;
+use App\Models\BookingStatus;
 use App\Services\RoomService;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Http\Requests\UpdateBookingRequest;
-use App\Models\BookingStatus;
 
 class BookingController extends Controller
 {
@@ -19,13 +19,15 @@ class BookingController extends Controller
         protected RoomService $roomService
     ) {}
 
-    public function index(): Response {
+    public function index(): Response
+    {
         return Inertia::render('Booking', [
             'rooms' => $this->roomService->list(),
         ]);
     }
 
-    public function store(StoreBookingRequest $request) {
+    public function store(StoreBookingRequest $request)
+    {
         $exists = Booking::where('room_id', $request->room_id)
             ->where('date', $request->date)
             ->whereIn('status_id', [1, 2])
@@ -34,7 +36,7 @@ class BookingController extends Controller
                     ->orWhereBetween('end_time', [$request->start_time, $request->end_time])
                     ->orWhere(function ($query) use ($request) {
                         $query->where('start_time', '<=', $request->start_time)
-                              ->where('end_time', '>=', $request->end_time);
+                            ->where('end_time', '>=', $request->end_time);
                     });
             })
             ->exists();
@@ -47,23 +49,23 @@ class BookingController extends Controller
 
         DB::transaction(function () use ($request) {
             $booking = Booking::create([
-                'room_id'      => $request->room_id,
-                'user_id'      => auth()->id(),
-                'date'         => $request->date,
-                'start_time'   => $request->start_time,
-                'end_time'     => $request->end_time,
-                'title'        => $request->title,
+                'room_id' => $request->room_id,
+                'user_id' => auth()->id(),
+                'date' => $request->date,
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
+                'title' => $request->title,
                 'participants' => $request->participants,
-                'status_id'    => 1,
+                'status_id' => 1,
             ]);
 
             if ($request->filled('request')) {
                 BookingAudit::create([
-                    'booking_id'    => $booking->id,
+                    'booking_id' => $booking->id,
                     'old_status_id' => null,
                     'new_status_id' => 1,
-                    'changed_by'    => auth()->id(),
-                    'comment'       => $request->input('request'),
+                    'changed_by' => auth()->id(),
+                    'comment' => $request->input('request'),
                 ]);
             }
 
@@ -74,11 +76,11 @@ class BookingController extends Controller
 
                 BookingAttachment::create([
                     'booking_id' => $booking->id,
-                    'filename'   => $file->getClientOriginalName(),
-                    'path'       => $path,
-                    'mime_type'  => $file->getClientMimeType(),
-                    'size'       => $file->getSize(),
-                    'uploaded_by'=> auth()->id(),
+                    'filename' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'mime_type' => $file->getClientMimeType(),
+                    'size' => $file->getSize(),
+                    'uploaded_by' => auth()->id(),
                 ]);
             }
         });
@@ -104,7 +106,8 @@ class BookingController extends Controller
         );
     }
 
-    public function cancel(Booking $booking) {
+    public function cancel(Booking $booking)
+    {
         DB::transaction(function () use ($booking) {
             $booking->load('status');
 
@@ -121,11 +124,11 @@ class BookingController extends Controller
             ]);
 
             BookingAudit::create([
-                'booking_id'    => $booking->id,
+                'booking_id' => $booking->id,
                 'old_status_id' => $oldStatusId,
                 'new_status_id' => $cancelled->id,
-                'changed_by'    => auth()->id(),
-                'comment'       => 'Dibatalkan oleh peminjam',
+                'changed_by' => auth()->id(),
+                'comment' => 'Dibatalkan oleh peminjam',
             ]);
         });
     }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use App\Models\BookingStatus;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -91,11 +90,11 @@ class AdminBookingController extends Controller
 
                 'total' => Booking::count(),
 
-                'pending' => Booking::whereHas('status', fn($q) => $q->where('code', 'PENDING'))->count(),
+                'pending' => Booking::whereHas('status', fn ($q) => $q->where('code', 'PENDING'))->count(),
 
-                'approved' => Booking::whereHas('status', fn($q) => $q->where('code', 'APPROVED'))->count(),
+                'approved' => Booking::whereHas('status', fn ($q) => $q->where('code', 'APPROVED'))->count(),
 
-                'finished' => Booking::whereHas('status', fn($q) => $q->where('code', 'FINISHED'))->count(),
+                'finished' => Booking::whereHas('status', fn ($q) => $q->where('code', 'FINISHED'))->count(),
 
             ],
 

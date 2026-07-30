@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { computed, ref } from "vue";
+import { computed, ref } from 'vue';
 
-type Status = "Approved" | "Pending" | "Rejected" | "Cancelled";
+type Status = 'Approved' | 'Pending' | 'Rejected' | 'Cancelled';
 
 interface BookingHistory {
     id: number;
@@ -17,14 +17,14 @@ const showEditModal = ref(false);
 
 const editForm = ref({
     id: 0,
-    title: "",
-    date: "",
-    start_time: "",
-    end_time: "",
+    title: '',
+    date: '',
+    start_time: '',
+    end_time: '',
 });
 
 const openEditModal = (booking: BookingHistory) => {
-    const [start, end] = booking.time.split(" - ");
+    const [start, end] = booking.time.split(' - ');
 
     editForm.value = {
         id: booking.id,
@@ -49,38 +49,40 @@ const submitEdit = () => {
     });
 };
 
-const filterStatus = ref("Semua");
+const filterStatus = ref('Semua');
 
 const { histories } = defineProps<{
     histories: BookingHistory[];
 }>();
 
 const filteredHistory = computed(() => {
-    if (filterStatus.value === "Semua") {
+    if (filterStatus.value === 'Semua') {
         return histories;
     }
 
-    return histories.filter(history => history.status === filterStatus.value);
+    return histories.filter((history) => history.status === filterStatus.value);
 });
 
 const cancelBooking = (id: number) => {
-    if (!confirm("Batalkan peminjaman ini?")) {
+    if (!confirm('Batalkan peminjaman ini?')) {
         return;
     }
 
-    router.put(`/booking/${id}/cancel`, {}, {
-        preserveScroll: true,
-    });
+    router.put(
+        `/booking/${id}/cancel`,
+        {},
+        {
+            preserveScroll: true,
+        },
+    );
 };
 </script>
 
 <template>
     <div class="history-page">
-
         <h2>Riwayat Peminjaman Ruang Rapat</h2>
 
         <div class="page-card">
-
             <div class="filter">
                 <select v-model="filterStatus">
                     <option>Semua</option>
@@ -92,140 +94,103 @@ const cancelBooking = (id: number) => {
             </div>
 
             <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Ruang Rapat</th>
+                            <th>Tanggal</th>
+                            <th>Waktu</th>
+                            <th>Judul</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
 
-            <table>
-
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Ruang Rapat</th>
-                        <th>Tanggal</th>
-                        <th>Waktu</th>
-                        <th>Judul</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    <tr
-                        v-for="(item, index) in filteredHistory"
-                        :key="item.id"
-                    >
-                        <td>{{ index + 1 }}</td>
-                        <td>{{ item.room }}</td>
-                        <td>{{ item.date }}</td>
-                        <td>{{ item.time }}</td>
-                        <td>{{ item.title }}</td>
-
-                        <td>
-                            <span
-                                class="badge"
-                                :class="item.status.toLowerCase()"
-                            >
-                                {{ item.status }}
-                            </span>
-                        </td>
-
-                        <td>
-                            <div
-                                v-if="item.status === 'Pending'"
-                                class="action-buttons"
-                            >
-                                <button
-                                    class="edit-btn"
-                                    @click="openEditModal(item)"
-                                >
-                                    Edit
-                                </button>
-
-                                <button
-                                    class="cancel-btn"
-                                    @click="cancelBooking(item.id)"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <tr v-if="filteredHistory.length === 0">
-                        <td
-                            colspan="7"
-                            class="empty"
+                    <tbody>
+                        <tr
+                            v-for="(item, index) in filteredHistory"
+                            :key="item.id"
                         >
-                            Tidak ada data.
-                        </td>
-                    </tr>
+                            <td>{{ index + 1 }}</td>
+                            <td>{{ item.room }}</td>
+                            <td>{{ item.date }}</td>
+                            <td>{{ item.time }}</td>
+                            <td>{{ item.title }}</td>
 
-                </tbody>
+                            <td>
+                                <span
+                                    class="badge"
+                                    :class="item.status.toLowerCase()"
+                                >
+                                    {{ item.status }}
+                                </span>
+                            </td>
 
-            </table>
+                            <td>
+                                <div
+                                    v-if="item.status === 'Pending'"
+                                    class="action-buttons"
+                                >
+                                    <button
+                                        class="edit-btn"
+                                        @click="openEditModal(item)"
+                                    >
+                                        Edit
+                                    </button>
 
+                                    <button
+                                        class="cancel-btn"
+                                        @click="cancelBooking(item.id)"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr v-if="filteredHistory.length === 0">
+                            <td colspan="7" class="empty">Tidak ada data.</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-
         </div>
-
     </div>
 
-    <div
-        v-if="showEditModal"
-        class="modal-overlay"
-    >
+    <div v-if="showEditModal" class="modal-overlay">
         <div class="modal">
             <h3>Edit Booking</h3>
 
             <div class="form-group">
                 <label>Judul</label>
-                <input
-                    type="text"
-                    v-model="editForm.title"
-                >
+                <input type="text" v-model="editForm.title" />
             </div>
 
             <div class="form-group">
                 <label>Tanggal</label>
-                <input
-                    type="text"
-                    v-model="editForm.date"
-                >
+                <input type="text" v-model="editForm.date" />
             </div>
 
             <div class="form-group">
                 <label>Jam Mulai</label>
-                <input
-                    type="time"
-                    v-model="editForm.start_time"
-                >
+                <input type="time" v-model="editForm.start_time" />
             </div>
 
             <div class="form-group">
                 <label>Jam Selesai</label>
-                <input
-                    type="time"
-                    v-model="editForm.end_time"
-                >
+                <input type="time" v-model="editForm.end_time" />
             </div>
 
             <div class="modal-actions">
-                <button
-                    class="cancel-btn"
-                    @click="closeEditModal"
-                >
+                <button class="cancel-btn" @click="closeEditModal">
                     Batal
                 </button>
 
-                <button
-                    class="edit-btn"
-                    @click="submitEdit"
-                >
-                    Simpan
-                </button>
+                <button class="edit-btn" @click="submitEdit">Simpan</button>
             </div>
         </div>
     </div>
-
 </template>
 
 <style scoped>
@@ -267,7 +232,7 @@ h2 {
     border-radius: 12px;
     padding: 18px;
     min-height: 420px;
-    box-shadow: 0 0 8px rgba(0,0,0,.08);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
     overflow-x: auto;
 }
 
@@ -326,7 +291,6 @@ tbody tr:hover {
 }
 
 @media (max-width: 768px) {
-
     .history-page {
         padding: 15px;
     }
@@ -334,7 +298,6 @@ tbody tr:hover {
     table {
         min-width: 650px;
     }
-
 }
 
 .action-buttons {
@@ -350,7 +313,7 @@ tbody tr:hover {
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
-    transition: .2s;
+    transition: 0.2s;
 }
 
 .edit-btn {
@@ -374,7 +337,7 @@ tbody tr:hover {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.5);
+    background: rgba(0, 0, 0, 0.5);
 
     display: flex;
     justify-content: center;

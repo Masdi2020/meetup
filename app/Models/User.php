@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 #[Fillable(['name', 'username', 'email', 'password', 'role'])]
 #[Hidden(['password'])]
@@ -22,11 +22,13 @@ class User extends Authenticatable
         ];
     }
 
-    public function bookings() {
+    public function bookings()
+    {
         return $this->hasMany(Booking::class);
     }
 
-    public function bookingAudits() {
+    public function bookingAudits()
+    {
         return $this->hasMany(BookingAudit::class, 'changed_by');
     }
 }

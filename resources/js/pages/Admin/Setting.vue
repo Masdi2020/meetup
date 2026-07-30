@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import AdminLayout from "@/layouts/AdminLayout.vue";
+import { ref } from 'vue';
+import AdminLayout from '@/layouts/AdminLayout.vue';
 
 defineOptions({
     layout: AdminLayout,
 });
 
 const settings = ref({
-    appName: "Meeting Room",
+    appName: 'Meeting Room',
 
-    organization: "Diskominfo",
+    organization: 'Diskominfo',
 
     allowSameDayBooking: true,
 
@@ -17,9 +17,9 @@ const settings = ref({
 
     maxBookingDay: 30,
 
-    openTime: "07:30",
+    openTime: '07:30',
 
-    closeTime: "17:30",
+    closeTime: '17:30',
 
     emailNotification: true,
 
@@ -29,265 +29,186 @@ const settings = ref({
 });
 
 function save() {
-    alert("Simpan konfigurasi");
+    alert('Simpan konfigurasi');
 }
 </script>
 
 <template>
+    <div class="space-y-6">
+        <div>
+            <h1 class="text-3xl font-bold">Pengaturan</h1>
 
-<div class="space-y-6">
-
-    <div>
-
-        <h1 class="text-3xl font-bold">
-            Pengaturan
-        </h1>
-
-        <p class="text-gray-500">
-            Konfigurasi aplikasi peminjaman ruangan.
-        </p>
-
-    </div>
-
-    <!-- Informasi -->
-
-    <div class="bg-white rounded-xl shadow">
-
-        <div class="border-b px-6 py-4">
-
-            <h2 class="font-semibold text-lg">
-                Informasi Sistem
-            </h2>
-
+            <p class="text-gray-500">
+                Konfigurasi aplikasi peminjaman ruangan.
+            </p>
         </div>
 
-        <div class="p-6 grid gap-5">
+        <!-- Informasi -->
 
-            <div>
-
-                <label class="block mb-2 font-medium">
-                    Nama Aplikasi
-                </label>
-
-                <input
-                    v-model="settings.appName"
-                    class="w-full rounded-lg border px-4 py-2"
-                >
-
+        <div class="rounded-xl bg-white shadow">
+            <div class="border-b px-6 py-4">
+                <h2 class="text-lg font-semibold">Informasi Sistem</h2>
             </div>
 
-            <div>
+            <div class="grid gap-5 p-6">
+                <div>
+                    <label class="mb-2 block font-medium">
+                        Nama Aplikasi
+                    </label>
 
-                <label class="block mb-2 font-medium">
-                    Nama Instansi
-                </label>
+                    <input
+                        v-model="settings.appName"
+                        class="w-full rounded-lg border px-4 py-2"
+                    />
+                </div>
 
-                <input
-                    v-model="settings.organization"
-                    class="w-full rounded-lg border px-4 py-2"
-                >
+                <div>
+                    <label class="mb-2 block font-medium">
+                        Nama Instansi
+                    </label>
 
+                    <input
+                        v-model="settings.organization"
+                        class="w-full rounded-lg border px-4 py-2"
+                    />
+                </div>
+
+                <div>
+                    <label class="mb-2 block font-medium"> Logo </label>
+
+                    <input type="file" class="w-full rounded-lg border p-2" />
+                </div>
             </div>
-
-            <div>
-
-                <label class="block mb-2 font-medium">
-                    Logo
-                </label>
-
-                <input
-                    type="file"
-                    class="w-full rounded-lg border p-2"
-                >
-
-            </div>
-
         </div>
 
-    </div>
+        <!-- Booking -->
 
-    <!-- Booking -->
+        <div class="rounded-xl bg-white shadow">
+            <div class="border-b px-6 py-4">
+                <h2 class="text-lg font-semibold">Pengaturan Booking</h2>
+            </div>
 
-    <div class="bg-white rounded-xl shadow">
+            <div class="space-y-5 p-6">
+                <label class="flex items-center gap-3">
+                    <input
+                        v-model="settings.allowSameDayBooking"
+                        type="checkbox"
+                    />
 
-        <div class="border-b px-6 py-4">
+                    Izinkan booking pada hari yang sama
+                </label>
 
-            <h2 class="font-semibold text-lg">
-                Pengaturan Booking
-            </h2>
+                <div>
+                    <label class="mb-2 block font-medium">
+                        Maksimal Lama Booking (Jam)
+                    </label>
 
+                    <input
+                        v-model="settings.maxBookingHour"
+                        type="number"
+                        class="w-full rounded-lg border px-4 py-2"
+                    />
+                </div>
+
+                <div>
+                    <label class="mb-2 block font-medium">
+                        Maksimal Hari Sebelum Booking
+                    </label>
+
+                    <input
+                        v-model="settings.maxBookingDay"
+                        type="number"
+                        class="w-full rounded-lg border px-4 py-2"
+                    />
+                </div>
+            </div>
         </div>
 
-        <div class="p-6 space-y-5">
+        <!-- Jam Operasional -->
 
-            <label class="flex items-center gap-3">
+        <div class="rounded-xl bg-white shadow">
+            <div class="border-b px-6 py-4">
+                <h2 class="text-lg font-semibold">Jam Operasional</h2>
+            </div>
 
-                <input
-                    v-model="settings.allowSameDayBooking"
-                    type="checkbox"
-                >
+            <div class="grid gap-5 p-6 md:grid-cols-2">
+                <div>
+                    <label class="mb-2 block font-medium"> Jam Mulai </label>
 
-                Izinkan booking pada hari yang sama
+                    <input
+                        v-model="settings.openTime"
+                        type="time"
+                        class="w-full rounded-lg border px-4 py-2"
+                    />
+                </div>
 
-            </label>
+                <div>
+                    <label class="mb-2 block font-medium"> Jam Selesai </label>
 
-            <div>
+                    <input
+                        v-model="settings.closeTime"
+                        type="time"
+                        class="w-full rounded-lg border px-4 py-2"
+                    />
+                </div>
+            </div>
+        </div>
 
-                <label class="block mb-2 font-medium">
-                    Maksimal Lama Booking (Jam)
+        <!-- Notifikasi -->
+
+        <div class="rounded-xl bg-white shadow">
+            <div class="border-b px-6 py-4">
+                <h2 class="text-lg font-semibold">Notifikasi</h2>
+            </div>
+
+            <div class="space-y-4 p-6">
+                <label class="flex items-center gap-3">
+                    <input
+                        v-model="settings.emailNotification"
+                        type="checkbox"
+                    />
+
+                    Aktifkan Email
+                </label>
+
+                <label class="flex items-center gap-3">
+                    <input
+                        v-model="settings.dashboardNotification"
+                        type="checkbox"
+                    />
+
+                    Aktifkan Notifikasi Dashboard
+                </label>
+            </div>
+        </div>
+
+        <!-- Keamanan -->
+
+        <div class="rounded-xl bg-white shadow">
+            <div class="border-b px-6 py-4">
+                <h2 class="text-lg font-semibold">Keamanan</h2>
+            </div>
+
+            <div class="p-6">
+                <label class="mb-2 block font-medium">
+                    Session Timeout (Menit)
                 </label>
 
                 <input
-                    v-model="settings.maxBookingHour"
+                    v-model="settings.sessionTimeout"
                     type="number"
                     class="w-full rounded-lg border px-4 py-2"
-                >
-
+                />
             </div>
-
-            <div>
-
-                <label class="block mb-2 font-medium">
-                    Maksimal Hari Sebelum Booking
-                </label>
-
-                <input
-                    v-model="settings.maxBookingDay"
-                    type="number"
-                    class="w-full rounded-lg border px-4 py-2"
-                >
-
-            </div>
-
         </div>
 
-    </div>
-
-    <!-- Jam Operasional -->
-
-    <div class="bg-white rounded-xl shadow">
-
-        <div class="border-b px-6 py-4">
-
-            <h2 class="font-semibold text-lg">
-                Jam Operasional
-            </h2>
-
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-5 p-6">
-
-            <div>
-
-                <label class="block mb-2 font-medium">
-                    Jam Mulai
-                </label>
-
-                <input
-                    v-model="settings.openTime"
-                    type="time"
-                    class="w-full rounded-lg border px-4 py-2"
-                >
-
-            </div>
-
-            <div>
-
-                <label class="block mb-2 font-medium">
-                    Jam Selesai
-                </label>
-
-                <input
-                    v-model="settings.closeTime"
-                    type="time"
-                    class="w-full rounded-lg border px-4 py-2"
-                >
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- Notifikasi -->
-
-    <div class="bg-white rounded-xl shadow">
-
-        <div class="border-b px-6 py-4">
-
-            <h2 class="font-semibold text-lg">
-                Notifikasi
-            </h2>
-
-        </div>
-
-        <div class="space-y-4 p-6">
-
-            <label class="flex items-center gap-3">
-
-                <input
-                    v-model="settings.emailNotification"
-                    type="checkbox"
-                >
-
-                Aktifkan Email
-
-            </label>
-
-            <label class="flex items-center gap-3">
-
-                <input
-                    v-model="settings.dashboardNotification"
-                    type="checkbox"
-                >
-
-                Aktifkan Notifikasi Dashboard
-
-            </label>
-
-        </div>
-
-    </div>
-
-    <!-- Keamanan -->
-
-    <div class="bg-white rounded-xl shadow">
-
-        <div class="border-b px-6 py-4">
-
-            <h2 class="font-semibold text-lg">
-                Keamanan
-            </h2>
-
-        </div>
-
-        <div class="p-6">
-
-            <label class="block mb-2 font-medium">
-                Session Timeout (Menit)
-            </label>
-
-            <input
-                v-model="settings.sessionTimeout"
-                type="number"
-                class="w-full rounded-lg border px-4 py-2"
+        <div class="flex justify-end">
+            <button
+                @click="save"
+                class="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
             >
-
+                Simpan Perubahan
+            </button>
         </div>
-
     </div>
-
-    <div class="flex justify-end">
-
-        <button
-            @click="save"
-            class="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
-        >
-            Simpan Perubahan
-        </button>
-
-    </div>
-
-</div>
-
 </template>

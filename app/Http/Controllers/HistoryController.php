@@ -9,7 +9,8 @@ class HistoryController extends Controller
 {
     public function __construct(protected BookingService $bookingService) {}
 
-    public function index() {
+    public function index()
+    {
         return Inertia::render('History', [
             'histories' => $this->bookingService->history(auth()->id()),
         ]);

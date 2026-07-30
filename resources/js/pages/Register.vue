@@ -14,7 +14,9 @@
                         required
                     />
 
-                    <small v-if="form.errors.name" class="error">{{ form.errors.name }}</small>
+                    <small v-if="form.errors.name" class="error">{{
+                        form.errors.name
+                    }}</small>
                 </div>
 
                 <div class="form-group">
@@ -26,7 +28,9 @@
                         placeholder="Masukkan username"
                         required
                     />
-                    <small v-if="form.errors.username" class="error">{{ form.errors.username }}</small>
+                    <small v-if="form.errors.username" class="error">{{
+                        form.errors.username
+                    }}</small>
                 </div>
 
                 <div class="form-group">
@@ -38,7 +42,9 @@
                         placeholder="Masukkan email"
                         required
                     />
-                    <small v-if="form.errors.email">{{ form.errors.email }}</small>
+                    <small v-if="form.errors.email">{{
+                        form.errors.email
+                    }}</small>
                 </div>
 
                 <div class="form-group">
@@ -50,7 +56,9 @@
                         placeholder="Masukkan password"
                         required
                     />
-                    <small v-if="form.errors.password" class="error">{{ form.errors.password }}</small>
+                    <small v-if="form.errors.password" class="error">{{
+                        form.errors.password
+                    }}</small>
                 </div>
 
                 <button type="submit" class="login-btn">Daftar</button>

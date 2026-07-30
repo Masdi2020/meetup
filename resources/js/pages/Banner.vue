@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { router } from "@inertiajs/vue3";
-import { onMounted, onUnmounted, ref } from "vue";
+import { router } from '@inertiajs/vue3';
+import { onMounted, onUnmounted, ref } from 'vue';
 
 const props = defineProps<{
     booking: any;
@@ -18,17 +18,11 @@ function scheduleReload() {
 
     const target = new Date(props.next_change).getTime();
 
-    const delay = Math.max(
-        target - Date.now(),
-        1000
-    );
+    const delay = Math.max(target - Date.now(), 1000);
 
     timer = window.setTimeout(() => {
         router.reload({
-            only: [
-                'booking',
-                'next_change'
-            ],
+            only: ['booking', 'next_change'],
         });
     }, delay);
 }
@@ -51,7 +45,7 @@ function onFullscreenChange() {
 
 onMounted(() => {
     scheduleReload();
-    document.addEventListener("fullscreenchange", onFullscreenChange);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
 });
 
 onUnmounted(() => {
@@ -59,68 +53,56 @@ onUnmounted(() => {
         clearTimeout(timer);
     }
 
-    document.removeEventListener("fullscreenchange", onFullscreenChange);
+    document.removeEventListener('fullscreenchange', onFullscreenChange);
 });
 </script>
 
 <template>
-
-    <button
-        class="fullscreen-btn"
-        @click="toggleFullscreen"
-    >
-        {{ isFullscreen ? "⤢" : "⛶" }}
+    <button class="fullscreen-btn" @click="toggleFullscreen">
+        {{ isFullscreen ? '⤢' : '⛶' }}
     </button>
 
     <div class="screen">
-
         <img
             v-if="booking?.attachments?.length"
             :src="`/storage/${booking.attachments[0].path}`"
             class="banner"
-        >
+        />
 
-        <h1
-            v-else-if="booking"
-            class="title"
-        >
+        <h1 v-else-if="booking" class="title">
             {{ booking.title }}
         </h1>
-
     </div>
-
 </template>
 
 <style>
-.screen{
-    width:100vw;
-    height:100vh;
-    background:black;
+.screen {
+    width: 100vw;
+    height: 100vh;
+    background: black;
 
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.banner{
+.banner {
+    width: 100%;
+    height: 100%;
 
-    width:100%;
-    height:100%;
-
-    object-fit:contain;
+    object-fit: contain;
 }
 
-.title{
+.title {
+    color: white;
 
-    color:white;
+    font-size: 72px;
 
-    font-size:72px;
+    font-weight: bold;
 
-    font-weight:bold;
+    text-align: center;
 
-    text-align:center;
-
-    padding:40px;
+    padding: 40px;
 }
 
 .fullscreen-btn {

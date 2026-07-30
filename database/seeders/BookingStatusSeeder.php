@@ -13,10 +13,10 @@ class BookingStatusSeeder extends Seeder
     public function run(): void
     {
         BookingStatus::insert([
-            ['id'=>1, 'code'=>'PENDING', 'label'=>'Pending'],
-            ['id'=>2, 'code'=>'APPROVED', 'label'=>'Approved'],
-            ['id'=>3, 'code'=>'REJECTED', 'label'=>'Rejected'],
-            ['id'=>4, 'code'=>'CANCELLED', 'label'=>'Cancelled'],
+            ['id' => 1, 'code' => 'PENDING', 'label' => 'Pending'],
+            ['id' => 2, 'code' => 'APPROVED', 'label' => 'Approved'],
+            ['id' => 3, 'code' => 'REJECTED', 'label' => 'Rejected'],
+            ['id' => 4, 'code' => 'CANCELLED', 'label' => 'Cancelled'],
         ]);
     }
 }

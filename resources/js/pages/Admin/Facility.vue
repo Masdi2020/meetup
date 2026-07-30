@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import AdminLayout from "@/layouts/AdminLayout.vue";
+import { computed, ref } from 'vue';
+import AdminLayout from '@/layouts/AdminLayout.vue';
 
 defineOptions({
     layout: AdminLayout,
@@ -16,13 +16,11 @@ const props = defineProps<{
     facilities: Facility[];
 }>();
 
-const search = ref("");
+const search = ref('');
 
 const filteredFacilities = computed(() =>
     props.facilities.filter((facility) =>
-        facility.name
-            .toLowerCase()
-            .includes(search.value.toLowerCase()),
+        facility.name.toLowerCase().includes(search.value.toLowerCase()),
     ),
 );
 
@@ -36,14 +34,10 @@ const totalUsage = computed(() =>
 
 <template>
     <div class="space-y-6">
-
         <!-- Header -->
         <div class="flex items-center justify-between">
-
             <div>
-                <h1 class="text-3xl font-bold">
-                    Fasilitas
-                </h1>
+                <h1 class="text-3xl font-bold">Fasilitas</h1>
 
                 <p class="text-gray-500">
                     Kelola fasilitas yang tersedia pada ruangan.
@@ -55,83 +49,56 @@ const totalUsage = computed(() =>
             >
                 + Tambah Fasilitas
             </button>
-
         </div>
 
         <!-- Statistik -->
         <div class="grid gap-4 md:grid-cols-2">
-
             <div class="rounded-xl bg-white p-5 shadow">
-
-                <p class="text-sm text-gray-500">
-                    Total Fasilitas
-                </p>
+                <p class="text-sm text-gray-500">Total Fasilitas</p>
 
                 <h2 class="mt-2 text-3xl font-bold">
                     {{ props.facilities.length }}
                 </h2>
-
             </div>
 
             <div class="rounded-xl bg-white p-5 shadow">
-
-                <p class="text-sm text-gray-500">
-                    Digunakan di Ruangan
-                </p>
+                <p class="text-sm text-gray-500">Digunakan di Ruangan</p>
 
                 <h2 class="mt-2 text-3xl font-bold">
                     {{ totalUsage }}
                 </h2>
-
             </div>
-
         </div>
 
         <!-- Filter -->
         <div class="rounded-xl bg-white p-5 shadow">
-
             <input
                 v-model="search"
                 type="text"
                 placeholder="Cari fasilitas..."
                 class="w-full rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
-            >
-
+            />
         </div>
 
         <!-- Table -->
         <div class="overflow-hidden rounded-xl bg-white shadow">
-
             <table class="min-w-full">
-
                 <thead class="bg-gray-100">
-
                     <tr class="text-left text-sm font-semibold">
+                        <th class="px-5 py-4">Nama</th>
 
-                        <th class="px-5 py-4">
-                            Nama
-                        </th>
+                        <th class="px-5 py-4">Digunakan</th>
 
-                        <th class="px-5 py-4">
-                            Digunakan
-                        </th>
-
-                        <th class="px-5 py-4 text-right">
-                            Aksi
-                        </th>
-
+                        <th class="px-5 py-4 text-right">Aksi</th>
                     </tr>
-
                 </thead>
 
                 <tbody>
-
                     <tr
                         v-for="facility in filteredFacilities"
                         :key="facility.id"
                         class="border-t transition hover:bg-gray-50"
                     >
-
                         <td class="px-5 py-4 font-medium">
                             {{ facility.name }}
                         </td>
@@ -141,9 +108,7 @@ const totalUsage = computed(() =>
                         </td>
 
                         <td class="px-5 py-4">
-
                             <div class="flex justify-end gap-2">
-
                                 <button
                                     class="rounded-lg border px-3 py-2 transition hover:bg-gray-100"
                                 >
@@ -161,29 +126,17 @@ const totalUsage = computed(() =>
                                 >
                                     Hapus
                                 </button>
-
                             </div>
-
                         </td>
-
                     </tr>
 
                     <tr v-if="filteredFacilities.length === 0">
-
-                        <td
-                            colspan="3"
-                            class="py-10 text-center text-gray-500"
-                        >
+                        <td colspan="3" class="py-10 text-center text-gray-500">
                             Tidak ada fasilitas yang ditemukan.
                         </td>
-
                     </tr>
-
                 </tbody>
-
             </table>
-
         </div>
-
     </div>
 </template>

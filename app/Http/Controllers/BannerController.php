@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
 use App\Services\BannerService;
+use Inertia\Inertia;
 
 class BannerController extends Controller
 {
-    public function index(BannerService $service) {
+    public function index(BannerService $service)
+    {
         return Inertia::render(
             'Banner',
             $service->current()

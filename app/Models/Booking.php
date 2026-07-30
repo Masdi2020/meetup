@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
     'room_id',
@@ -20,7 +20,8 @@ class Booking extends Model
 {
     use HasFactory;
 
-    protected function casts(): array {
+    protected function casts(): array
+    {
         return [
             'date' => 'date',
             'start_time' => 'datetime:H:i',
@@ -28,23 +29,28 @@ class Booking extends Model
         ];
     }
 
-    public function room() {
+    public function room()
+    {
         return $this->belongsTo(Room::class);
     }
 
-    public function user() {
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function status() {
+    public function status()
+    {
         return $this->belongsTo(BookingStatus::class, 'status_id');
     }
 
-    public function attachments() {
+    public function attachments()
+    {
         return $this->hasMany(BookingAttachment::class);
     }
 
-    public function audits() {
+    public function audits()
+    {
         return $this->hasMany(BookingAudit::class);
     }
 }

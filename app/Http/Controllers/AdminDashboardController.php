@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingAudit;
 use App\Models\BookingStatus;
@@ -13,7 +12,8 @@ use Inertia\Inertia;
 
 class AdminDashboardController extends Controller
 {
-    public function __invoke() {
+    public function __invoke()
+    {
         $pendingStatus = BookingStatus::where('code', 'PENDING')->value('id');
 
         return Inertia::render('Admin/Dashboard', [
@@ -29,7 +29,7 @@ class AdminDashboardController extends Controller
                 ->whereDate('date', Carbon::today())
                 ->orderBy('start_time')
                 ->get([
-                    'id', 'room_id', 'title', 'start_time'
+                    'id', 'room_id', 'title', 'start_time',
                 ]),
 
             'activities' => BookingAudit::query()
@@ -40,7 +40,7 @@ class AdminDashboardController extends Controller
                     'newStatus:id,label',
                 ])->latest()
                 ->take(10)
-                ->get()
+                ->get(),
         ]);
     }
 }

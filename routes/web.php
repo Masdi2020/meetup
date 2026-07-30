@@ -1,15 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\HistoryController;
-use App\Http\Controllers\BannerController;
-use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminBookingController;
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminFacilityController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\BannerController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\RoomController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/meeting/banner', [BannerController::class, 'index'])->name('meeting.banner');
 
@@ -48,15 +48,14 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/kalender', [RoomController::class, 'index'])->name('calendar.index');
             Route::get('/riwayat', [HistoryController::class, 'index'])->name('history.index');
 
-
             Route::put('/booking/{booking}', [
                 BookingController::class,
-                'update'
+                'update',
             ])->name('booking.update');
 
             Route::put('/booking/{booking}/cancel', [
                 BookingController::class,
-                'cancel'
+                'cancel',
             ])->name('booking.cancel');
         });
 });

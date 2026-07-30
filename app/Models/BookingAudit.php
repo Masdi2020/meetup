@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
     'booking_id',
@@ -21,19 +21,23 @@ class BookingAudit extends Model
 
     const UPDATED_AT = null;
 
-    public function booking() {
+    public function booking()
+    {
         return $this->belongsTo(Booking::class);
     }
 
-    public function oldStatus() {
+    public function oldStatus()
+    {
         return $this->belongsTo(BookingStatus::class, 'old_status_id');
     }
 
-    public function newStatus() {
+    public function newStatus()
+    {
         return $this->belongsTo(BookingStatus::class, 'new_status_id');
     }
 
-    public function changedBy() {
+    public function changedBy()
+    {
         return $this->belongsTo(User::class, 'changed_by');
     }
 }

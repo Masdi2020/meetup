@@ -8,20 +8,22 @@ use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
-    public function create() {
+    public function create()
+    {
         return inertia('Login');
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $credentials = $request->validate([
             'username' => ['required'],
             'password' => ['required'],
         ]);
 
-        if(Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            return match (Auth::user()->role){
+            return match (Auth::user()->role) {
                 'admin' => to_route('admin.dashboard'),
                 'user' => to_route('home'),
                 default => abort(403),

@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
-use Inertia\Inertia;
 use App\Services\RoomService;
-use Inertia\Response;
+use Inertia\Inertia;
 
 class RoomController extends Controller
 {
@@ -13,7 +11,8 @@ class RoomController extends Controller
         protected RoomService $roomService
     ) {}
 
-    public function index() {
+    public function index()
+    {
         return Inertia::render('Calendar', [
             'rooms' => $this->roomService->calendar(),
         ]);

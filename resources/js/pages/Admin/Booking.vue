@@ -1,19 +1,15 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { watchDebounced } from "@vueuse/core";
-import {  ref, watch } from "vue";
-import AdminLayout from "@/layouts/AdminLayout.vue";
+import { watchDebounced } from '@vueuse/core';
+import { ref, watch } from 'vue';
+import AdminLayout from '@/layouts/AdminLayout.vue';
 
 defineOptions({
     layout: AdminLayout,
 });
 
 type BookingStatus =
-    | "pending"
-    | "approved"
-    | "rejected"
-    | "cancelled"
-    | "finished";
+    'pending' | 'approved' | 'rejected' | 'cancelled' | 'finished';
 
 interface Booking {
     id: number;
@@ -56,13 +52,13 @@ const props = defineProps<{
     };
 }>();
 
-const search = ref(props.filters?.search ?? "");
-const statusFilter = ref(props.filters?.status ?? "");
-const roomFilter = ref(props.filters?.room ?? "");
+const search = ref(props.filters?.search ?? '');
+const statusFilter = ref(props.filters?.status ?? '');
+const roomFilter = ref(props.filters?.room ?? '');
 
 function fetchBookings() {
     router.get(
-        "/admin/bookings",
+        '/admin/bookings',
         {
             search: search.value,
             status: statusFilter.value,
@@ -72,62 +68,42 @@ function fetchBookings() {
             preserveState: true,
             preserveScroll: true,
             replace: true,
-        }
-    )
+        },
+    );
 }
 
-watchDebounced(
-    search,
-    fetchBookings,
-    {
-        debounce: 500,
-    }
-);
+watchDebounced(search, fetchBookings, {
+    debounce: 500,
+});
 
-watch(
-    [statusFilter, roomFilter],
-    fetchBookings
-);
+watch([statusFilter, roomFilter], fetchBookings);
 
 function badgeClass(status: BookingStatus) {
     return {
-        pending:
-            "bg-yellow-100 text-yellow-700",
-        approved:
-            "bg-green-100 text-green-700",
-        rejected:
-            "bg-red-100 text-red-700",
-        cancelled:
-            "bg-gray-200 text-gray-700",
-        finished:
-            "bg-blue-100 text-blue-700",
+        pending: 'bg-yellow-100 text-yellow-700',
+        approved: 'bg-green-100 text-green-700',
+        rejected: 'bg-red-100 text-red-700',
+        cancelled: 'bg-gray-200 text-gray-700',
+        finished: 'bg-blue-100 text-blue-700',
     }[status];
 }
 </script>
 
 <template>
     <div class="space-y-6">
-
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold">
-                    Booking
-                </h1>
+                <h1 class="text-3xl font-bold">Booking</h1>
 
-                <p class="text-gray-500">
-                    Kelola seluruh peminjaman ruangan.
-                </p>
+                <p class="text-gray-500">Kelola seluruh peminjaman ruangan.</p>
             </div>
         </div>
 
         <!-- Statistik -->
 
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-
             <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">
-                    Total
-                </p>
+                <p class="text-sm text-gray-500">Total</p>
 
                 <h2 class="mt-2 text-3xl font-bold">
                     {{ stats?.total }}
@@ -135,9 +111,7 @@ function badgeClass(status: BookingStatus) {
             </div>
 
             <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">
-                    Pending
-                </p>
+                <p class="text-sm text-gray-500">Pending</p>
 
                 <h2 class="mt-2 text-3xl font-bold text-yellow-600">
                     {{ stats?.pending }}
@@ -145,9 +119,7 @@ function badgeClass(status: BookingStatus) {
             </div>
 
             <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">
-                    Approved
-                </p>
+                <p class="text-sm text-gray-500">Approved</p>
 
                 <h2 class="mt-2 text-3xl font-bold text-green-600">
                     {{ stats?.approved }}
@@ -155,29 +127,24 @@ function badgeClass(status: BookingStatus) {
             </div>
 
             <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">
-                    Selesai
-                </p>
+                <p class="text-sm text-gray-500">Selesai</p>
 
                 <h2 class="mt-2 text-3xl font-bold text-blue-600">
                     {{ stats?.finished }}
                 </h2>
             </div>
-
         </div>
 
         <!-- Filter -->
 
         <div class="rounded-xl bg-white p-5 shadow">
-
             <div class="grid gap-4 md:grid-cols-3">
-
                 <input
                     v-model="search"
                     type="text"
                     placeholder="Cari booking..."
                     class="rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
-                >
+                />
 
                 <select
                     v-model="statusFilter"
@@ -204,21 +171,15 @@ function badgeClass(status: BookingStatus) {
                         {{ room.name }}
                     </option>
                 </select>
-
             </div>
-
         </div>
 
         <!-- Table -->
 
         <div class="overflow-hidden rounded-xl bg-white shadow">
-
             <table class="min-w-full">
-
                 <thead class="bg-gray-100">
-
                     <tr class="text-left text-sm">
-
                         <th class="px-5 py-4">Kode</th>
                         <th class="px-5 py-4">Peminjam</th>
                         <th class="px-5 py-4">Ruangan</th>
@@ -226,13 +187,10 @@ function badgeClass(status: BookingStatus) {
                         <th class="px-5 py-4">Jadwal</th>
                         <th class="px-5 py-4">Status</th>
                         <th class="px-5 py-4 text-right">Aksi</th>
-
                     </tr>
-
                 </thead>
 
                 <tbody>
-
                     <tr
                         v-for="booking in bookings?.data"
                         :key="booking.id"
@@ -263,20 +221,16 @@ function badgeClass(status: BookingStatus) {
                         </td>
 
                         <td class="px-5 py-4">
-
                             <span
                                 :class="badgeClass(booking.status)"
                                 class="rounded-full px-3 py-1 text-xs font-semibold capitalize"
                             >
                                 {{ booking.status }}
                             </span>
-
                         </td>
 
                         <td class="px-5 py-4">
-
                             <div class="flex justify-end gap-2">
-
                                 <button
                                     class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-100"
                                 >
@@ -296,35 +250,26 @@ function badgeClass(status: BookingStatus) {
                                 >
                                     Reject
                                 </button>
-
                             </div>
-
                         </td>
-
                     </tr>
-
                 </tbody>
-
             </table>
-
         </div>
 
         <!-- Pagination -->
 
         <div class="flex justify-end gap-2">
-
             <button
                 class="rounded-lg border px-4 py-2 hover:bg-gray-100"
                 :disabled="bookings?.current_page === 1"
                 @click="
-                    router.get(
-                        '/admin/bookings', {
-                            page: bookings.current_page - 1,
-                            search,
-                            status: statusFilter,
-                            room: roomFilter,
-                        }
-                    )
+                    router.get('/admin/bookings', {
+                        page: bookings.current_page - 1,
+                        search,
+                        status: statusFilter,
+                        room: roomFilter,
+                    })
                 "
             >
                 Previous
@@ -334,20 +279,16 @@ function badgeClass(status: BookingStatus) {
                 class="rounded-lg border px-4 py-2 hover:bg-gray-100"
                 :disabled="bookings.current_page === bookings.last_page"
                 @click="
-                    router.get(
-                        '/admin/bookings', {
-                            page: bookings.current_page + 1,
-                            search,
-                            status: statusFilter,
-                            room: roomFilter,
-                        }
-                    )
+                    router.get('/admin/bookings', {
+                        page: bookings.current_page + 1,
+                        search,
+                        status: statusFilter,
+                        room: roomFilter,
+                    })
                 "
             >
                 Next
             </button>
-
         </div>
-
     </div>
 </template>

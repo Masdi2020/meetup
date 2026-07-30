@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use App\Models\Facility;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class AdminFacilityController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         $facilities = Facility::query()
             ->withCount('rooms')
             ->orderBy('name')
@@ -20,7 +20,8 @@ class AdminFacilityController extends Controller
         ]);
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validated = $request->validate([
             'name' => ['required', 'max:255'],
         ]);

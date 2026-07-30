@@ -13,11 +13,13 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class Room extends Model
 {
-    public function bookings() {
+    public function bookings()
+    {
         return $this->hasMany(Booking::class);
     }
 
-    public function facilities() {
+    public function facilities()
+    {
         return $this->belongsToMany(
             Facility::class,
             'room_facilities',
