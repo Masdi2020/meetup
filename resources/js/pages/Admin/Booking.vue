@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
+import { watchDebounced } from "@vueuse/core";
 import {  ref, watch } from "vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
 
@@ -45,7 +46,7 @@ interface Pagination<T> {
 }
 
 const props = defineProps<{
-    bookings?: Pagination<Booking>;
+    bookings: Pagination<Booking>;
     rooms?: Room[];
     stats?: Stats;
     filters?: {
@@ -59,22 +60,33 @@ const search = ref(props.filters?.search ?? "");
 const statusFilter = ref(props.filters?.status ?? "");
 const roomFilter = ref(props.filters?.room ?? "");
 
-watch(
-    [search, statusFilter, roomFilter],
-    () => {
-        router.get(
-            "/admin/bookings",
-            {
-                search: search.value,
-                status: statusFilter.value,
-                room: roomFilter.value,
-            },
-            {
-                preserveState: true,
-                replace: true,
-            }
-        );
+function fetchBookings() {
+    router.get(
+        "/admin/bookings",
+        {
+            search: search.value,
+            status: statusFilter.value,
+            room: roomFilter.value,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        }
+    )
+}
+
+watchDebounced(
+    search,
+    fetchBookings,
+    {
+        debounce: 500,
     }
+);
+
+watch(
+    [statusFilter, roomFilter],
+    fetchBookings
 );
 
 function badgeClass(status: BookingStatus) {
@@ -307,7 +319,7 @@ function badgeClass(status: BookingStatus) {
                 @click="
                     router.get(
                         '/admin/bookings', {
-                            page: bookings?.current_page - 1,
+                            page: bookings.current_page - 1,
                             search,
                             status: statusFilter,
                             room: roomFilter,
@@ -320,11 +332,11 @@ function badgeClass(status: BookingStatus) {
 
             <button
                 class="rounded-lg border px-4 py-2 hover:bg-gray-100"
-                :disabled="bookings?.current_page === bookings?.last_page"
+                :disabled="bookings.current_page === bookings.last_page"
                 @click="
                     router.get(
                         '/admin/bookings', {
-                            page: bookings?.current_page + 1,
+                            page: bookings.current_page + 1,
                             search,
                             status: statusFilter,
                             room: roomFilter,

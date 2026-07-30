@@ -20,7 +20,12 @@ class LoginController extends Controller
 
         if(Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return to_route('home');
+
+            return match (Auth::user()->role){
+                'admin' => to_route('admin.dashboard'),
+                'user' => to_route('home'),
+                default => abort(403),
+            };
         }
 
         return back()->withErrors([

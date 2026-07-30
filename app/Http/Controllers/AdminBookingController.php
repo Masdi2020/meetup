@@ -25,9 +25,7 @@ class AdminBookingController extends Controller
 
             $query->where(function ($q) use ($search) {
 
-                $q->where('code', 'like', "%{$search}%")
-                    ->orWhere('title', 'like', "%{$search}%")
-
+                $q->where('title', 'like', "%{$search}%")
                     ->orWhereHas('user', function ($user) use ($search) {
                         $user->where('name', 'like', "%{$search}%");
                     })
@@ -63,7 +61,7 @@ class AdminBookingController extends Controller
 
                     'id' => $booking->id,
 
-                    'code' => $booking->code,
+                    'code' => $booking->id,
 
                     'room' => $booking->room->name,
 
@@ -71,11 +69,11 @@ class AdminBookingController extends Controller
 
                     'activity' => $booking->title,
 
-                    'date' => $booking->date,
+                    'date' => $booking->date->format('d-m-Y'),
 
-                    'start' => substr($booking->start_time, 0, 5),
+                    'start' => $booking->start_time->format('H:i'),
 
-                    'end' => substr($booking->end_time, 0, 5),
+                    'end' => $booking->end_time->format('H:i'),
 
                     'status' => strtolower($booking->status->code),
 
