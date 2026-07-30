@@ -9,66 +9,35 @@ defineOptions({
 interface Facility {
     id: number;
     name: string;
-    description: string;
-    rooms: number;
-    active: boolean;
+    rooms_count: number;
 }
 
-const search = ref("");
-const statusFilter = ref("");
+const props = defineProps<{
+    facilities: Facility[];
+}>();
 
-const facilities = ref<Facility[]>([
-    {
-        id: 1,
-        name: "Proyektor",
-        description: "LCD Projector",
-        rooms: 8,
-        active: true,
-    },
-    {
-        id: 2,
-        name: "AC",
-        description: "Pendingin Ruangan",
-        rooms: 12,
-        active: true,
-    },
-    {
-        id: 3,
-        name: "Whiteboard",
-        description: "Papan Tulis",
-        rooms: 5,
-        active: true,
-    },
-    {
-        id: 4,
-        name: "Microphone",
-        description: "Wireless Microphone",
-        rooms: 2,
-        active: false,
-    },
-]);
+const search = ref("");
 
 const filteredFacilities = computed(() =>
-    facilities.value.filter((facility) => {
-        const keyword =
-            facility.name.toLowerCase().includes(search.value.toLowerCase()) ||
-            facility.description
-                .toLowerCase()
-                .includes(search.value.toLowerCase());
+    props.facilities.filter((facility) =>
+        facility.name
+            .toLowerCase()
+            .includes(search.value.toLowerCase()),
+    ),
+);
 
-        const status =
-            !statusFilter.value ||
-            (statusFilter.value === "active" && facility.active) ||
-            (statusFilter.value === "inactive" && !facility.active);
-
-        return keyword && status;
-    }),
+const totalUsage = computed(() =>
+    props.facilities.reduce(
+        (total, facility) => total + facility.rooms_count,
+        0,
+    ),
 );
 </script>
 
 <template>
     <div class="space-y-6">
 
+        <!-- Header -->
         <div class="flex items-center justify-between">
 
             <div>
@@ -82,7 +51,7 @@ const filteredFacilities = computed(() =>
             </div>
 
             <button
-                class="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+                class="rounded-lg bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700"
             >
                 + Tambah Fasilitas
             </button>
@@ -90,82 +59,66 @@ const filteredFacilities = computed(() =>
         </div>
 
         <!-- Statistik -->
-
-        <div class="grid gap-4 md:grid-cols-3">
+        <div class="grid gap-4 md:grid-cols-2">
 
             <div class="rounded-xl bg-white p-5 shadow">
+
                 <p class="text-sm text-gray-500">
                     Total Fasilitas
                 </p>
 
                 <h2 class="mt-2 text-3xl font-bold">
-                    {{ facilities.length }}
+                    {{ props.facilities.length }}
                 </h2>
+
             </div>
 
             <div class="rounded-xl bg-white p-5 shadow">
+
                 <p class="text-sm text-gray-500">
-                    Aktif
+                    Digunakan di Ruangan
                 </p>
 
-                <h2 class="mt-2 text-3xl font-bold text-green-600">
-                    {{ facilities.filter(f => f.active).length }}
+                <h2 class="mt-2 text-3xl font-bold">
+                    {{ totalUsage }}
                 </h2>
-            </div>
 
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">
-                    Nonaktif
-                </p>
-
-                <h2 class="mt-2 text-3xl font-bold text-red-600">
-                    {{ facilities.filter(f => !f.active).length }}
-                </h2>
             </div>
 
         </div>
 
         <!-- Filter -->
-
         <div class="rounded-xl bg-white p-5 shadow">
 
-            <div class="grid gap-4 md:grid-cols-2">
-
-                <input
-                    v-model="search"
-                    type="text"
-                    placeholder="Cari fasilitas..."
-                    class="rounded-lg border px-4 py-2"
-                >
-
-                <select
-                    v-model="statusFilter"
-                    class="rounded-lg border px-4 py-2"
-                >
-                    <option value="">Semua Status</option>
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Nonaktif</option>
-                </select>
-
-            </div>
+            <input
+                v-model="search"
+                type="text"
+                placeholder="Cari fasilitas..."
+                class="w-full rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
+            >
 
         </div>
 
         <!-- Table -->
-
         <div class="overflow-hidden rounded-xl bg-white shadow">
 
             <table class="min-w-full">
 
                 <thead class="bg-gray-100">
 
-                    <tr class="text-left text-sm">
+                    <tr class="text-left text-sm font-semibold">
 
-                        <th class="px-5 py-4">Nama</th>
-                        <th class="px-5 py-4">Deskripsi</th>
-                        <th class="px-5 py-4">Digunakan</th>
-                        <th class="px-5 py-4">Status</th>
-                        <th class="px-5 py-4 text-right">Aksi</th>
+                        <th class="px-5 py-4">
+                            Nama
+                        </th>
+
+                        <th class="px-5 py-4">
+                            Digunakan
+                        </th>
+
+                        <th class="px-5 py-4 text-right">
+                            Aksi
+                        </th>
 
                     </tr>
 
@@ -176,7 +129,7 @@ const filteredFacilities = computed(() =>
                     <tr
                         v-for="facility in filteredFacilities"
                         :key="facility.id"
-                        class="border-t hover:bg-gray-50"
+                        class="border-t transition hover:bg-gray-50"
                     >
 
                         <td class="px-5 py-4 font-medium">
@@ -184,24 +137,7 @@ const filteredFacilities = computed(() =>
                         </td>
 
                         <td class="px-5 py-4">
-                            {{ facility.description }}
-                        </td>
-
-                        <td class="px-5 py-4">
-                            {{ facility.rooms }} Ruangan
-                        </td>
-
-                        <td class="px-5 py-4">
-
-                            <span
-                                :class="facility.active
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-red-100 text-red-700'"
-                                class="rounded-full px-3 py-1 text-xs font-semibold"
-                            >
-                                {{ facility.active ? "Aktif" : "Nonaktif" }}
-                            </span>
-
+                            {{ facility.rooms_count }} Ruangan
                         </td>
 
                         <td class="px-5 py-4">
@@ -209,25 +145,36 @@ const filteredFacilities = computed(() =>
                             <div class="flex justify-end gap-2">
 
                                 <button
-                                    class="rounded-lg border px-3 py-2 hover:bg-gray-100"
+                                    class="rounded-lg border px-3 py-2 transition hover:bg-gray-100"
                                 >
                                     Detail
                                 </button>
 
                                 <button
-                                    class="rounded-lg bg-yellow-500 px-3 py-2 text-white hover:bg-yellow-600"
+                                    class="rounded-lg bg-yellow-500 px-3 py-2 text-white transition hover:bg-yellow-600"
                                 >
                                     Edit
                                 </button>
 
                                 <button
-                                    class="rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700"
+                                    class="rounded-lg bg-red-600 px-3 py-2 text-white transition hover:bg-red-700"
                                 >
                                     Hapus
                                 </button>
 
                             </div>
 
+                        </td>
+
+                    </tr>
+
+                    <tr v-if="filteredFacilities.length === 0">
+
+                        <td
+                            colspan="3"
+                            class="py-10 text-center text-gray-500"
+                        >
+                            Tidak ada fasilitas yang ditemukan.
                         </td>
 
                     </tr>

@@ -9,6 +9,7 @@ use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminBookingController;
+use App\Http\Controllers\AdminFacilityController;
 
 Route::get('/meeting/banner', [BannerController::class, 'index'])->name('meeting.banner');
 
@@ -26,15 +27,17 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin')
         ->prefix('admin')
+        ->name('admin.')
         ->group(function () {
-            Route::get('/', AdminDashboardController::class)->name('admin.dashboard');
-            // Route::inertia('/bookings', 'Admin/Booking')->name('admin.booking');
-            Route::get('/bookings', [AdminBookingController::class, 'index'])->name('admin.bookings.index');
-            Route::inertia('/rooms', 'Admin/Room')->name('admin.room');
-            Route::inertia('/facilities', 'Admin/Facility')->name('admin.facility');
-            Route::inertia('/users', 'Admin/User')->name('admin.user');
-            Route::inertia('/audits', 'Admin/Audit')->name('admin.audit');
-            Route::inertia('/settings', 'Admin/Setting')->name('admin.setting');
+            Route::get('/', AdminDashboardController::class)->name('dashboard');
+            // Route::inertia('/bookings', 'Admin/Booking')->name('booking');
+            Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+            Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');
+            Route::post('/facilities', [AdminFacilityController::class, 'store'])->name('facilities.store');
+            Route::inertia('/rooms', 'Admin/Room')->name('room');
+            Route::inertia('/users', 'Admin/User')->name('user');
+            Route::inertia('/audits', 'Admin/Audit')->name('audit');
+            Route::inertia('/settings', 'Admin/Setting')->name('setting');
         });
 
     Route::middleware('role:user')
