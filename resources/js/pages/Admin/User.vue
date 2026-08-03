@@ -14,61 +14,20 @@ interface User {
     username: string;
     email: string;
     role: Role;
-    active: boolean;
-    lastLogin: string;
 }
 
-const search = ref('');
-const roleFilter = ref('');
-const statusFilter = ref('');
+const props = defineProps<{
+    users: User[];
+    filters: {
+        search: string;
+        role: string;
+    };
+}>();
 
-const users = ref<User[]>([
-    {
-        id: 1,
-        name: 'Administrator',
-        username: 'admin',
-        email: 'admin@example.com',
-        role: 'admin',
-        active: true,
-        lastLogin: 'Hari ini 08:30',
-    },
-    {
-        id: 2,
-        name: 'Dimas Ramadhani',
-        username: 'dimas',
-        email: 'dimas@example.com',
-        role: 'user',
-        active: true,
-        lastLogin: 'Kemarin 16:40',
-    },
-    {
-        id: 3,
-        name: 'Andi Saputra',
-        username: 'andi',
-        email: 'andi@example.com',
-        role: 'user',
-        active: false,
-        lastLogin: '10 Jul 2026',
-    },
-]);
+const users = computed(() => props.users);
 
-const filteredUsers = computed(() =>
-    users.value.filter((user) => {
-        const keyword =
-            user.name.toLowerCase().includes(search.value.toLowerCase()) ||
-            user.username.toLowerCase().includes(search.value.toLowerCase()) ||
-            user.email.toLowerCase().includes(search.value.toLowerCase());
-
-        const role = !roleFilter.value || user.role === roleFilter.value;
-
-        const status =
-            !statusFilter.value ||
-            (statusFilter.value === 'active' && user.active) ||
-            (statusFilter.value === 'inactive' && !user.active);
-
-        return keyword && role && status;
-    }),
-);
+const search = ref(props.filters.search ?? '');
+const roleFilter = ref(props.filters.role ?? '');
 
 function initials(name: string) {
     return name
@@ -122,14 +81,6 @@ function initials(name: string) {
                     {{ users.filter((u) => u.role === 'user').length }}
                 </h2>
             </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Aktif</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-blue-600">
-                    {{ users.filter((u) => u.active).length }}
-                </h2>
-            </div>
         </div>
 
         <!-- Filter -->
@@ -153,17 +104,6 @@ function initials(name: string) {
 
                     <option value="user">User</option>
                 </select>
-
-                <select
-                    v-model="statusFilter"
-                    class="rounded-lg border px-4 py-2"
-                >
-                    <option value="">Semua Status</option>
-
-                    <option value="active">Aktif</option>
-
-                    <option value="inactive">Nonaktif</option>
-                </select>
             </div>
         </div>
 
@@ -179,17 +119,13 @@ function initials(name: string) {
 
                         <th class="px-5 py-4">Role</th>
 
-                        <th class="px-5 py-4">Status</th>
-
-                        <th class="px-5 py-4">Login Terakhir</th>
-
                         <th class="px-5 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     <tr
-                        v-for="user in filteredUsers"
+                        v-for="user in users"
                         :key="user.id"
                         class="border-t hover:bg-gray-50"
                     >
@@ -228,23 +164,6 @@ function initials(name: string) {
                             >
                                 {{ user.role }}
                             </span>
-                        </td>
-
-                        <td class="px-5 py-4">
-                            <span
-                                :class="
-                                    user.active
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-red-100 text-red-700'
-                                "
-                                class="rounded-full px-3 py-1 text-xs font-semibold"
-                            >
-                                {{ user.active ? 'Aktif' : 'Nonaktif' }}
-                            </span>
-                        </td>
-
-                        <td class="px-5 py-4">
-                            {{ user.lastLogin }}
                         </td>
 
                         <td class="px-5 py-4">

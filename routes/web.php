@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminBookingController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminFacilityController;
 use App\Http\Controllers\AdminRoomController;
+use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BannerController;
@@ -36,7 +37,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');
             Route::post('/facilities', [AdminFacilityController::class, 'store'])->name('facilities.store');
             Route::get('/rooms', [AdminRoomController::class, 'index'])->name('rooms.index');
-            Route::inertia('/users', 'Admin/User')->name('user');
+            Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
             Route::inertia('/audits', 'Admin/Audit')->name('audit');
             Route::inertia('/settings', 'Admin/Setting')->name('setting');
         });
