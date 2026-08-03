@@ -13,18 +13,25 @@ class BannerService
         $booking = Booking::query()
             ->with('attachments')
             ->whereDate('date', $now->toDateString())
-            ->whereTime('start_time', '<=', $now->format('H:i:s'))
-            ->whereTime('end_time', '>', $now->format('H:i:s'))
+            ->whereTime('start_time', '<=', $now->toTimeString())
+            ->whereTime('end_time', '>', $now->toTimeString())
             ->whereHas('status', fn ($q) => $q->where('code', 'APPROVED')
             )->first();
 
-        $nextStart = Booking::query()
+        $nextBooking = Booking::query()
             ->whereDate('date', $now->toDateString())
-            ->whereTime('start_time', '>', $now->format('H:i:s'))
+            ->whereTime('start_time', '>', $now->toTimeString())
+            ->whereHas('status', fn ($q) => $q->where('code', 'APPROVED'))
             ->orderBy('start_time', 'asc')
-            ->value('start_time');
+            ->first();
 
-        $nextChange = $booking ? $booking->end_time : $nextStart;
+        $nextChange = null;
+
+        if ($booking) {
+            $nextChange = $booking->date->format('Y-m-d') . ' ' . $booking->end_time;
+        } elseif ($nextBooking) {
+            $nextChange = $nextBooking->date->format('Y-m-d') . ' ' . $nextBooking->start_time;
+        }
 
         return [
             'booking' => $booking,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, computed } from 'vue';
 
 const props = defineProps<{
     booking: any;
@@ -69,9 +69,16 @@ onUnmounted(() => {
             class="banner"
         />
 
-        <h1 v-else-if="booking" class="title">
-            {{ booking.title }}
-        </h1>
+        <div v-else-if="booking" class="meeting-info">
+            <h1 class="title">
+                {{ booking.title }}
+            </h1>
+
+            <p class="time">
+                {{ booking.start_time.slice(0, 5) }} - {{ booking.end_time.slice(0, 5) }}
+            </p>
+        </div>
+
     </div>
 </template>
 
@@ -93,16 +100,27 @@ onUnmounted(() => {
     object-fit: contain;
 }
 
-.title {
+.meeting-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     color: white;
-
-    font-size: 72px;
-
-    font-weight: bold;
-
     text-align: center;
-
     padding: 40px;
+}
+
+.title {
+    font-size: 72px;
+    font-weight: bold;
+    margin-bottom: 24px;
+}
+
+.time {
+    font-size: 42px;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-bottom: 16px;
 }
 
 .fullscreen-btn {
