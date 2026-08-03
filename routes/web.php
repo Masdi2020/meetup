@@ -35,7 +35,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
             Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');
             Route::post('/facilities', [AdminFacilityController::class, 'store'])->name('facilities.store');
-            Route::get('/rooms', [AdminBookingController::class, 'index'])->name('rooms.index');
+            Route::get('/rooms', [AdminRoomController::class, 'index'])->name('rooms.index');
             Route::inertia('/users', 'Admin/User')->name('user');
             Route::inertia('/audits', 'Admin/Audit')->name('audit');
             Route::inertia('/settings', 'Admin/Setting')->name('setting');

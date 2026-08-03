@@ -24,7 +24,7 @@ class AdminRoomController extends Controller
                     'name'=> $room->name,
                     'floor'=> $room->floor,
                     'capacity'=> $room->capacity,
-                    'calendar_url'=> $$room->calendar_url,
+                    'calendar_url'=> $room->calendar_url,
                     'facilities'=>$room->facilities->pluck('name'),
                 ];
             });
