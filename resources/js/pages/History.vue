@@ -1,0 +1,393 @@
+<script setup lang="ts">
+import { router } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+
+type Status = 'Approved' | 'Pending' | 'Rejected' | 'Cancelled';
+
+interface BookingHistory {
+    id: number;
+    room: string;
+    date: string;
+    time: string;
+    title: string;
+    status: Status;
+}
+
+const showEditModal = ref(false);
+
+const editForm = ref({
+    id: 0,
+    title: '',
+    date: '',
+    start_time: '',
+    end_time: '',
+});
+
+const openEditModal = (booking: BookingHistory) => {
+    const [start, end] = booking.time.split(' - ');
+
+    editForm.value = {
+        id: booking.id,
+        title: booking.title,
+        date: booking.date,
+        start_time: start,
+        end_time: end,
+    };
+
+    showEditModal.value = true;
+};
+
+const closeEditModal = () => {
+    showEditModal.value = false;
+};
+
+const submitEdit = () => {
+    router.put(`/booking/${editForm.value.id}`, editForm.value, {
+        onSuccess: () => {
+            closeEditModal();
+        },
+    });
+};
+
+const filterStatus = ref('Semua');
+
+const { histories } = defineProps<{
+    histories: BookingHistory[];
+}>();
+
+const filteredHistory = computed(() => {
+    if (filterStatus.value === 'Semua') {
+        return histories;
+    }
+
+    return histories.filter((history) => history.status === filterStatus.value);
+});
+
+const cancelBooking = (id: number) => {
+    if (!confirm('Batalkan peminjaman ini?')) {
+        return;
+    }
+
+    router.put(
+        `/booking/${id}/cancel`,
+        {},
+        {
+            preserveScroll: true,
+        },
+    );
+};
+</script>
+
+<template>
+    <div class="history-page">
+        <h2>Riwayat Peminjaman Ruang Rapat</h2>
+
+        <div class="page-card">
+            <div class="filter">
+                <select v-model="filterStatus">
+                    <option>Semua</option>
+                    <option>Approved</option>
+                    <option>Pending</option>
+                    <option>Rejected</option>
+                    <option>Cancelled</option>
+                </select>
+            </div>
+
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Ruang Rapat</th>
+                            <th>Tanggal</th>
+                            <th>Waktu</th>
+                            <th>Judul</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr
+                            v-for="(item, index) in filteredHistory"
+                            :key="item.id"
+                        >
+                            <td>{{ index + 1 }}</td>
+                            <td>{{ item.room }}</td>
+                            <td>{{ item.date }}</td>
+                            <td>{{ item.time }}</td>
+                            <td>{{ item.title }}</td>
+
+                            <td>
+                                <span
+                                    class="badge"
+                                    :class="item.status.toLowerCase()"
+                                >
+                                    {{ item.status }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <div
+                                    v-if="item.status === 'Pending'"
+                                    class="action-buttons"
+                                >
+                                    <button
+                                        class="edit-btn"
+                                        @click="openEditModal(item)"
+                                    >
+                                        Edit
+                                    </button>
+
+                                    <button
+                                        class="cancel-btn"
+                                        @click="cancelBooking(item.id)"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr v-if="filteredHistory.length === 0">
+                            <td colspan="7" class="empty">Tidak ada data.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showEditModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Edit Booking</h3>
+
+            <div class="form-group">
+                <label>Judul</label>
+                <input type="text" v-model="editForm.title" />
+            </div>
+
+            <div class="form-group">
+                <label>Tanggal</label>
+                <input type="text" v-model="editForm.date" />
+            </div>
+
+            <div class="form-group">
+                <label>Jam Mulai</label>
+                <input type="time" v-model="editForm.start_time" />
+            </div>
+
+            <div class="form-group">
+                <label>Jam Selesai</label>
+                <input type="time" v-model="editForm.end_time" />
+            </div>
+
+            <div class="modal-actions">
+                <button class="cancel-btn" @click="closeEditModal">
+                    Batal
+                </button>
+
+                <button class="edit-btn" @click="submitEdit">Simpan</button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+.history-page {
+    padding: 30px;
+}
+
+.page-card {
+    background: #cfe2ff;
+    border-radius: 10px;
+    padding: 28px;
+    max-width: 1100px;
+    margin: 0; /* align left with heading */
+}
+
+h2 {
+    width: fit-content;
+    color: #1b3768;
+    border-bottom: 2px solid #d9d9d9;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+
+.filter {
+    margin-bottom: 20px;
+}
+
+.filter select {
+    background: #efc74a;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.table-card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    min-height: 420px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    color: #1b3768;
+    padding: 10px 14px;
+    font-weight: 600;
+}
+
+td {
+    padding: 10px 14px;
+    color: #243b73;
+}
+
+tbody tr:hover {
+    background: #f6f8fc;
+}
+
+.badge {
+    display: inline-block;
+    min-width: 85px;
+    text-align: center;
+    padding: 4px 12px;
+    border-radius: 6px;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.approved {
+    background: #2da10c;
+}
+
+.pending {
+    background: #d8bc00;
+}
+
+.rejected {
+    background: #d62828;
+}
+
+.cancelled {
+    background: #6c757d;
+}
+
+.empty {
+    text-align: center;
+    color: gray;
+    padding: 40px;
+}
+
+@media (max-width: 768px) {
+    .history-page {
+        padding: 15px;
+    }
+
+    table {
+        min-width: 650px;
+    }
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-btn,
+.cancel-btn {
+    border: none;
+    border-radius: 6px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.edit-btn {
+    background: #2b6cb0;
+    color: white;
+}
+
+.edit-btn:hover {
+    background: #1f4f82;
+}
+
+.cancel-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background: #b52b38;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 999;
+}
+
+.modal {
+    width: 500px;
+    max-width: 95%;
+
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.form-group input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.save-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.close-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+</style>

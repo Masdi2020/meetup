@@ -30,23 +30,25 @@
 
                 <button type="submit" class="login-btn">Login</button>
             </form>
+
+            <p class="extra-text">
+                Belum punya akun?
+                <a href="/register">Daftar sekarang</a>
+            </p>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 
-const form = reactive({
+const form = useForm({
     username: '',
     password: '',
 });
 
 const login = () => {
-    console.log(form);
-
-    // Contoh:
-    // axios.post('/login', form)
+    form.post('/login');
 };
 </script>
 
@@ -66,9 +68,9 @@ const login = () => {
 
 .login-card {
     width: 360px;
-    background: #dce9ff;
-    border-radius: 18px;
-    padding: 35px;
+    background: #cfe2ff;
+    border-radius: 10px;
+    padding: 28px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     text-align: center;
 }
