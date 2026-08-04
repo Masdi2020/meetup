@@ -4,6 +4,12 @@
          bootstrap="vendor/autoload.php"
          colors="true"
 >
+    <testsuites>
+        <testsuite name="Unit">
+        </testsuite>
+        <testsuite name="Feature">
+        </testsuite>
+    </testsuites>
     <source>
         <include>
             <directory>app</directory>
