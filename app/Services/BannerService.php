@@ -6,6 +6,13 @@ use App\Models\Booking;
 
 class BannerService
 {
+    /**
+     * @return array{
+     *      booking: Booking | null,
+     *      next_change: string | null,
+     *      now: string
+     * }
+    */
     public function current(): array
     {
         $now = now();
