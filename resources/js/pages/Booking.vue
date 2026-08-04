@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 interface Room {
     id: number;
     name: string;
 }
+
+const today = new Date().toISOString().split('T')[0];
 
 const preview = ref<string | null>(null);
 
@@ -24,15 +26,29 @@ const form = useForm({
     banner: null as File | null,
 });
 
-const times: string[] = [];
-
-for (let hour = 7; hour <= 21; hour++) {
-    times.push(`${hour.toString().padStart(2, '0')}:00`);
-
-    if (hour !== 21) {
-        times.push(`${hour.toString().padStart(2, '0')}:30`);
+const minStartTime = computed(() => {
+    if (form.date !== today) {
+        return '07:00';
     }
-}
+
+    const now = new Date();
+
+    let hour = now.getHours();
+    let minute = now.getMinutes();
+
+    if (minute > 0 && minute <= 30) {
+        minute = 30;
+    } else if (minute > 30) {
+        hour++;
+        minute = 0;
+    }
+
+    return `${String(hour).padStart(2, '0')}"${String(minute).padStart(2, '0')}"`;
+});
+
+const minEndTime = computed(() => {
+    return form.start_time || minStartTime.value;
+});
 
 const handleFile = (event: Event) => {
     const target = event.target as HTMLInputElement;
@@ -80,32 +96,29 @@ const submitBooking = () => {
             <div class="booking-card">
                 <div class="form-group">
                     <label>Tanggal</label>
-                    <input type="date" v-model="form.date" />
+                    <input type="date" v-model="form.date" :min="today" />
                 </div>
 
                 <div class="form-group">
                     <label>Dari Jam</label>
-                    <select v-model="form.start_time">
-                        <option
-                            v-for="time in times"
-                            :key="time"
-                            :value="time"
-                            placeholder="Pilih Ruangan"
-                        >
-                            {{ time }}
-                        </option>
-                    </select>
+                    <input
+                        type="time"
+                        v-model="form.start_time"
+                        :min="minStartTime"
+                        max="23:59"
+                        step="1800"
+                    />
                 </div>
 
                 <div class="form-group">
                     <label>Sampai Jam</label>
-                    <select v-model="form.end_time">
-                        <option value="">Pilih Jam</option>
-
-                        <option v-for="time in times" :key="time" :value="time">
-                            {{ time }}
-                        </option>
-                    </select>
+                    <input
+                        type="time"
+                        v-model="form.end_time"
+                        :min="minEndTime"
+                        max="23:59"
+                        step="1800"
+                    />
                 </div>
 
                 <div class="form-group">
