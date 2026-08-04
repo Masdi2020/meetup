@@ -36,6 +36,7 @@ class BannerService
         return [
             'booking' => $booking,
             'next_change' => $nextChange,
+            'now' => $now->toIso8601String(),
         ];
     }
 }
