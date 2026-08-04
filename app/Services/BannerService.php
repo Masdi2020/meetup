@@ -11,7 +11,7 @@ class BannerService
         $now = now();
 
         $baseQuery = Booking::query()
-            ->where("room_id",1)
+            ->where("room_id", 1)
             ->whereDate('date', $now->toDateString())
             ->whereHas('status', fn ($q) => $q->where('code', 'APPROVED'));
 
@@ -21,7 +21,7 @@ class BannerService
             ->whereTime('end_time', '>', $now->toTimeString())
             ->first();
 
-        $nextBooking = (clone $booking)
+        $nextBooking = (clone $baseQuery)
             ->whereTime('start_time', '>', $now->toTimeString())
             ->orderBy('start_time')
             ->first();
