@@ -10,19 +10,20 @@ class BannerService
     {
         $now = now();
 
-        $booking = Booking::query()
-            ->with('attachments')
+        $baseQuery = Booking::query()
+            ->where("room_id",1)
             ->whereDate('date', $now->toDateString())
+            ->whereHas('status', fn ($q) => $q->where('code', 'APPROVED'));
+
+        $booking = (clone $baseQuery)
+            ->with('attachments')
             ->whereTime('start_time', '<=', $now->toTimeString())
             ->whereTime('end_time', '>', $now->toTimeString())
-            ->whereHas('status', fn ($q) => $q->where('code', 'APPROVED')
-            )->first();
+            ->first();
 
-        $nextBooking = Booking::query()
-            ->whereDate('date', $now->toDateString())
+        $nextBooking = (clone $booking)
             ->whereTime('start_time', '>', $now->toTimeString())
-            ->whereHas('status', fn ($q) => $q->where('code', 'APPROVED'))
-            ->orderBy('start_time', 'asc')
+            ->orderBy('start_time')
             ->first();
 
         $nextChange = null;
