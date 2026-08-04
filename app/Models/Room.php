@@ -13,13 +13,28 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'floor',
     'calendar_url',
 ])]
+
+/**
+ * @property int $id
+ * @property string $name
+ */
 class Room extends Model
 {
+    /**
+     * Summary of bookings
+     *
+     * @return HasMany<Booking, $this>
+     */
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
     }
 
+    /**
+     * Summary of facilities
+     *
+     * @return BelongsToMany<Facility, $this>
+     */
     public function facilities(): BelongsToMany
     {
         return $this->belongsToMany(

@@ -3,28 +3,46 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'code',
     'label',
 ])]
+
+/**
+ * @property int $id
+ * @property string $label
+ */
 class BookingStatus extends Model
 {
-    use HasFactory;
-
-    public function bookings()
+    /**
+     * Summary of bookings
+     *
+     * @return HasMany<Booking, $this>
+     */
+    public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'status_id');
     }
 
-    public function oldStatusAudits()
+    /**
+     * Summary of oldStatusAudits
+     *
+     * @return HasMany<BookingAudit, $this>
+     */
+    public function oldStatusAudits(): HasMany
     {
         return $this->hasMany(BookingAudit::class, 'old_status_id');
     }
 
-    public function newStatusAudits()
+    /**
+     * Summary of newStatusAudits
+     *
+     * @return HasMany<BookingAudit, $this>
+     */
+    public function newStatusAudits(): HasMany
     {
         return $this->hasMany(BookingAudit::class, 'new_status_id');
     }

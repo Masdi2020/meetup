@@ -19,19 +19,18 @@ const props = defineProps<{
     rooms: Room[];
     filters: {
         search: string;
-    }
+    };
 }>();
 
 const search = ref(props.filters.search ?? '');
 
-const rooms = computed(() => props.rooms)
+const rooms = computed(() => props.rooms);
 
 const filteredRooms = computed(() =>
     rooms.value.filter((room) =>
         room.name.toLowerCase().includes(search.value.toLowerCase()),
-    )
-)
-
+    ),
+);
 </script>
 
 <template>
@@ -64,24 +63,17 @@ const filteredRooms = computed(() =>
             </div>
 
             <div class="rouded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">
-                    Total Kapasitas
-                </p>
+                <p class="text-sm text-gray-500">Total Kapasitas</p>
 
                 <h2 class="mt-2 text-3xl font-bold">
                     {{
-                        rooms.reduce(
-                            (total, room) => total + room.capacity,
-                            0,
-                        )
+                        rooms.reduce((total, room) => total + room.capacity, 0)
                     }}
                 </h2>
             </div>
 
             <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">
-                    Total Fasilitas
-                </p>
+                <p class="text-sm text-gray-500">Total Fasilitas</p>
 
                 <h2 class="mt-2 text-3xl font-bold">
                     {{

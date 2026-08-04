@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
                 return route('admin.dashboard');
             }
 
-            if (Route\has('home')) {
+            if (Route::has('home')) {
                 return route('home');
             }
 

@@ -12,7 +12,7 @@ class BannerService
      *      next_change: string | null,
      *      now: string
      * }
-    */
+     */
     public function current(): array
     {
         $now = now();

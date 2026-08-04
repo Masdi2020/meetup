@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'booking_id',
@@ -15,28 +15,46 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class BookingAudit extends Model
 {
-    use HasFactory;
-
     protected $table = 'booking_audit';
 
     const UPDATED_AT = null;
 
-    public function booking()
+    /**
+     * Summary of booking
+     *
+     * @return BelongsTo<Booking, $this>
+     */
+    public function booking(): BelongsTo
     {
         return $this->belongsTo(Booking::class);
     }
 
-    public function oldStatus()
+    /**
+     * Summary of oldStatus
+     *
+     * @return BelongsTo<BookingStatus, $this>
+     */
+    public function oldStatus(): BelongsTo
     {
         return $this->belongsTo(BookingStatus::class, 'old_status_id');
     }
 
-    public function newStatus()
+    /**
+     * Summary of newStatus
+     *
+     * @return BelongsTo<BookingStatus, $this>
+     */
+    public function newStatus(): BelongsTo
     {
         return $this->belongsTo(BookingStatus::class, 'new_status_id');
     }
 
-    public function changedBy()
+    /**
+     * Summary of changedBy
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function changedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'changed_by');
     }

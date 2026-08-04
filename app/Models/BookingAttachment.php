@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'booking_id',
@@ -16,13 +16,16 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class BookingAttachment extends Model
 {
-    use HasFactory;
-
     public $timestamps = false;
 
     const CREATED_AT = 'created_at';
 
-    public function booking()
+    /**
+     * Summary of booking
+     *
+     * @return BelongsTo<Booking, $this>
+     */
+    public function booking(): BelongsTo
     {
         return $this->belongsTo(Booking::class);
     }

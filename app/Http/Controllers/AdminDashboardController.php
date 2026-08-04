@@ -9,10 +9,11 @@ use App\Models\Room;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminDashboardController extends Controller
 {
-    public function __invoke()
+    public function __invoke(): Response
     {
         $pendingStatus = BookingStatus::where('code', 'PENDING')->value('id');
 

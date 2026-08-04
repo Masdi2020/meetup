@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Facility;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminFacilityController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $facilities = Facility::query()
             ->withCount('rooms')
@@ -20,7 +22,7 @@ class AdminFacilityController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'max:255'],

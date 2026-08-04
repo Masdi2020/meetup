@@ -7,12 +7,22 @@ use Illuminate\Database\Eloquent\Collection;
 
 class RoomService
 {
+    /**
+     * Summary of list
+     *
+     * @return Collection<int, Room>
+     */
     public function list(): Collection
     {
         return Room::select('id', 'name')
             ->get();
     }
 
+    /**
+     * Summary of calendar
+     *
+     * @return Collection<int, Room>
+     */
     public function calendar(): Collection
     {
         return Room::with('facilities:id,name')

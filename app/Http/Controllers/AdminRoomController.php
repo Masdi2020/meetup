@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminRoomController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        $search = $request->query('search');
+        $search = $request->string('search')->toString();
 
         $rooms = Room::query()
             ->with('facilities:id,name')

@@ -4,17 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
 #[Fillable(['name', 'username', 'email', 'password', 'role'])]
 #[Hidden(['password'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
-
+    /**
+     * Summary of casts
+     *
+     * @return array{password: string}
+     */
     protected function casts(): array
     {
         return [
@@ -22,12 +23,22 @@ class User extends Authenticatable
         ];
     }
 
-    public function bookings()
+    /**
+     * Summary of bookings
+     *
+     * @return HasMany<Booking, $this>
+     */
+    public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
     }
 
-    public function bookingAudits()
+    /**
+     * Summary of bookingAudits
+     *
+     * @return HasMany<BookingAudit, $this>
+     */
+    public function bookingAudits(): HasMany
     {
         return $this->hasMany(BookingAudit::class, 'changed_by');
     }

@@ -9,6 +9,7 @@ use App\Models\BookingAttachment;
 use App\Models\BookingAudit;
 use App\Models\BookingStatus;
 use App\Services\RoomService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,7 +27,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function store(StoreBookingRequest $request)
+    public function store(StoreBookingRequest $request): RedirectResponse
     {
         $exists = Booking::where('room_id', $request->room_id)
             ->where('date', $request->date)
@@ -91,7 +92,7 @@ class BookingController extends Controller
     public function update(
         UpdateBookingRequest $request,
         Booking $booking
-    ) {
+    ): RedirectResponse {
         if ($booking->status->code !== 'PENDING') {
             abort(403);
         }
@@ -106,7 +107,7 @@ class BookingController extends Controller
         );
     }
 
-    public function cancel(Booking $booking)
+    public function cancel(Booking $booking): RedirectResponse
     {
         DB::transaction(function () use ($booking) {
             $booking->load('status');
@@ -131,5 +132,7 @@ class BookingController extends Controller
                 'comment' => 'Dibatalkan oleh peminjam',
             ]);
         });
+
+        return back()->with('success', 'Booking berhasul dibatalkan');
     }
 }

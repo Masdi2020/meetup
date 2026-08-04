@@ -21,7 +21,7 @@ const currentClock = computed(() =>
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-    })
+    }),
 );
 
 const remainingTime = computed(() => {
@@ -30,7 +30,7 @@ const remainingTime = computed(() => {
     }
 
     const end = new Date(
-        `${currentTime.value.toISOString().slice(0,10)}T${props.booking.end_time}`
+        `${currentTime.value.toISOString().slice(0, 10)}T${props.booking.end_time}`,
     );
 
     const diff = end.getTime() - currentTime.value.getTime();
@@ -123,18 +123,16 @@ onUnmounted(() => {
             </h1>
 
             <p class="time">
-                {{ booking.start_time.slice(0, 5) }} - {{ booking.end_time.slice(0, 5) }}
+                {{ booking.start_time.slice(0, 5) }} -
+                {{ booking.end_time.slice(0, 5) }}
             </p>
 
             <p class="clock">
                 {{ currentClock }}
             </p>
 
-            <p class="remaining">
-                Berakhir dalam {{ remainingTime }}
-            </p>
+            <p class="remaining">Berakhir dalam {{ remainingTime }}</p>
         </div>
-
     </div>
 </template>
 
