@@ -11,7 +11,7 @@ class BannerService
         $now = now();
 
         $baseQuery = Booking::query()
-            ->where("room_id", 1)
+            ->where('room_id', 1)
             ->whereDate('date', $now->toDateString())
             ->whereHas('status', fn ($q) => $q->where('code', 'APPROVED'));
 
@@ -29,9 +29,9 @@ class BannerService
         $nextChange = null;
 
         if ($booking) {
-            $nextChange = $booking->date->format('Y-m-d') . ' ' . $booking->end_time;
+            $nextChange = $booking->date->format('Y-m-d').' '.$booking->end_time;
         } elseif ($nextBooking) {
-            $nextChange = $nextBooking->date->format('Y-m-d') . ' ' . $nextBooking->start_time;
+            $nextChange = $nextBooking->date->format('Y-m-d').' '.$nextBooking->start_time;
         }
 
         return [

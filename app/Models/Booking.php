@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'room_id',
@@ -29,27 +31,27 @@ class Booking extends Model
         ];
     }
 
-    public function room()
+    public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function status()
+    public function status(): BelongsTo
     {
         return $this->belongsTo(BookingStatus::class, 'status_id');
     }
 
-    public function attachments()
+    public function attachments(): HasMany
     {
         return $this->hasMany(BookingAttachment::class);
     }
 
-    public function audits()
+    public function audits(): HasMany
     {
         return $this->hasMany(BookingAudit::class);
     }

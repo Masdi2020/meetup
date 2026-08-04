@@ -6,10 +6,11 @@ use App\Models\Booking;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminBookingController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $query = Booking::query()
             ->with([
@@ -20,7 +21,7 @@ class AdminBookingController extends Controller
 
         if ($request->filled('search')) {
 
-            $search = $request->search;
+            $search = $request->string('search')->toString();
 
             $query->where(function ($q) use ($search) {
 
