@@ -1,15 +1,54 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { onMounted, onUnmounted, ref, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const props = defineProps<{
     booking: any;
     next_change: string | null;
+    now: string;
 }>();
 
 const isFullscreen = ref(false);
 
 let timer: number | undefined;
+
+const currentTime = ref(new Date(props.now));
+
+let clock: number | undefined;
+
+const currentClock = computed(() =>
+    currentTime.value.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    })
+);
+
+const remainingTime = computed(() => {
+    if (!props.booking) {
+        return '';
+    }
+
+    const end = new Date(
+        `${currentTime.value.toISOString().slice(0,10)}T${props.booking.end_time}`
+    );
+
+    const diff = end.getTime() - currentTime.value.getTime();
+
+    if (diff <= 0) {
+        return 'Selesai';
+    }
+
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+
+    if (hours > 0) {
+        return `${hours} jam ${minutes} menit`;
+    }
+
+    return `${minutes} menit ${seconds} detik`;
+});
 
 function scheduleReload() {
     if (!props.next_change) {
@@ -45,12 +84,21 @@ function onFullscreenChange() {
 
 onMounted(() => {
     scheduleReload();
+
+    clock = window.setInterval(() => {
+        currentTime.value = new Date(currentTime.value.getTime() + 1000);
+    }, 1000);
+
     document.addEventListener('fullscreenchange', onFullscreenChange);
 });
 
 onUnmounted(() => {
     if (timer) {
         clearTimeout(timer);
+    }
+
+    if (clock) {
+        clearInterval(clock);
     }
 
     document.removeEventListener('fullscreenchange', onFullscreenChange);
@@ -76,6 +124,14 @@ onUnmounted(() => {
 
             <p class="time">
                 {{ booking.start_time.slice(0, 5) }} - {{ booking.end_time.slice(0, 5) }}
+            </p>
+
+            <p class="clock">
+                {{ currentClock }}
+            </p>
+
+            <p class="remaining">
+                Berakhir dalam {{ remainingTime }}
             </p>
         </div>
 
