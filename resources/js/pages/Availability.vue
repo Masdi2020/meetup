@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import Calendar from "@/components/Calendar/Calendar.vue";
 
 interface Facility {
     id: number;
@@ -94,12 +95,7 @@ function booking(roomId: number) {
             </div>
 
             <div class="calendar-card" v-if="selectedRoom">
-                <iframe
-                    class="calendar-frame"
-                    :src="`${selectedRoom.calendar_url}&showPrint=0&showTz=0`"
-                    frameborder="0"
-                    scrolling="no"
-                ></iframe>
+                <Calendar />
             </div>
         </div>
     </div>
