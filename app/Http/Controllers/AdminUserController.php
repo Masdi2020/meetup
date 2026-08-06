@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AdminUserController extends Controller
 {
@@ -38,6 +40,21 @@ class AdminUserController extends Controller
                 'search' => $search,
                 'role' => $role,
             ],
+        ]);
+    }
+
+    public function resetPassword(User $user) {
+        $password = Str::password(
+            length: 8
+        );
+
+        $user->update([
+            'password' => Hash::make($password),
+        ]);
+
+        return back()->with([
+            'success' => 'Password berhasil direset',
+            'generated_password' => $password,
         ]);
     }
 }

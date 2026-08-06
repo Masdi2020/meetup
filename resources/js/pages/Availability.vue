@@ -18,9 +18,23 @@ interface Room {
     image: null;
 }
 
-const { rooms } = defineProps<{
+interface CalendarEvent {
+    id: number;
+    title: string;
+    room: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+}
+
+const props = defineProps<{
     rooms: Room[];
+    events: CalendarEvent[];
+    month: number;
+    year: number;
 }>();
+
+const rooms = props.rooms;
 
 const selectedRoomId = ref<number>(rooms[0]?.id ?? 1);
 
@@ -30,6 +44,46 @@ const selectedRoom = computed(() =>
 
 function booking(roomId: number) {
     router.get(`/booking/${roomId}`);
+}
+
+function previousMonth() {
+    let month = props.month - 1;
+    let year = props.year;
+
+    if (month === 0) {
+        month = 12;
+        year--;
+    }
+
+    router.get(
+        `/availability`,
+        { month, year },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['events', 'month', 'year']
+        }
+    );
+}
+
+function nextMonth() {
+    let month = props.month + 1;
+    let year = props.year;
+
+    if (month === 13) {
+        month = 1;
+        year++;
+    }
+
+    router.get(
+        `/availability`,
+        { month, year },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['events', 'month', 'year']
+        }
+    );
 }
 </script>
 
@@ -95,7 +149,13 @@ function booking(roomId: number) {
             </div>
 
             <div class="calendar-card" v-if="selectedRoom">
-                <Calendar />
+                <Calendar
+                    :events="events"
+                    :month="month"
+                    :year="year"
+                    @previous="previousMonth"
+                    @next="nextMonth"
+                />
             </div>
         </div>
     </div>

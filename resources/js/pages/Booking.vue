@@ -11,6 +11,8 @@ const today = new Date().toISOString().split('T')[0];
 
 const preview = ref<string | null>(null);
 
+const showSuccessDialog = ref(false);
+
 const { rooms } = defineProps<{
     rooms: Room[];
 }>();
@@ -66,7 +68,10 @@ const submitBooking = () => {
     form.post('/booking', {
         forceFormData: true,
         onSuccess: () => {
-            console.log('Berhasil');
+            showSuccessDialog.value = true;
+
+            form.reset();
+            preview.value = null;
         },
         onError: (err) => {
             console.log(err);

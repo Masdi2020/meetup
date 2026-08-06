@@ -5,19 +5,22 @@ import { ref, computed } from "vue";
 import CalendarToolbar from "./CalendarToolbar.vue";
 import MonthView from "./MonthView.vue";
 
+const props = defineProps<{
+    events: any[];
+    month: number;
+    year: number;
+}>();
+
+const emit = defineEmits([
+    "previous",
+    "next"
+]);
+
 const currentDate = ref(dayjs());
 
 const title = computed(() =>
     currentDate.value.format("MMMM YYYY")
 );
-
-function previousMonth() {
-    currentDate.value = currentDate.value.subtract(1, "month");
-}
-
-function nextMonth() {
-    currentDate.value = currentDate.value.add(1, "month");
-}
 
 function today() {
     currentDate.value = dayjs();
@@ -30,8 +33,8 @@ function today() {
 
         <CalendarToolbar
             :title="title"
-            @previous="previousMonth"
-            @next="nextMonth"
+            @previous="emit('previous')"
+            @next="emit('next')"
             @today="today"
         />
 

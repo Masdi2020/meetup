@@ -87,6 +87,26 @@ function badgeClass(status: BookingStatus) {
         finished: 'bg-blue-100 text-blue-700',
     }[status];
 }
+
+function approve(id: number) {
+    if (!confirm('Setujui booking ini?')) {
+        return;
+    }
+
+    router.patch(`/admin/bookings/${id}/approve`, {}, {
+        preserveScroll: true,
+    });
+}
+
+function reject(id: number) {
+    if (!confirm('Tolak booking ini?')) {
+        return;
+    }
+
+    router.patch(`/admin/bookings/${id}/reject`, {}, {
+        preserveScroll: true,
+    });
+}
 </script>
 
 <template>
@@ -240,6 +260,7 @@ function badgeClass(status: BookingStatus) {
                                 <button
                                     v-if="booking.status === 'pending'"
                                     class="rounded-lg bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"
+                                    @click="approve(booking.id)"
                                 >
                                     Approve
                                 </button>
@@ -247,6 +268,7 @@ function badgeClass(status: BookingStatus) {
                                 <button
                                     v-if="booking.status === 'pending'"
                                     class="rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700"
+                                    @click="reject(booking.id)"
                                 >
                                     Reject
                                 </button>

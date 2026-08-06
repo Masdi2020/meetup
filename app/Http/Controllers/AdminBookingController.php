@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\BookingAudit;
+use App\Models\BookingStatus;
 use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -106,5 +109,43 @@ class AdminBookingController extends Controller
             ]),
 
         ]);
+    }
+
+    public function approve(Booking $booking) {
+        if ($booking->status->code !== 'PENDING') {
+            return back()->with('error', 'Booking is not pending.');
+        }
+
+        DB::transaction(function () use ($booking) {
+            $oldStatus = $booking->status_id;
+            $approved = BookingStatus::where('code', 'APPROVED')->firstOrFail();
+            $booking->update(['status_id' => $approved->id]);
+            BookingAudit::create([
+                'booking_id' => $booking->id,
+                'old_status_id' => $oldStatus,
+                'new_status_id' => $approved->id,
+                'changed_by' => auth()->id(),
+            ]);
+        });
+        return back()->with('success', 'Booking approved successfully.');
+    }
+
+    public function reject(Booking $booking) {
+        if ($booking->status->code !== 'PENDING') {
+            return back()->with('error', 'Booking is not pending.');
+        }
+
+        DB::transaction(function () use ($booking) {
+            $oldStatus = $booking->status_id;
+            $rejected = BookingStatus::where('code', 'REJECTED')->firstOrFail();
+            $booking->update(['status_id' => $rejected->id]);
+            BookingAudit::create([
+                'booking_id' => $booking->id,
+                'old_status_id' => $oldStatus,
+                'new_status_id' => $rejected->id,
+                'changed_by' => auth()->id(),
+            ]);
+        });
+        return back()->with('success', 'Booking rejected successfully.');
     }
 }

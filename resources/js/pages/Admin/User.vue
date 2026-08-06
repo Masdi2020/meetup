@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 
@@ -15,6 +17,16 @@ interface User {
     email: string;
     role: Role;
 }
+
+interface pageProps extends InertiaPageProps {
+    flash: {
+        success?: string;
+        error?: string;
+        generated_password?: string;
+    }
+}
+
+const page = usePage<pageProps>();
 
 const props = defineProps<{
     users: User[];
@@ -36,6 +48,49 @@ function initials(name: string) {
         .join('')
         .substring(0, 2)
         .toUpperCase();
+}
+
+const showPasswordModal = ref(false);
+const generatedPassword = ref('');
+
+function resetPassword(user: User) {
+    if (
+        !confirm(
+            `Reset password untuk ${user.name}?`
+        )
+    ) {
+        return;
+    }
+
+    router.post(
+        `/admin/users/${user.id}/reset-password`,
+        {},
+        {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                const password = page.props.flash?.generated_password;
+
+                if (!password) {
+                    return;
+                }
+
+                generatedPassword.value = password;
+                showPasswordModal.value = true;
+            },
+        }
+    );
+}
+
+async function copyPassword() {
+    await navigator.clipboard.writeText(generatedPassword.value);
+
+    alert('Password berhasil disalin ke clipboard');
+}
+
+function closeModal() {
+    generatedPassword.value = '';
+    showPasswordModal.value = false;
 }
 </script>
 
@@ -182,6 +237,7 @@ function initials(name: string) {
 
                                 <button
                                     class="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700"
+                                    @click="resetPassword(user)"
                                 >
                                     Reset Password
                                 </button>
@@ -196,6 +252,44 @@ function initials(name: string) {
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div
+            v-if="showPasswordModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+        >
+            <div class="w-full max-w-md rounded-xl bg-white p-6">
+                <h2 class="text-xl font-bold">
+                    Password baru
+                </h2>
+
+                <p class="mt-2 text-gray-500">
+                    Password ini hanya ditampilkan sekali.
+                    Salin dan berikan kepada pengguna.
+                </p>
+
+                <div class="mt-4 flex items-center justify-between rounded-lg bg-gray-100 p-3">
+                    <code class="font-mono text-lg">
+                        {{ generatedPassword }}
+                    </code>
+
+                    <button
+                        class="rounded bg-blue-600 px-3 py-2 text-white"
+                        @click="copyPassword"
+                    >
+                        Copy
+                    </button>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button
+                        class="rounded-lg bg-gray-800 px-5 py-2 text-white"
+                        @click="closeModal"
+                    >
+                        Tutup
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
