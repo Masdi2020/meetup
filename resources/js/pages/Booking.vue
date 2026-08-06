@@ -179,6 +179,29 @@ const submitBooking = () => {
             </div>
         </div>
     </div>
+
+    <div
+        v-if="showSuccessDialog"
+        class="dialog-overlay"
+        @click.self="showSuccessDialog = false"
+    >
+        <div class="dialog">
+            <div class="dialog-icon">
+                ✓
+            </div>
+
+            <h3>Booking Berhasil Diajukan</h3>
+
+            <p>
+                Permintaan peminjaman ruangan telah berhasil dikirim dan sedang
+                menunggu persetujuan admin.
+            </p>
+
+            <button @click="showSuccessDialog = false">
+                Tutup
+            </button>
+        </div>
+    </div>
 </template>
 
 <style scoped>
@@ -291,5 +314,72 @@ button:hover {
     margin-top: 5px;
     color: #dc3545;
     font-size: 13px;
+}
+
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 9999;
+}
+
+.dialog {
+    background: white;
+    width: 420px;
+    max-width: 90%;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+
+    animation: popup 0.2s ease;
+}
+
+.dialog-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #28a745;
+    color: white;
+
+    margin: 0 auto 20px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.dialog h3 {
+    margin-bottom: 10px;
+    color: #173b7a;
+}
+
+.dialog p {
+    color: #555;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.dialog button {
+    min-width: 120px;
+}
+
+@keyframes popup {
+    from {
+        transform: scale(.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 </style>
