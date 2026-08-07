@@ -29,27 +29,48 @@ const weekDays = [
 
 const days = computed(() => {
     const firstDay = props.date.startOf("month");
-    const start = firstDay.startOf("week").add(1, "day");
+    const lastDay = props.date.endOf("month");
 
-    return Array.from({ length: 42 }, (_, index) => start.add(index, "day"));
+    const firstWeekday = firstDay.day();
+    const daysToMonday = firstWeekday === 0 ? 6 : firstWeekday - 1;
+    const start = firstDay.subtract(daysToMonday, "day");
+
+    const lastWeekday = lastDay.day();
+    const daysToSunday = lastWeekday === 0 ? 0 : 7 - lastWeekday;
+    const end = lastDay.add(daysToSunday, "day");
+
+    const totalDays = end.diff(start, "day") + 1;
+
+    return Array.from({ length: totalDays }, (_, index) => start.add(index, "day"));
 });
+
+const roomColors = [
+    '#fbcfe8',
+    '#c7d2fe',
+    '#bbf7d0',
+    '#fed7aa',
+    '#a5f3fc',
+    '#fde68a',
+    '#f5d0fe',
+    '#d8b4fe',
+    '#fef08a',
+    '#a7f3d0',
+];
 
 function getEventsForDate(day: Dayjs) {
     return props.events.filter((event) => event.date === day.format("YYYY-MM-DD"));
 }
 
-function getEventColor(event: CalendarEvent) {
-    const base = event.room.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const hue = base % 360;
+function getRoomColor(event: CalendarEvent) {
+    const hash = event.room
+        .split("")
+        .reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
-    return `hsl(${hue} 70% 92%)`;
+    return roomColors[hash % roomColors.length];
 }
 
-function getEventTextColor(event: CalendarEvent) {
-    const base = event.room.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const hue = base % 360;
-
-    return `hsl(${hue} 55% 28%)`;
+function getRoomTextColor() {
+    return '#1f2937';
 }
 </script>
 
@@ -78,8 +99,8 @@ function getEventTextColor(event: CalendarEvent) {
                     :key="`${event.id}-${event.date}`"
                     class="event-pill"
                     :style="{
-                        backgroundColor: getEventColor(event),
-                        color: getEventTextColor(event),
+                        backgroundColor: getRoomColor(event),
+                        color: getRoomTextColor(),
                     }"
                 >
                     <span class="event-title">{{ event.title }}</span>
@@ -100,9 +121,11 @@ function getEventTextColor(event: CalendarEvent) {
 <style scoped>
 .calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(120px, 1fr));
+    grid-auto-rows: minmax(140px, auto);
     gap: 1px;
     background: #ddd;
+    width: 100%;
 }
 
 .header {
@@ -111,15 +134,17 @@ function getEventTextColor(event: CalendarEvent) {
     padding: 12px;
     font-weight: bold;
     text-align: center;
+    box-sizing: border-box;
 }
 
 .cell {
     background: white;
-    min-height: 132px;
+    min-height: 140px;
     padding: 8px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .number {
