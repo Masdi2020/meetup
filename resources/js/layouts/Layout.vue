@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import Sidebar from '@/components/Sidebar.vue';
 import LogoutButton from '@/components/LogoutButton.vue';
+import Sidebar from '@/components/Sidebar.vue';
 
 const isOpen = ref(true);
 
