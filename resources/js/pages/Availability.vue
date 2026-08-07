@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
+import dayjs from 'dayjs';
 import { ref, computed, watch } from 'vue';
 import Calendar from "@/components/Calendar/Calendar.vue";
 
@@ -95,6 +96,24 @@ function nextMonth() {
     );
 }
 
+function goToToday() {
+    const today = dayjs();
+
+    router.get(
+        '/availability',
+        {
+            room: selectedRoomId.value,
+            month: today.month() + 1,
+            year: today.year(),
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['events', 'month', 'year'],
+        },
+    );
+}
+
 watch(selectedRoomId, (room) => {
     router.get(
         '/availability',
@@ -183,6 +202,7 @@ watch(selectedRoomId, (room) => {
                     :year="year"
                     @previous="previousMonth"
                     @next="nextMonth"
+                    @today="goToToday"
                 />
             </div>
         </div>
