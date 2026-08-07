@@ -5,12 +5,6 @@ import { ref, computed } from "vue";
 import CalendarToolbar from "./CalendarToolbar.vue";
 import MonthView from "./MonthView.vue";
 
-const props = defineProps<{
-    events: any[];
-    month: number;
-    year: number;
-}>();
-
 const emit = defineEmits([
     "previous",
     "next"

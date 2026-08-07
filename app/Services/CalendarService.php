@@ -16,25 +16,30 @@ class CalendarService
         ?int $roomId = null
     ): array {
         return Booking::query()
+            ->with(['room', 'status'])
             ->whereBetween('date', [
                 $start->toDateString(),
                 $end->toDateString(),
             ])
-            ->whereHas('status', fn ($q) =>
-                $q->where('code', 'APPROVED')
-            )->with('room')
+            ->when($roomId, function ($query) use ($roomId) {
+                $query->where('room_id', $roomId);
+            })
+            ->whereHas('status', function ($query) use ($roomId) {
+                $query->where('code', 'APPROVED');
+            })
             ->orderBy('date')
             ->orderBy('start_time')
             ->get()
-            ->map(fn ($booking) => [
-                'id'=> $booking->id,
-                'title'=> $booking->title,
-                'room'=> $booking->room->name,
-                'date'=> $booking->date,
-                'start_time'=> $booking->start_time,
-                'end_time'=> $booking->end_time,
-            ])
+            ->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'title' => $booking->title,
+                    'room' => $booking->room->name,
+                    'date' => $booking->date->format('Y-m-d'),
+                    'start_time' => substr($booking->start_time, 0, 5),
+                    'end_time' => substr($booking->end_time, 0,5),
+                ];
+            })
             ->all();
-
     }
 }

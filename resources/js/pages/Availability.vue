@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Calendar from "@/components/Calendar/Calendar.vue";
 
 interface Facility {
@@ -32,11 +32,12 @@ const props = defineProps<{
     events: CalendarEvent[];
     month: number;
     year: number;
+    selectedRoomId: number;
 }>();
 
 const rooms = props.rooms;
 
-const selectedRoomId = ref<number>(rooms[0]?.id ?? 1);
+const selectedRoomId = ref(props.selectedRoomId);
 
 const selectedRoom = computed(() =>
     rooms.find((room) => room.id === selectedRoomId.value),
@@ -57,7 +58,11 @@ function previousMonth() {
 
     router.get(
         `/availability`,
-        { month, year },
+        {
+            room: selectedRoomId.value,
+            month,
+            year
+        },
         {
             preserveScroll: true,
             preserveState: true,
@@ -77,7 +82,11 @@ function nextMonth() {
 
     router.get(
         `/availability`,
-        { month, year },
+        {
+            room: selectedRoomId.value,
+            month,
+            year
+        },
         {
             preserveScroll: true,
             preserveState: true,
@@ -85,6 +94,25 @@ function nextMonth() {
         }
     );
 }
+
+watch(selectedRoomId, (room) => {
+    router.get(
+        '/availability',
+        {
+            room,
+            month: props.month,
+            year: props.year,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'events',
+                'selectedRoomId'
+            ],
+        }
+    );
+});
 </script>
 
 <template>
