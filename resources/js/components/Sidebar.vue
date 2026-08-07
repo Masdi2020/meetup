@@ -11,7 +11,7 @@ const emit = defineEmits<{
 
 const menus = [
     { name: 'Halaman Utama', icon: '🏠', to: '/dashboard' },
-    { name: 'Ruangan', icon: '🗓️', to: '/kalender' },
+    { name: 'Ruangan', icon: '🗓️', to: '/availability' },
     { name: 'Peminjaman', icon: '📝', to: '/pinjam' },
     { name: 'Riwayat', icon: '📋', to: '/riwayat' },
 ];

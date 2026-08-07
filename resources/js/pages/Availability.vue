@@ -38,11 +38,15 @@ const props = defineProps<{
 
 const rooms = props.rooms;
 
-const selectedRoomId = ref(props.selectedRoomId);
+const selectedRoomId = ref<number | string>(props.selectedRoomId ?? 0);
 
-const selectedRoom = computed(() =>
-    rooms.find((room) => room.id === selectedRoomId.value),
-);
+const selectedRoom = computed(() => {
+    if (selectedRoomId.value === 0 || selectedRoomId.value === '0') {
+        return null;
+    }
+
+    return rooms.find((room) => room.id === Number(selectedRoomId.value));
+});
 
 function booking(roomId: number) {
     router.get(`/booking/${roomId}`);
@@ -143,6 +147,7 @@ watch(selectedRoomId, (room) => {
                 <label>Pilih Ruangan</label>
 
                 <select v-model="selectedRoomId">
+                    <option :value="0">Semua Ruangan</option>
                     <option
                         v-for="room in rooms"
                         :key="room.id"
@@ -153,7 +158,7 @@ watch(selectedRoomId, (room) => {
                 </select>
             </div>
 
-            <div class="room-card" v-if="selectedRoom">
+            <div class="room-card" v-if="selectedRoom && selectedRoomId !== 0">
                 <div class="room-image">
                     <img
                         v-if="selectedRoom.image"

@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/pinjam', [BookingController::class, 'index'])->name('booking.index');
             Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
             // Route::get('/kalender', [RoomController::class, 'index'])->name('calendar.index');
+            Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability.index');
             Route::get('/kalender', [AvailabilityController::class, 'index'])->name('calendar.events');
             Route::get('/riwayat', [HistoryController::class, 'index'])->name('history.index');
 

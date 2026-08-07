@@ -21,9 +21,10 @@ class AvailabilityController extends Controller
 
         $rooms = Room::with('facilities')->get();
 
-        $roomId = $request->integer('room');
+        $roomValue = $request->input('room');
+        $roomId = $roomValue !== null && $roomValue !== '' ? (int) $roomValue : null;
 
-        if (!$roomId && $rooms->isNotEmpty()) {
+        if ($roomId === null && $rooms->isNotEmpty()) {
             $roomId = $rooms->first()->id;
         }
 
