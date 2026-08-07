@@ -36,4 +36,14 @@ class LoginController extends Controller
             'username' => 'Username atau password salah',
         ]);
     }
+
+    public function destroy(Request $request): RedirectResponse
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return to_route('login');
+    }
 }

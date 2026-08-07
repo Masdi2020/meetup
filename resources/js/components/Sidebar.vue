@@ -3,25 +3,20 @@ import { Link } from '@inertiajs/vue3';
 
 defineProps<{
     isOpen: boolean;
+    menus: Array<{ name: string; icon: string; to: string }>;
+    brand?: string;
 }>();
 
 const emit = defineEmits<{
     (e: 'toggle'): void;
 }>();
-
-const menus = [
-    { name: 'Halaman Utama', icon: '🏠', to: '/dashboard' },
-    { name: 'Ruangan', icon: '🗓️', to: '/availability' },
-    { name: 'Peminjaman', icon: '📝', to: '/pinjam' },
-    { name: 'Riwayat', icon: '📋', to: '/riwayat' },
-];
 </script>
 
 <template>
     <aside :class="['sidebar', { collapsed: !isOpen }]">
         <div class="menu-header" @click="emit('toggle')">
             <span class="hamburger">☰</span>
-            <span v-if="isOpen" class="brand">Menu</span>
+            <span v-if="isOpen" class="brand">{{ brand ?? 'Menu' }}</span>
         </div>
 
         <nav>
@@ -37,6 +32,10 @@ const menus = [
                     {{ menu.name }}
                 </span>
             </Link>
+
+            <div class="bottom-nav" v-if="isOpen">
+                <slot name="sidebar-footer" />
+            </div>
         </nav>
     </aside>
 </template>
