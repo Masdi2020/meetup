@@ -37,6 +37,20 @@ const days = computed(() => {
 function getEventsForDate(day: Dayjs) {
     return props.events.filter((event) => event.date === day.format("YYYY-MM-DD"));
 }
+
+function getEventColor(event: CalendarEvent) {
+    const base = event.room.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hue = base % 360;
+
+    return `hsl(${hue} 70% 92%)`;
+}
+
+function getEventTextColor(event: CalendarEvent) {
+    const base = event.room.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hue = base % 360;
+
+    return `hsl(${hue} 55% 28%)`;
+}
 </script>
 
 <template>
@@ -60,18 +74,23 @@ function getEventsForDate(day: Dayjs) {
 
             <div v-if="getEventsForDate(day).length" class="event-list">
                 <div
-                    v-for="event in getEventsForDate(day).slice(0, 2)"
+                    v-for="event in getEventsForDate(day).slice(0, 3)"
                     :key="`${event.id}-${event.date}`"
                     class="event-pill"
+                    :style="{
+                        backgroundColor: getEventColor(event),
+                        color: getEventTextColor(event),
+                    }"
                 >
-                    {{ event.title }}
+                    <span class="event-title">{{ event.title }}</span>
+                    <span class="event-time">{{ event.start_time }}-{{ event.end_time }}</span>
                 </div>
 
                 <div
-                    v-if="getEventsForDate(day).length > 2"
+                    v-if="getEventsForDate(day).length > 3"
                     class="event-more"
                 >
-                    +{{ getEventsForDate(day).length - 2 }} lagi
+                    +{{ getEventsForDate(day).length - 3 }} lagi
                 </div>
             </div>
         </div>
@@ -96,8 +115,11 @@ function getEventsForDate(day: Dayjs) {
 
 .cell {
     background: white;
-    min-height: 120px;
+    min-height: 132px;
     padding: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .number {
@@ -118,18 +140,32 @@ function getEventsForDate(day: Dayjs) {
     flex-direction: column;
     gap: 4px;
     margin-top: 6px;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .event-pill {
-    background: #dbeafe;
-    color: #1d4ed8;
     border-radius: 6px;
     padding: 4px 6px;
     font-size: 11px;
     line-height: 1.3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+}
+
+.event-title {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    flex: 1;
+}
+
+.event-time {
+    white-space: nowrap;
+    font-weight: 600;
 }
 
 .event-more {

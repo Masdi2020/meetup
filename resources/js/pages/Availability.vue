@@ -200,7 +200,7 @@ watch(selectedRoomId, (room) => {
                 </div>
             </div>
 
-            <div class="calendar-card" v-if="selectedRoom">
+            <div class="calendar-card">
                 <Calendar
                     :events="events"
                     :month="month"
@@ -298,10 +298,11 @@ h2 {
 }
 
 .calendar-card {
-    height: 700px;
     border: 1px solid #ddd;
     border-radius: 12px;
-    overflow: hidden;
+    overflow: visible;
+    padding: 8px;
+    background: white;
 }
 
 .calendar-frame {

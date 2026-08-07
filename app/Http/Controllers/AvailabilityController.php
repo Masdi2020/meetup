@@ -22,10 +22,17 @@ class AvailabilityController extends Controller
         $rooms = Room::with('facilities')->get();
 
         $roomValue = $request->input('room');
-        $roomId = $roomValue !== null && $roomValue !== '' ? (int) $roomValue : null;
+        $roomId = null;
+        $selectedRoomId = 0;
 
-        if ($roomId === null && $rooms->isNotEmpty()) {
-            $roomId = $rooms->first()->id;
+        if ($roomValue !== null && $roomValue !== '') {
+            if ((string) $roomValue !== '0') {
+                $roomId = (int) $roomValue;
+                $selectedRoomId = $roomId;
+            }
+        } elseif ($rooms->isNotEmpty()) {
+            $selectedRoomId = $rooms->first()->id;
+            $roomId = $selectedRoomId;
         }
 
         $start = Carbon::create($year, $month, 1)->startOfMonth();
@@ -38,7 +45,7 @@ class AvailabilityController extends Controller
                 end: $end,
                 roomId: $roomId,
             ),
-            'selectedRoomId' => $roomId,
+            'selectedRoomId' => $selectedRoomId,
             'month' => $month,
             'year'=> $year,
         ]);
