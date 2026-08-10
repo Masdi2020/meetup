@@ -16,7 +16,11 @@ use Illuminate\Support\Carbon;
     'end_time',
     'title',
     'participants',
+    'participants_count',
+    'notes',
     'status_id',
+    'processed_at',
+    'processed_notes',
 ])]
 
 /**
@@ -26,8 +30,9 @@ use Illuminate\Support\Carbon;
  * @property Carbon $start_time
  * @property Carbon $end_time
  * @property int $user_id
+ * @property int $participants_count
  * @property Room $room
- * @property Status $status
+ * @property BookingStatus $status
  */
 class Booking extends Model
 {
@@ -40,6 +45,8 @@ class Booking extends Model
         'date' => 'date',
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
+        'processed_at' => 'datetime',
+        'participants_count' => 'integer',
     ];
 
     /**

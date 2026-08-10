@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'booking_id',
+    'original_filename',
     'filename',
     'path',
     'mime_type',
@@ -16,9 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class BookingAttachment extends Model
 {
-    public $timestamps = false;
-
-    const CREATED_AT = 'created_at';
+    public const UPDATED_AT = null;
 
     /**
      * Summary of booking

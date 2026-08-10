@@ -8,16 +8,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'booking_id',
+    'entity_type',
+    'entity_id',
     'old_status_id',
     'new_status_id',
     'changed_by',
     'comment',
+    'action',
+    'old_values',
+    'new_values',
+    'ip_address',
 ])]
 class BookingAudit extends Model
 {
-    protected $table = 'booking_audit';
+    protected $table = 'audits';
 
-    const UPDATED_AT = null;
+    public const UPDATED_AT = null;
+
+    protected $casts = [
+        'old_values' => 'array',
+        'new_values' => 'array',
+    ];
 
     /**
      * Summary of booking
@@ -26,7 +37,11 @@ class BookingAudit extends Model
      */
     public function booking(): BelongsTo
     {
-        return $this->belongsTo(Booking::class);
+        return $this->belongsTo(Booking::class, 'entity_id')
+            ->where(function ($query) {
+                $query->where('entity_type', Booking::class)
+                    ->orWhere('entity_type', 'booking');
+            });
     }
 
     /**
