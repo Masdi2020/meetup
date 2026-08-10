@@ -39,6 +39,7 @@ const hasWarning = (field: string): boolean => {
         case 'room_id':
             return form.room_id === null;
         case 'date':
+            return !form.date || form.date < today;
         case 'start_time':
         case 'end_time':
         case 'title':
@@ -146,7 +147,10 @@ const submitBooking = () => {
                         Tanggal <span class="required">*</span>
                     </label>
                     <input type="date" v-model="form.date" :min="today" />
-                    <p v-if="hasWarning('date')" class="warning-text">
+                    <p v-if="form.date && form.date < today" class="warning-text">
+                        Tanggal tidak boleh kurang dari hari ini.
+                    </p>
+                    <p v-else-if="hasWarning('date')" class="warning-text">
                         Tanggal wajib diisi.
                     </p>
                 </div>

@@ -14,6 +14,7 @@ interface BookingHistory {
 }
 
 const showEditModal = ref(false);
+const today = new Date().toISOString().split('T')[0];
 
 const editForm = ref({
     id: 0,
@@ -23,13 +24,29 @@ const editForm = ref({
     end_time: '',
 });
 
+const formatBookingDate = (value: string) => {
+    if (!value) {
+        return '';
+    }
+
+    const simpleDate = value.split(' ')[0];
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(simpleDate)) {
+        return simpleDate;
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+};
+
 const openEditModal = (booking: BookingHistory) => {
     const [start, end] = booking.time.split(' - ');
 
     editForm.value = {
         id: booking.id,
         title: booking.title,
-        date: booking.date,
+        date: formatBookingDate(booking.date),
         start_time: start,
         end_time: end,
     };
@@ -42,6 +59,12 @@ const closeEditModal = () => {
 };
 
 const submitEdit = () => {
+    if (editForm.value.date && editForm.value.date < today) {
+        alert('Tanggal tidak boleh kurang dari hari ini.');
+
+        return;
+    }
+
     router.put(`/booking/${editForm.value.id}`, editForm.value, {
         onSuccess: () => {
             closeEditModal();
@@ -169,7 +192,7 @@ const cancelBooking = (id: number) => {
 
             <div class="form-group">
                 <label>Tanggal</label>
-                <input type="text" v-model="editForm.date" />
+                <input type="date" v-model="editForm.date" :min="today" />
             </div>
 
             <div class="form-group">
