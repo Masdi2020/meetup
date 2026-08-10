@@ -30,11 +30,6 @@
 
                 <button type="submit" class="login-btn">Login</button>
             </form>
-
-            <p class="extra-text">
-                Belum punya akun?
-                <a href="/register">Daftar sekarang</a>
-            </p>
         </div>
     </div>
 </template>
