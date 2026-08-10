@@ -34,6 +34,11 @@ return new class extends Migration
                 ->constrained('booking_statuses')
                 ->restrictOnDelete();
 
+            $table->foreignId('processed_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
             $table->timestamp('processed_at')->nullable();
             $table->text('processed_notes')->nullable();
 
