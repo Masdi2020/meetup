@@ -16,8 +16,8 @@ return new class extends Migration
 
             $table->string('name');
             $table->integer('capacity');
-            $table->string('floor');
-            $table->text('calendar_url')->nullable();
+            $table->string('location');
+            $table->boolean('is_available')->default(true);
 
             $table->timestamps();
         });
