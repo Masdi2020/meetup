@@ -36,8 +36,8 @@ class CalendarService
                     'title' => $booking->title,
                     'room' => $booking->room->name,
                     'date' => $booking->date->format('Y-m-d'),
-                    'start_time' => substr($booking->start_time, 0, 5),
-                    'end_time' => substr($booking->end_time, 0,5),
+                    'start_time' => $booking->start_time->format('H:i'),
+                    'end_time' => $booking->end_time->format('H:i'),
                 ];
             })
             ->all();
