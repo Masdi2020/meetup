@@ -13,9 +13,24 @@ class RoomSeeder extends Seeder
     public function run(): void
     {
         Room::insert([
-            ['id' => 1, 'name' => 'Room 1', 'capacity' => 10],
-            ['id' => 2, 'name' => 'Room 2', 'capacity' => 20],
-            ['id' => 3, 'name' => 'Room 3', 'capacity' => 30],
+            [
+                'id' => 1,
+                'name' => 'Ruang Rapat Besar',
+                'capacity' => 50,
+                'location' => 'Lantai 2',
+            ],
+            [
+                'id' => 2,
+                'name' => 'Ruang Rapat Kecil',
+                'capacity' => 10,
+                'location' => 'Lantai 2',
+            ],
+            [
+                'id' => 3,
+                'name' => 'Ruang Kepala',
+                'capacity' => 20,
+                'location' => 'Lantai 2',
+            ],
         ]);
     }
 }
