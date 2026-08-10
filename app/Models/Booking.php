@@ -88,14 +88,4 @@ class Booking extends Model
     {
         return $this->hasMany(BookingAttachment::class);
     }
-
-    /**
-     * Summary of audits
-     *
-     * @return HasMany<BookingAudit, $this>
-     */
-    public function audits(): HasMany
-    {
-        return $this->hasMany(BookingAudit::class);
-    }
 }

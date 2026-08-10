@@ -132,7 +132,7 @@ defineProps<{
 
                         mengubah status
 
-                        <strong>{{ activity.booking.title }}</strong>
+                        <strong>{{ activity.booking?.title ?? '-' }}</strong>
 
                         dari
 
@@ -140,7 +140,7 @@ defineProps<{
 
                         menjadi
 
-                        {{ activity.new_status.label }}
+                        {{ activity.new_status?.label ?? '-' }}
                     </li>
                 </ul>
             </div>

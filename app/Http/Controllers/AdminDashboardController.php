@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use App\Models\BookingAudit;
+use App\Models\Audit;
 use App\Models\BookingStatus;
 use App\Models\Room;
 use App\Models\User;
@@ -33,13 +33,14 @@ class AdminDashboardController extends Controller
                     'id', 'room_id', 'title', 'start_time',
                 ]),
 
-            'activities' => BookingAudit::query()
+            'activities' => Audit::query()
                 ->with([
                     'booking:id,title',
                     'changedBy:id,name',
                     'oldStatus:id,label',
                     'newStatus:id,label',
-                ])->latest()
+                ])
+                ->latest()
                 ->take(10)
                 ->get(),
         ]);

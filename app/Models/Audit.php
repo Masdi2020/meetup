@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'new_values',
     'ip_address',
 ])]
-class BookingAudit extends Model
+class Audit extends Model
 {
     protected $table = 'audits';
 
@@ -37,11 +37,7 @@ class BookingAudit extends Model
      */
     public function booking(): BelongsTo
     {
-        return $this->belongsTo(Booking::class, 'entity_id')
-            ->where(function ($query) {
-                $query->where('entity_type', Booking::class)
-                    ->orWhere('entity_type', 'booking');
-            });
+        return $this->belongsTo(Booking::class, 'entity_id');
     }
 
     /**

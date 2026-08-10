@@ -28,6 +28,28 @@ const form = useForm({
     banner: null as File | null,
 });
 
+const submitted = ref(false);
+
+const hasWarning = (field: string): boolean => {
+    if (!submitted.value) {
+        return false;
+    }
+
+    switch (field) {
+        case 'room_id':
+            return form.room_id === null;
+        case 'date':
+        case 'start_time':
+        case 'end_time':
+        case 'title':
+            return !form[field];
+        case 'participants':
+            return !form.participants || form.participants < 1;
+        default:
+            return false;
+    }
+};
+
 const minStartTime = computed(() => {
     if (form.date !== today) {
         return '07:00';
@@ -65,6 +87,19 @@ const handleFile = (event: Event) => {
 };
 
 const submitBooking = () => {
+    submitted.value = true;
+
+    if (
+        hasWarning('room_id') ||
+        hasWarning('date') ||
+        hasWarning('start_time') ||
+        hasWarning('end_time') ||
+        hasWarning('title') ||
+        hasWarning('participants')
+    ) {
+        return;
+    }
+
     form.post('/booking', {
         forceFormData: true,
         onSuccess: () => {
@@ -72,6 +107,7 @@ const submitBooking = () => {
 
             form.reset();
             preview.value = null;
+            submitted.value = false;
         },
         onError: (err) => {
             console.log(err);
@@ -85,7 +121,10 @@ const submitBooking = () => {
         <h2>Formulir Peminjaman</h2>
 
         <div class="page-card">
-            <div class="room-selector">
+            <div class="room-selector" :class="{'warning': hasWarning('room_id')}">
+                <label>
+                    Ruangan <span class="required">*</span>
+                </label>
                 <select v-model.number="form.room_id">
                     <option :value="null" disabled hidden>Pilih Ruangan</option>
                     <option
@@ -96,16 +135,26 @@ const submitBooking = () => {
                         {{ room.name }}
                     </option>
                 </select>
+                <p v-if="hasWarning('room_id')" class="warning-text">
+                    Ruangan wajib dipilih.
+                </p>
             </div>
 
             <div class="booking-card">
-                <div class="form-group">
-                    <label>Tanggal</label>
+                <div class="form-group" :class="{'warning': hasWarning('date')}">
+                    <label>
+                        Tanggal <span class="required">*</span>
+                    </label>
                     <input type="date" v-model="form.date" :min="today" />
+                    <p v-if="hasWarning('date')" class="warning-text">
+                        Tanggal wajib diisi.
+                    </p>
                 </div>
 
-                <div class="form-group">
-                    <label>Dari Jam</label>
+                <div class="form-group" :class="{'warning': hasWarning('start_time')}">
+                    <label>
+                        Dari Jam <span class="required">*</span>
+                    </label>
                     <input
                         type="time"
                         v-model="form.start_time"
@@ -113,10 +162,15 @@ const submitBooking = () => {
                         max="23:59"
                         step="1800"
                     />
+                    <p v-if="hasWarning('start_time')" class="warning-text">
+                        Waktu mulai wajib diisi.
+                    </p>
                 </div>
 
-                <div class="form-group">
-                    <label>Sampai Jam</label>
+                <div class="form-group" :class="{'warning': hasWarning('end_time')}">
+                    <label>
+                        Sampai Jam <span class="required">*</span>
+                    </label>
                     <input
                         type="time"
                         v-model="form.end_time"
@@ -124,20 +178,33 @@ const submitBooking = () => {
                         max="23:59"
                         step="1800"
                     />
+                    <p v-if="hasWarning('end_time')" class="warning-text">
+                        Waktu selesai wajib diisi.
+                    </p>
                 </div>
 
-                <div class="form-group">
-                    <label>Judul Rapat</label>
+                <div class="form-group" :class="{'warning': hasWarning('title')}">
+                    <label>
+                        Judul Rapat <span class="required">*</span>
+                    </label>
                     <input type="text" v-model="form.title" />
+                    <p v-if="hasWarning('title')" class="warning-text">
+                        Judul rapat wajib diisi.
+                    </p>
                 </div>
 
-                <div class="form-group">
-                    <label>Jumlah Orang</label>
+                <div class="form-group" :class="{'warning': hasWarning('participants')}">
+                    <label>
+                        Jumlah Orang <span class="required">*</span>
+                    </label>
                     <input
                         type="number"
                         min="1"
                         v-model.number="form.participants"
                     />
+                    <p v-if="hasWarning('participants')" class="warning-text">
+                        Jumlah orang wajib diisi dan minimal 1.
+                    </p>
                 </div>
 
                 <div class="form-group">
@@ -149,7 +216,7 @@ const submitBooking = () => {
                     ></textarea>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" v-if="form.room_id === 1">
                     <label>Unggah Banner Rapat</label>
 
                     <input
@@ -262,6 +329,24 @@ textarea {
     background: white;
     font-size: 14px;
     box-sizing: border-box;
+}
+
+.form-group.warning input,
+.form-group.warning select,
+.room-selector.warning select,
+.form-group.warning textarea {
+    border: 1px solid #dc3545;
+    background: #fff5f5;
+}
+
+.required {
+    color: #dc3545;
+}
+
+.warning-text {
+    margin-top: 6px;
+    color: #dc3545;
+    font-size: 13px;
 }
 
 textarea {

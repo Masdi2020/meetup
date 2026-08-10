@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
+use App\Models\Audit;
 use App\Models\Booking;
 use App\Models\BookingAttachment;
-use App\Models\BookingAudit;
 use App\Models\BookingStatus;
 use App\Services\RoomService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,8 +30,9 @@ class BookingController extends Controller
 
     public function store(StoreBookingRequest $request): RedirectResponse
     {
-        $exists = Booking::where('room_id', $request->room_id)
-            ->where('date', $request->date)
+        $exists = Booking::query()
+            ->where('room_id', '=', $request->room_id)
+            ->where('date', '=', $request->date)
             ->whereIn('status_id', [1, 2])
             ->where(function ($query) use ($request) {
                 $query->whereBetween('start_time', [$request->start_time, $request->end_time])
@@ -51,24 +53,26 @@ class BookingController extends Controller
         DB::transaction(function () use ($request) {
             $booking = Booking::create([
                 'room_id' => $request->room_id,
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'date' => $request->date,
                 'start_time' => $request->start_time,
                 'end_time' => $request->end_time,
                 'title' => $request->title,
-                'participants' => $request->participants,
+                'participants_count' => $request->participants,
+                'notes' => $request->input('request'),
                 'status_id' => 1,
             ]);
 
-            if ($request->filled('request')) {
-                BookingAudit::create([
-                    'booking_id' => $booking->id,
-                    'old_status_id' => null,
-                    'new_status_id' => 1,
-                    'changed_by' => auth()->id(),
-                    'comment' => $request->input('request'),
-                ]);
-            }
+            Audit::create([
+                'entity_type' => 'Booking',
+                'entity_id' => $booking->id,
+                'action' => 'created',
+                'old_values' => null,
+                'new_values' => ['status_id' => 1],
+                'changed_by' => Auth::id(),
+                'ip_address' => $this->resolveIpAddress(),
+                'comment' => 'booking dibuat',
+            ]);
 
             if ($request->hasFile('banner')) {
                 $file = $request->file('banner');
@@ -77,11 +81,12 @@ class BookingController extends Controller
 
                 BookingAttachment::create([
                     'booking_id' => $booking->id,
-                    'filename' => $file->getClientOriginalName(),
+                    'original_filename' => $file->getClientOriginalName(),
+                    'filename' => $file->hashName(),
                     'path' => $path,
                     'mime_type' => $file->getClientMimeType(),
                     'size' => $file->getSize(),
-                    'uploaded_by' => auth()->id(),
+                    'uploaded_by' => Auth::id(),
                 ]);
             }
         });
@@ -107,6 +112,19 @@ class BookingController extends Controller
         );
     }
 
+    private function resolveIpAddress(): string
+    {
+        $ip = request()->header('X-Forwarded-For') ?: request()->header('Client-IP');
+
+        if ($ip) {
+            $ip = trim(explode(',', $ip)[0]);
+        } else {
+            $ip = request()->ip();
+        }
+
+        return $ip === '::1' ? '127.0.0.1' : $ip;
+    }
+
     public function cancel(Booking $booking): RedirectResponse
     {
         DB::transaction(function () use ($booking) {
@@ -118,21 +136,24 @@ class BookingController extends Controller
 
             $oldStatusId = $booking->status_id;
 
-            $cancelled = BookingStatus::where('code', 'CANCELLED')->firstOrFail();
+            $cancelled = BookingStatus::where('code', '=', 'CANCELLED')->firstOrFail();
 
             $booking->update([
                 'status_id' => $cancelled->id,
             ]);
 
-            BookingAudit::create([
-                'booking_id' => $booking->id,
-                'old_status_id' => $oldStatusId,
-                'new_status_id' => $cancelled->id,
-                'changed_by' => auth()->id(),
+            Audit::create([
+                'entity_type' => 'Booking',
+                'entity_id' => $booking->id,
+                'action' => 'status_changed',
+                'old_values' => ['status_id' => $oldStatusId],
+                'new_values' => ['status_id' => $cancelled->id],
+                'changed_by' => Auth::id(),
+                'ip_address' => $this->resolveIpAddress(),
                 'comment' => 'Dibatalkan oleh peminjam',
             ]);
         });
 
-        return back()->with('success', 'Booking berhasul dibatalkan');
+        return back()->with('success', 'Booking berhasil dibatalkan');
     }
 }

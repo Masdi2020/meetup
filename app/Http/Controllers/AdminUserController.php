@@ -30,7 +30,6 @@ class AdminUserController extends Controller
                 'id',
                 'name',
                 'username',
-                'email',
                 'role',
             ]);
 

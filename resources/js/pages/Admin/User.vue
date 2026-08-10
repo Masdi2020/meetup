@@ -196,10 +196,6 @@ function closeModal() {
                                     <div class="font-medium">
                                         {{ user.name }}
                                     </div>
-
-                                    <div class="text-sm text-gray-500">
-                                        {{ user.email }}
-                                    </div>
                                 </div>
                             </div>
                         </td>

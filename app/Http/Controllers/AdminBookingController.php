@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Audit;
 use App\Models\Booking;
-use App\Models\BookingAudit;
 use App\Models\BookingStatus;
 use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -120,11 +121,15 @@ class AdminBookingController extends Controller
             $oldStatus = $booking->status_id;
             $approved = BookingStatus::where('code', 'APPROVED')->firstOrFail();
             $booking->update(['status_id' => $approved->id]);
-            BookingAudit::create([
-                'booking_id' => $booking->id,
-                'old_status_id' => $oldStatus,
-                'new_status_id' => $approved->id,
-                'changed_by' => auth()->id(),
+            Audit::create([
+                'entity_type' => 'Booking',
+                'entity_id' => $booking->id,
+                'action' => 'status_changed',
+                'old_values' => ['status_id' => $oldStatus],
+                'new_values' => ['status_id' => $approved->id],
+                'changed_by' => Auth::id(),
+                'ip_address' => $this->resolveIpAddress(),
+                'comment' => 'booking disetujui',
             ]);
         });
         return back()->with('success', 'Booking approved successfully.');
@@ -139,13 +144,30 @@ class AdminBookingController extends Controller
             $oldStatus = $booking->status_id;
             $rejected = BookingStatus::where('code', 'REJECTED')->firstOrFail();
             $booking->update(['status_id' => $rejected->id]);
-            BookingAudit::create([
-                'booking_id' => $booking->id,
-                'old_status_id' => $oldStatus,
-                'new_status_id' => $rejected->id,
-                'changed_by' => auth()->id(),
+            Audit::create([
+                'entity_type' => 'Booking',
+                'entity_id' => $booking->id,
+                'action' => 'status_changed',
+                'old_values' => ['status_id' => $oldStatus],
+                'new_values' => ['status_id' => $rejected->id],
+                'changed_by' => Auth::id(),
+                'ip_address' => $this->resolveIpAddress(),
+                'comment' => 'booking ditolak',
             ]);
         });
         return back()->with('success', 'Booking rejected successfully.');
+    }
+
+    private function resolveIpAddress(): string
+    {
+        $ip = request()->header('X-Forwarded-For') ?: request()->header('Client-IP');
+
+        if ($ip) {
+            $ip = trim(explode(',', $ip)[0]);
+        } else {
+            $ip = request()->ip();
+        }
+
+        return $ip === '::1' ? '127.0.0.1' : $ip;
     }
 }
