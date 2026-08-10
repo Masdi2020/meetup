@@ -17,15 +17,29 @@
                     />
                 </div>
 
-                <div class="form-group">
+                <div class="form-group password-group">
                     <label for="password">Password</label>
-                    <input
-                        id="password"
-                        v-model="form.password"
-                        type="password"
-                        placeholder="Masukkan password"
-                        required
-                    />
+                    <div class="password-input-wrapper">
+                        <input
+                            id="password"
+                            v-model="form.password"
+                            :type="showPassword ? 'text' : 'password'"
+                            placeholder="Masukkan password"
+                            required
+                        />
+                        <button type="button" class="password-toggle" @click="showPassword = !showPassword" aria-label="Toggle password visibility">
+                            <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 1l22 22" />
+                                <path d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38" />
+                                <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94" />
+                                <path d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88" />
+                            </svg>
+                            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="login-btn">Login</button>
@@ -36,11 +50,13 @@
 
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const form = useForm({
     username: '',
     password: '',
 });
+const showPassword = ref(false);
 
 const login = () => {
     form.post('/login');
@@ -104,6 +120,33 @@ const login = () => {
     font-size: 15px;
     transition: 0.2s;
     outline: none;
+}
+
+.password-input-wrapper {
+    position: relative;
+}
+
+.password-group .password-input-wrapper input {
+    padding-right: 46px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    color: #4d8df7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle svg {
+    display: block;
 }
 
 .form-group input:focus {
