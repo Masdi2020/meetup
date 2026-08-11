@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
-import { computed, ref, watchEffect } from 'vue';
+import { computed, ref } from 'vue';
 
 interface PageProps {
     user: {
@@ -52,16 +52,6 @@ function showToast(message: string, type: 'success' | 'error') {
     }, 3500);
 }
 
-watchEffect(() => {
-    if (props.flash?.success) {
-        showToast(props.flash.success, 'success');
-    }
-
-    if (props.flash?.error) {
-        showToast(props.flash.error, 'error');
-    }
-});
-
 function saveProfile() {
     form.post('/profile', {
         preserveState: true,
@@ -72,6 +62,10 @@ function saveProfile() {
                 name: form.name,
                 username: form.username,
             };
+            showToast('Profil berhasil diperbarui.', 'success');
+        },
+        onError: () => {
+            showToast('Gagal memperbarui profil.', 'error');
         },
     });
 }
@@ -81,6 +75,15 @@ function changePassword() {
         preserveState: true,
         preserveScroll: true,
         only: ['errors', 'flash'],
+        onSuccess: () => {
+            form.current_password = '';
+            form.password = '';
+            form.password_confirmation = '';
+            showToast('Password berhasil diubah.', 'success');
+        },
+        onError: () => {
+            showToast('Gagal mengubah password.', 'error');
+        },
     });
 }
 </script>
