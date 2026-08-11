@@ -81,6 +81,10 @@ class AdminBookingController extends Controller
 
                     'status' => strtolower($booking->status->code),
 
+                    'request' => $booking->request,
+
+                    'processed_notes' => $booking->processed_notes,
+
                 ];
 
             });
