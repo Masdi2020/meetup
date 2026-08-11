@@ -122,27 +122,71 @@ defineProps<{
             <div class="rounded-xl bg-white p-6 shadow">
                 <h2 class="mb-4 text-lg font-semibold">Aktivitas Terbaru</h2>
 
-                <ul class="space-y-3">
-                    <li
+                <div class="space-y-4">
+                    <div
                         v-for="activity in activities"
                         :key="activity.id"
-                        class="border-b pb-2"
+                        class="flex gap-4 border-b pb-4 last:border-0"
                     >
-                        <strong>{{ activity.changed_by.name }}</strong>
+                        <!-- Icon -->
+                        <div
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600"
+                        >
+                            <span class="text-sm font-bold">
+                                {{ activity.user?.name?.charAt(0).toUpperCase() ?? 'A' }}
+                            </span>
+                        </div>
 
-                        mengubah status
+                        <!-- Content -->
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-medium">
+                                        {{ activity.user?.name ?? 'System' }}
+                                    </p>
 
-                        <strong>{{ activity.booking?.title ?? '-' }}</strong>
+                                    <p class="text-sm text-gray-500">
+                                        {{ activity.action }}
+                                    </p>
+                                </div>
 
-                        dari
+                                <span
+                                    class="shrink-0 text-xs text-gray-400"
+                                    :title="formatDateTime(activity.created_at)"
+                                >
+                                    {{ formatTime(activity.created_at) }}
+                                </span>
+                            </div>
 
-                        {{ activity.old_status?.label ?? '-' }}
+                            <div class="mt-2 text-sm text-gray-600">
+                                <span>
+                                    {{ getEntityName(activity.entity_type) }}
+                                </span>
 
-                        menjadi
+                                <span
+                                    v-if="activity.entity_id"
+                                    class="text-gray-400"
+                                >
+                                    #{{ activity.entity_id }}
+                                </span>
+                            </div>
 
-                        {{ activity.new_status?.label ?? '-' }}
-                    </li>
-                </ul>
+                            <p
+                                v-if="activity.comment"
+                                class="mt-1 text-sm text-gray-500"
+                            >
+                                {{ activity.comment }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <p
+                        v-if="activities.length === 0"
+                        class="py-6 text-center text-gray-500"
+                    >
+                        Belum ada aktivitas.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
