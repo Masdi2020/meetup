@@ -21,6 +21,8 @@ interface Booking {
     start: string;
     end: string;
     status: BookingStatus;
+    request?: string;
+    processed_notes?: string;
 }
 
 interface Room {
@@ -61,8 +63,10 @@ const showAddBookingModal = ref(false);
 const showAddBookingSuccess = ref(false);
 const showApproveModal = ref(false);
 const showRejectModal = ref(false);
+const showDetailModal = ref(false);
 const selectedBookingId = ref<number | null>(null);
 const selectedBookingCode = ref<string | null>(null);
+const detailBooking = ref<Booking | null>(null);
 const rejectReason = ref('');
 const rejectValidationErrors = ref({ reason: '' });
 const addBookingPreview = ref<string | null>(null);
@@ -159,6 +163,16 @@ function closeRejectModal() {
     selectedBookingCode.value = null;
     rejectReason.value = '';
     rejectValidationErrors.value.reason = '';
+}
+
+function openDetailModal(booking: Booking) {
+    detailBooking.value = booking;
+    showDetailModal.value = true;
+}
+
+function closeDetailModal() {
+    showDetailModal.value = false;
+    detailBooking.value = null;
 }
 
 function handleAddBookingFile(event: Event) {
@@ -494,6 +508,85 @@ function reject(id: number, code: string) {
 
         <Teleport to="body">
             <div
+                v-if="showDetailModal"
+                class="add-booking-modal-overlay"
+                @click.self="closeDetailModal"
+            >
+                <div class="add-booking-modal">
+                    <div class="modal-header">
+                        <div>
+                            <h2 class="text-xl font-semibold">Detail Booking</h2>
+                            <p class="text-sm text-gray-500">
+                                Informasi lengkap untuk booking <strong>{{ detailBooking?.code }}</strong>.
+                            </p>
+                        </div>
+
+                        <button
+                            class="modal-close"
+                            type="button"
+                            @click="closeDetailModal"
+                            aria-label="Tutup"
+                        >
+                            ×
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <p class="text-sm text-gray-500">Kode Booking</p>
+                                <p class="mt-1 font-medium">{{ detailBooking?.code }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Status</p>
+                                <p class="mt-1 font-medium capitalize">{{ detailBooking?.status }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Peminjam</p>
+                                <p class="mt-1 font-medium">{{ detailBooking?.borrower }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Ruangan</p>
+                                <p class="mt-1 font-medium">{{ detailBooking?.room }}</p>
+                            </div>
+                            <div class="md:col-span-2">
+                                <p class="text-sm text-gray-500">Kegiatan</p>
+                                <p class="mt-1 font-medium">{{ detailBooking?.activity }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Tanggal</p>
+                                <p class="mt-1 font-medium">{{ detailBooking?.date }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Waktu</p>
+                                <p class="mt-1 font-medium">{{ detailBooking?.start }} - {{ detailBooking?.end }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Catatan/Request</p>
+                                <p class="mt-1 font-medium">{{ detailBooking?.request || '-' }}</p>
+                            </div>
+                            <div v-if="detailBooking?.processed_notes">
+                                <p class="text-sm text-gray-500">Processed Note</p>
+                                <p class="mt-1 font-medium">{{ detailBooking?.processed_notes }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button
+                                type="button"
+                                class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                                @click="closeDetailModal"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
+        <Teleport to="body">
+            <div
                 v-if="showApproveModal"
                 class="add-booking-modal-overlay"
                 @click.self="closeApproveModal"
@@ -734,6 +827,7 @@ function reject(id: number, code: string) {
                             <div class="flex justify-end gap-2">
                                 <button
                                     class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-100"
+                                    @click="openDetailModal(booking)"
                                 >
                                     Detail
                                 </button>
