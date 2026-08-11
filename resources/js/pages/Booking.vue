@@ -128,12 +128,9 @@ watch(
     () => form.room_id,
     (roomId) => {
         if (roomId !== null) {
-            localStorage.setItem(
-                'booking_room_id',
-                String(roomId)
-            );
+            localStorage.setItem('booking_room_id', String(roomId));
         }
-    }
+    },
 );
 </script>
 
@@ -142,10 +139,11 @@ watch(
         <h2>Formulir Peminjaman</h2>
 
         <div class="page-card">
-            <div class="room-selector" :class="{'warning': hasWarning('room_id')}">
-                <label>
-                    Ruangan <span class="required">*</span>
-                </label>
+            <div
+                class="room-selector"
+                :class="{ warning: hasWarning('room_id') }"
+            >
+                <label> Ruangan <span class="required">*</span> </label>
                 <select v-model.number="form.room_id">
                     <option :value="null" disabled hidden>Pilih Ruangan</option>
                     <option
@@ -162,12 +160,16 @@ watch(
             </div>
 
             <div class="booking-card">
-                <div class="form-group" :class="{'warning': hasWarning('date')}">
-                    <label>
-                        Tanggal <span class="required">*</span>
-                    </label>
+                <div
+                    class="form-group"
+                    :class="{ warning: hasWarning('date') }"
+                >
+                    <label> Tanggal <span class="required">*</span> </label>
                     <input type="date" v-model="form.date" :min="today" />
-                    <p v-if="form.date && form.date < today" class="warning-text">
+                    <p
+                        v-if="form.date && form.date < today"
+                        class="warning-text"
+                    >
                         Tanggal tidak boleh kurang dari hari ini.
                     </p>
                     <p v-else-if="hasWarning('date')" class="warning-text">
@@ -175,10 +177,11 @@ watch(
                     </p>
                 </div>
 
-                <div class="form-group" :class="{'warning': hasWarning('start_time')}">
-                    <label>
-                        Dari Jam <span class="required">*</span>
-                    </label>
+                <div
+                    class="form-group"
+                    :class="{ warning: hasWarning('start_time') }"
+                >
+                    <label> Dari Jam <span class="required">*</span> </label>
                     <input
                         type="time"
                         v-model="form.start_time"
@@ -191,10 +194,11 @@ watch(
                     </p>
                 </div>
 
-                <div class="form-group" :class="{'warning': hasWarning('end_time')}">
-                    <label>
-                        Sampai Jam <span class="required">*</span>
-                    </label>
+                <div
+                    class="form-group"
+                    :class="{ warning: hasWarning('end_time') }"
+                >
+                    <label> Sampai Jam <span class="required">*</span> </label>
                     <input
                         type="time"
                         v-model="form.end_time"
@@ -207,17 +211,21 @@ watch(
                     </p>
                 </div>
 
-                <div class="form-group" :class="{'warning': hasWarning('title')}">
-                    <label>
-                        Judul Rapat <span class="required">*</span>
-                    </label>
+                <div
+                    class="form-group"
+                    :class="{ warning: hasWarning('title') }"
+                >
+                    <label> Judul Rapat <span class="required">*</span> </label>
                     <input type="text" v-model="form.title" />
                     <p v-if="hasWarning('title')" class="warning-text">
                         Judul rapat wajib diisi.
                     </p>
                 </div>
 
-                <div class="form-group" :class="{'warning': hasWarning('participants')}">
+                <div
+                    class="form-group"
+                    :class="{ warning: hasWarning('participants') }"
+                >
                     <label>
                         Jumlah Orang <span class="required">*</span>
                     </label>
@@ -277,9 +285,7 @@ watch(
         @click.self="showSuccessDialog = false"
     >
         <div class="dialog">
-            <div class="dialog-icon">
-                ✓
-            </div>
+            <div class="dialog-icon">✓</div>
 
             <h3>Booking Berhasil Diajukan</h3>
 
@@ -288,9 +294,7 @@ watch(
                 menunggu persetujuan admin.
             </p>
 
-            <button @click="showSuccessDialog = false">
-                Tutup
-            </button>
+            <button @click="showSuccessDialog = false">Tutup</button>
         </div>
     </div>
 </template>
@@ -482,7 +486,7 @@ button:hover {
 
 @keyframes popup {
     from {
-        transform: scale(.9);
+        transform: scale(0.9);
         opacity: 0;
     }
 

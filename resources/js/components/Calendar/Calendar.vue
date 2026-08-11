@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import dayjs from "dayjs";
-import { ref, computed, watch } from "vue";
+import dayjs from 'dayjs';
+import { ref, computed, watch } from 'vue';
 
-import CalendarToolbar from "./CalendarToolbar.vue";
-import MonthView from "./MonthView.vue";
+import CalendarToolbar from './CalendarToolbar.vue';
+import MonthView from './MonthView.vue';
 
 interface CalendarEvent {
     id: number;
@@ -20,15 +20,11 @@ const props = defineProps<{
     year: number;
 }>();
 
-const emit = defineEmits([
-    "previous",
-    "next",
-    "today",
-]);
+const emit = defineEmits(['previous', 'next', 'today']);
 
 const currentDate = ref(dayjs());
 
-const title = computed(() => currentDate.value.format("MMMM YYYY"));
+const title = computed(() => currentDate.value.format('MMMM YYYY'));
 
 watch(
     () => [props.month, props.year],
@@ -40,7 +36,7 @@ watch(
 
 function today() {
     currentDate.value = dayjs();
-    emit("today");
+    emit('today');
 }
 </script>
 

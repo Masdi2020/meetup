@@ -7,9 +7,7 @@ function logout() {
 </script>
 
 <template>
-    <button class="logout-button" @click="logout">
-        Keluar
-    </button>
+    <button class="logout-button" @click="logout">Keluar</button>
 </template>
 
 <style scoped>

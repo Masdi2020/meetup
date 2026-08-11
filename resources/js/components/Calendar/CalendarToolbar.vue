@@ -1,75 +1,41 @@
 <script setup lang="ts">
-
 defineProps<{
-
-    title:string
-
+    title: string;
 }>();
 
-const emit = defineEmits([
-    "previous",
-    "next",
-    "today"
-]);
-
+const emit = defineEmits(['previous', 'next', 'today']);
 </script>
 
 <template>
+    <div class="toolbar">
+        <div>
+            <button @click="emit('previous')">◀</button>
 
-<div class="toolbar">
+            <button @click="emit('today')">Hari Ini</button>
 
-    <div>
+            <button @click="emit('next')">▶</button>
+        </div>
 
-        <button @click="emit('previous')">
-
-            ◀
-
-        </button>
-
-        <button @click="emit('today')">
-
-            Hari Ini
-
-        </button>
-
-        <button @click="emit('next')">
-
-            ▶
-
-        </button>
-
+        <h2>
+            {{ title }}
+        </h2>
     </div>
-
-    <h2>
-
-        {{ title }}
-
-    </h2>
-
-</div>
-
 </template>
 
 <style scoped>
+.toolbar {
+    display: flex;
 
-.toolbar{
+    justify-content: space-between;
 
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
+    align-items: center;
 }
 
-button{
+button {
+    padding: 8px 14px;
 
-padding:8px 14px;
+    margin-right: 8px;
 
-margin-right:8px;
-
-cursor:pointer;
-
+    cursor: pointer;
 }
-
 </style>

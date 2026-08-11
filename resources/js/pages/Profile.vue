@@ -119,21 +119,31 @@ function changePassword() {
                 <div class="field">
                     <label>Nama</label>
                     <input v-model="form.name" type="text" required />
-                    <p v-if="form.errors.name" class="error">{{ form.errors.name }}</p>
+                    <p v-if="form.errors.name" class="error">
+                        {{ form.errors.name }}
+                    </p>
                 </div>
 
                 <div class="field">
                     <label>Username</label>
                     <input v-model="form.username" type="text" required />
-                    <p v-if="form.errors.username" class="error">{{ form.errors.username }}</p>
+                    <p v-if="form.errors.username" class="error">
+                        {{ form.errors.username }}
+                    </p>
                 </div>
 
-                <button type="submit" :disabled="!profileChanged || form.processing">
+                <button
+                    type="submit"
+                    :disabled="!profileChanged || form.processing"
+                >
                     Simpan Profil
                 </button>
             </form>
 
-            <form v-if="activeTab === 'password'" @submit.prevent="changePassword">
+            <form
+                v-if="activeTab === 'password'"
+                @submit.prevent="changePassword"
+            >
                 <div class="field password-field">
                     <label>Password Lama</label>
                     <div class="password-input-wrapper">
@@ -142,20 +152,55 @@ function changePassword() {
                             :type="showCurrentPassword ? 'text' : 'password'"
                             required
                         />
-                        <button type="button" class="password-toggle" @click="showCurrentPassword = !showCurrentPassword" aria-label="Toggle current password visibility">
-                            <svg v-if="showCurrentPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            @click="showCurrentPassword = !showCurrentPassword"
+                            aria-label="Toggle current password visibility"
+                        >
+                            <svg
+                                v-if="showCurrentPassword"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                width="20"
+                                height="20"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
                                 <path d="M1 1l22 22" />
-                                <path d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38" />
+                                <path
+                                    d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38"
+                                />
                                 <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94" />
-                                <path d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88" />
+                                <path
+                                    d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88"
+                                />
                             </svg>
-                            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <svg
+                                v-else
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                width="20"
+                                height="20"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                />
                                 <circle cx="12" cy="12" r="3" />
                             </svg>
                         </button>
                     </div>
-                    <p v-if="form.errors.current_password" class="error">{{ form.errors.current_password }}</p>
+                    <p v-if="form.errors.current_password" class="error">
+                        {{ form.errors.current_password }}
+                    </p>
                 </div>
 
                 <div class="field password-field">
@@ -166,20 +211,55 @@ function changePassword() {
                             :type="showNewPassword ? 'text' : 'password'"
                             required
                         />
-                        <button type="button" class="password-toggle" @click="showNewPassword = !showNewPassword" aria-label="Toggle new password visibility">
-                            <svg v-if="showNewPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            @click="showNewPassword = !showNewPassword"
+                            aria-label="Toggle new password visibility"
+                        >
+                            <svg
+                                v-if="showNewPassword"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                width="20"
+                                height="20"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
                                 <path d="M1 1l22 22" />
-                                <path d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38" />
+                                <path
+                                    d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38"
+                                />
                                 <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94" />
-                                <path d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88" />
+                                <path
+                                    d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88"
+                                />
                             </svg>
-                            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <svg
+                                v-else
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                width="20"
+                                height="20"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                />
                                 <circle cx="12" cy="12" r="3" />
                             </svg>
                         </button>
                     </div>
-                    <p v-if="form.errors.password" class="error">{{ form.errors.password }}</p>
+                    <p v-if="form.errors.password" class="error">
+                        {{ form.errors.password }}
+                    </p>
                 </div>
 
                 <div class="field password-field">
@@ -190,15 +270,48 @@ function changePassword() {
                             :type="showConfirmPassword ? 'text' : 'password'"
                             required
                         />
-                        <button type="button" class="password-toggle" @click="showConfirmPassword = !showConfirmPassword" aria-label="Toggle confirm password visibility">
-                            <svg v-if="showConfirmPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            @click="showConfirmPassword = !showConfirmPassword"
+                            aria-label="Toggle confirm password visibility"
+                        >
+                            <svg
+                                v-if="showConfirmPassword"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                width="20"
+                                height="20"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
                                 <path d="M1 1l22 22" />
-                                <path d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38" />
+                                <path
+                                    d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38"
+                                />
                                 <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94" />
-                                <path d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88" />
+                                <path
+                                    d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88"
+                                />
                             </svg>
-                            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <svg
+                                v-else
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                width="20"
+                                height="20"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                />
                                 <circle cx="12" cy="12" r="3" />
                             </svg>
                         </button>
@@ -277,7 +390,7 @@ function changePassword() {
     font-size: 13px;
 }
 
-button[type="submit"] {
+button[type='submit'] {
     width: fit-content;
     padding: 12px 24px;
     border: none;
@@ -287,7 +400,7 @@ button[type="submit"] {
     cursor: pointer;
 }
 
-button[type="submit"]:disabled {
+button[type='submit']:disabled {
     opacity: 0.55;
     cursor: not-allowed;
 }

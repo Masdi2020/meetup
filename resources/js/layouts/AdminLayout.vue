@@ -18,7 +18,12 @@ const adminMenus = [
 
 <template>
     <div class="admin-layout">
-        <Sidebar :is-open="isOpen" :menus="adminMenus" brand="Admin Menu" @toggle="isOpen = !isOpen">
+        <Sidebar
+            :is-open="isOpen"
+            :menus="adminMenus"
+            brand="Admin Menu"
+            @toggle="isOpen = !isOpen"
+        >
             <template #sidebar-footer>
                 <LogoutButton />
             </template>

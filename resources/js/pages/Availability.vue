@@ -2,7 +2,7 @@
 import { router } from '@inertiajs/vue3';
 import dayjs from 'dayjs';
 import { ref, computed, watch } from 'vue';
-import Calendar from "@/components/Calendar/Calendar.vue";
+import Calendar from '@/components/Calendar/Calendar.vue';
 
 interface Facility {
     id: number;
@@ -68,13 +68,13 @@ function previousMonth() {
         {
             room: selectedRoomId.value,
             month,
-            year
+            year,
         },
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['events', 'month', 'year']
-        }
+            only: ['events', 'month', 'year'],
+        },
     );
 }
 
@@ -92,13 +92,13 @@ function nextMonth() {
         {
             room: selectedRoomId.value,
             month,
-            year
+            year,
         },
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['events', 'month', 'year']
-        }
+            only: ['events', 'month', 'year'],
+        },
     );
 }
 
@@ -131,11 +131,8 @@ watch(selectedRoomId, (room) => {
         {
             preserveScroll: true,
             preserveState: true,
-            only: [
-                'events',
-                'selectedRoomId'
-            ],
-        }
+            only: ['events', 'selectedRoomId'],
+        },
     );
 });
 </script>

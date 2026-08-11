@@ -15,8 +15,12 @@
                         placeholder="Masukkan username"
                         required
                     />
-                    <p v-if="form.errors.username" class="error">{{ form.errors.username }}</p>
-                    <p v-else-if="showUsernameWarning" class="warning">Username wajib diisi</p>
+                    <p v-if="form.errors.username" class="error">
+                        {{ form.errors.username }}
+                    </p>
+                    <p v-else-if="showUsernameWarning" class="warning">
+                        Username wajib diisi
+                    </p>
                 </div>
 
                 <div class="form-group password-group">
@@ -29,24 +33,67 @@
                             placeholder="Masukkan password"
                             required
                         />
-                        <button type="button" class="password-toggle" @click="showPassword = !showPassword" aria-label="Toggle password visibility">
-                            <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            @click="showPassword = !showPassword"
+                            aria-label="Toggle password visibility"
+                        >
+                            <svg
+                                v-if="showPassword"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                width="20"
+                                height="20"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
                                 <path d="M1 1l22 22" />
-                                <path d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38" />
+                                <path
+                                    d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38"
+                                />
                                 <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94" />
-                                <path d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88" />
+                                <path
+                                    d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88"
+                                />
                             </svg>
-                            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <svg
+                                v-else
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                width="20"
+                                height="20"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                />
                                 <circle cx="12" cy="12" r="3" />
                             </svg>
                         </button>
                     </div>
-                    <p v-if="form.errors.password" class="error">{{ form.errors.password }}</p>
-                    <p v-else-if="showPasswordWarning" class="warning">Password wajib diisi</p>
+                    <p v-if="form.errors.password" class="error">
+                        {{ form.errors.password }}
+                    </p>
+                    <p v-else-if="showPasswordWarning" class="warning">
+                        Password wajib diisi
+                    </p>
                 </div>
 
-                <button type="submit" class="login-btn" :disabled="form.processing">Login</button>
+                <button
+                    type="submit"
+                    class="login-btn"
+                    :disabled="form.processing"
+                >
+                    Login
+                </button>
             </form>
         </div>
     </div>
@@ -114,10 +161,10 @@ const login = () => {
     font-size: 2rem;
     font-weight: 700;
 
-.warning {
-    color: #b45309;
-    font-size: 13px;
-}
+    .warning {
+        color: #b45309;
+        font-size: 13px;
+    }
     color: #1d3557;
     margin-bottom: 30px;
 }

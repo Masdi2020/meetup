@@ -23,7 +23,7 @@ interface pageProps extends InertiaPageProps {
         success?: string;
         error?: string;
         generated_password?: string;
-    }
+    };
 }
 
 const page = usePage<pageProps>();
@@ -54,11 +54,7 @@ const showPasswordModal = ref(false);
 const generatedPassword = ref('');
 
 function resetPassword(user: User) {
-    if (
-        !confirm(
-            `Reset password untuk ${user.name}?`
-        )
-    ) {
+    if (!confirm(`Reset password untuk ${user.name}?`)) {
         return;
     }
 
@@ -78,7 +74,7 @@ function resetPassword(user: User) {
                 generatedPassword.value = password;
                 showPasswordModal.value = true;
             },
-        }
+        },
     );
 }
 
@@ -255,16 +251,16 @@ function closeModal() {
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
         >
             <div class="w-full max-w-md rounded-xl bg-white p-6">
-                <h2 class="text-xl font-bold">
-                    Password baru
-                </h2>
+                <h2 class="text-xl font-bold">Password baru</h2>
 
                 <p class="mt-2 text-gray-500">
-                    Password ini hanya ditampilkan sekali.
-                    Salin dan berikan kepada pengguna.
+                    Password ini hanya ditampilkan sekali. Salin dan berikan
+                    kepada pengguna.
                 </p>
 
-                <div class="mt-4 flex items-center justify-between rounded-lg bg-gray-100 p-3">
+                <div
+                    class="mt-4 flex items-center justify-between rounded-lg bg-gray-100 p-3"
+                >
                     <code class="font-mono text-lg">
                         {{ generatedPassword }}
                     </code>

@@ -110,8 +110,7 @@ function exportCsv() {
 
     const query = params.toString();
 
-    window.location.href =
-        '/audits/export' + (query ? `?${query}` : '');
+    window.location.href = '/audits/export' + (query ? `?${query}` : '');
 }
 
 function formatDate(date: string) {
@@ -254,8 +253,8 @@ function formatValue(value: unknown) {
             </div>
 
             <div class="mt-3 text-sm text-gray-500">
-                Menampilkan {{ props.audits.data.length }}
-                dari {{ filteredCount }} aktivitas
+                Menampilkan {{ props.audits.data.length }} dari
+                {{ filteredCount }} aktivitas
             </div>
         </div>
 
@@ -440,9 +439,7 @@ function formatValue(value: unknown) {
 
                             <p class="font-medium">
                                 {{
-                                    formatRole(
-                                        selectedAudit.user?.role ?? null,
-                                    )
+                                    formatRole(selectedAudit.user?.role ?? null)
                                 }}
                             </p>
                         </div>
@@ -496,7 +493,7 @@ function formatValue(value: unknown) {
 
                         <pre
                             class="overflow-x-auto rounded-lg bg-gray-100 p-4 text-sm"
-                        >{{ formatValue(selectedAudit.old_values) }}</pre>
+                            >{{ formatValue(selectedAudit.old_values) }}</pre>
                     </div>
 
                     <!-- New Values -->
@@ -507,7 +504,7 @@ function formatValue(value: unknown) {
 
                         <pre
                             class="overflow-x-auto rounded-lg bg-gray-100 p-4 text-sm"
-                        >{{ formatValue(selectedAudit.new_values) }}</pre>
+                            >{{ formatValue(selectedAudit.new_values) }}</pre>
                     </div>
                 </div>
 

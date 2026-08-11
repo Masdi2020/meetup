@@ -53,14 +53,14 @@ function getEntityName(entityType: string) {
 function formatTime(date: string) {
     return new Intl.DateTimeFormat('id-ID', {
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
     }).format(new Date(date));
 }
 
 function formatDateTime(date: string) {
     return new Intl.DateTimeFormat('id-ID', {
         dateStyle: 'medium',
-        timeStyle: 'short'
+        timeStyle: 'short',
     }).format(new Date(date));
 }
 
@@ -159,7 +159,11 @@ defineProps<{
                             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600"
                         >
                             <span class="text-sm font-bold">
-                                {{ activity.user?.name?.charAt(0).toUpperCase() ?? 'A' }}
+                                {{
+                                    activity.user?.name
+                                        ?.charAt(0)
+                                        .toUpperCase() ?? 'A'
+                                }}
                             </span>
                         </div>
 

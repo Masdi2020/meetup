@@ -99,7 +99,9 @@ const addBookingHasWarning = (field: string): boolean => {
         case 'title':
             return !addBookingForm[field];
         case 'participants':
-            return !addBookingForm.participants || addBookingForm.participants < 1;
+            return (
+                !addBookingForm.participants || addBookingForm.participants < 1
+            );
         default:
             return false;
     }
@@ -249,12 +251,16 @@ function confirmApprove() {
         return;
     }
 
-    router.patch(`/admin/bookings/${selectedBookingId.value}/approve`, {}, {
-        preserveScroll: true,
-        onSuccess: () => {
-            closeApproveModal();
+    router.patch(
+        `/admin/bookings/${selectedBookingId.value}/approve`,
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                closeApproveModal();
+            },
         },
-    });
+    );
 }
 
 function confirmReject() {
@@ -293,7 +299,9 @@ function reject(id: number, code: string) {
 
 <template>
     <div class="space-y-6">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div
+            class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+        >
             <div>
                 <h1 class="text-3xl font-bold">Booking</h1>
 
@@ -317,9 +325,12 @@ function reject(id: number, code: string) {
                 <div class="add-booking-modal">
                     <div class="modal-header">
                         <div>
-                            <h2 class="text-xl font-semibold">Tambah Peminjaman</h2>
+                            <h2 class="text-xl font-semibold">
+                                Tambah Peminjaman
+                            </h2>
                             <p class="text-sm text-gray-500">
-                                Ajukan peminjaman baru langsung dari panel admin.
+                                Ajukan peminjaman baru langsung dari panel
+                                admin.
                             </p>
                         </div>
 
@@ -333,13 +344,19 @@ function reject(id: number, code: string) {
                         </button>
                     </div>
 
-                    <div v-if="showAddBookingSuccess" class="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+                    <div
+                        v-if="showAddBookingSuccess"
+                        class="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700"
+                    >
                         Peminjaman berhasil ditambahkan.
                     </div>
 
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Status</label
+                            >
                             <select
                                 v-model="addBookingForm.status"
                                 class="mt-2 w-full rounded-lg border px-4 py-2"
@@ -350,12 +367,17 @@ function reject(id: number, code: string) {
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Ruangan</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Ruangan</label
+                            >
                             <select
                                 v-model.number="addBookingForm.room_id"
                                 class="mt-2 w-full rounded-lg border px-4 py-2"
                             >
-                                <option :value="null" disabled hidden>Pilih Ruangan</option>
+                                <option :value="null" disabled hidden>
+                                    Pilih Ruangan
+                                </option>
                                 <option
                                     v-for="room in rooms"
                                     :key="room.id"
@@ -364,31 +386,49 @@ function reject(id: number, code: string) {
                                     {{ room.name }}
                                 </option>
                             </select>
-                            <p v-if="addBookingHasWarning('room_id')" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingHasWarning('room_id')"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 Ruangan wajib dipilih.
                             </p>
-                            <p v-if="addBookingForm.errors.room_id" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingForm.errors.room_id"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 {{ addBookingForm.errors.room_id }}
                             </p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Tanggal</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Tanggal</label
+                            >
                             <input
                                 type="date"
                                 v-model="addBookingForm.date"
                                 class="mt-2 w-full rounded-lg border px-4 py-2"
                             />
-                            <p v-if="addBookingHasWarning('date')" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingHasWarning('date')"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 Tanggal wajib diisi.
                             </p>
-                            <p v-if="addBookingForm.errors.date" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingForm.errors.date"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 {{ addBookingForm.errors.date }}
                             </p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Dari Jam</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Dari Jam</label
+                            >
                             <input
                                 type="time"
                                 v-model="addBookingForm.start_time"
@@ -396,16 +436,25 @@ function reject(id: number, code: string) {
                                 max="23:59"
                                 class="mt-2 w-full rounded-lg border px-4 py-2"
                             />
-                            <p v-if="addBookingHasWarning('start_time')" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingHasWarning('start_time')"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 Waktu mulai wajib diisi.
                             </p>
-                            <p v-if="addBookingForm.errors.start_time" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingForm.errors.start_time"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 {{ addBookingForm.errors.start_time }}
                             </p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Sampai Jam</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Sampai Jam</label
+                            >
                             <input
                                 type="time"
                                 v-model="addBookingForm.end_time"
@@ -414,59 +463,95 @@ function reject(id: number, code: string) {
                                 step="1800"
                                 class="mt-2 w-full rounded-lg border px-4 py-2"
                             />
-                            <p v-if="addBookingHasWarning('end_time')" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingHasWarning('end_time')"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 Waktu selesai wajib diisi.
                             </p>
-                            <p v-if="addBookingForm.errors.end_time" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingForm.errors.end_time"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 {{ addBookingForm.errors.end_time }}
                             </p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Judul Kegiatan</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Judul Kegiatan</label
+                            >
                             <input
                                 type="text"
                                 v-model="addBookingForm.title"
                                 class="mt-2 w-full rounded-lg border px-4 py-2"
                             />
-                            <p v-if="addBookingHasWarning('title')" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingHasWarning('title')"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 Judul wajib diisi.
                             </p>
-                            <p v-if="addBookingForm.errors.title" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingForm.errors.title"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 {{ addBookingForm.errors.title }}
                             </p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Jumlah Orang</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Jumlah Orang</label
+                            >
                             <input
                                 type="number"
                                 min="1"
                                 v-model.number="addBookingForm.participants"
                                 class="mt-2 w-full rounded-lg border px-4 py-2"
                             />
-                            <p v-if="addBookingHasWarning('participants')" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingHasWarning('participants')"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 Jumlah orang wajib diisi dan minimal 1.
                             </p>
-                            <p v-if="addBookingForm.errors.participants" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingForm.errors.participants"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 {{ addBookingForm.errors.participants }}
                             </p>
                         </div>
 
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700">Permintaan Khusus</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Permintaan Khusus</label
+                            >
                             <textarea
                                 rows="3"
                                 v-model="addBookingForm.request"
                                 class="mt-2 w-full rounded-lg border px-4 py-2"
                             ></textarea>
-                            <p v-if="addBookingForm.errors.request" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingForm.errors.request"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 {{ addBookingForm.errors.request }}
                             </p>
                         </div>
 
-                        <div class="md:col-span-2" v-if="addBookingForm.room_id === 1">
-                            <label class="block text-sm font-medium text-gray-700">Unggah Banner Rapat</label>
+                        <div
+                            class="md:col-span-2"
+                            v-if="addBookingForm.room_id === 1"
+                        >
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Unggah Banner Rapat</label
+                            >
                             <input
                                 type="file"
                                 accept=".jpg,.jpeg,.png"
@@ -476,15 +561,24 @@ function reject(id: number, code: string) {
                             <small class="text-sm text-gray-500">
                                 Format yang didukung: JPG, JPEG, PNG
                             </small>
-                            <div v-if="addBookingPreview" class="banner-preview mt-3">
-                                <img :src="addBookingPreview" alt="Preview Banner" />
+                            <div
+                                v-if="addBookingPreview"
+                                class="banner-preview mt-3"
+                            >
+                                <img
+                                    :src="addBookingPreview"
+                                    alt="Preview Banner"
+                                />
                             </div>
-                            <p v-if="addBookingForm.errors.banner" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="addBookingForm.errors.banner"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 {{ addBookingForm.errors.banner }}
                             </p>
                         </div>
 
-                        <div class="md:col-span-2 flex justify-end gap-3">
+                        <div class="flex justify-end gap-3 md:col-span-2">
                             <button
                                 type="button"
                                 class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
@@ -498,7 +592,11 @@ function reject(id: number, code: string) {
                                 :disabled="addBookingForm.processing"
                                 @click="submitAddBooking"
                             >
-                                {{ addBookingForm.processing ? 'Menyimpan...' : 'Simpan' }}
+                                {{
+                                    addBookingForm.processing
+                                        ? 'Menyimpan...'
+                                        : 'Simpan'
+                                }}
                             </button>
                         </div>
                     </div>
@@ -515,9 +613,13 @@ function reject(id: number, code: string) {
                 <div class="add-booking-modal">
                     <div class="modal-header">
                         <div>
-                            <h2 class="text-xl font-semibold">Detail Booking</h2>
+                            <h2 class="text-xl font-semibold">
+                                Detail Booking
+                            </h2>
                             <p class="text-sm text-gray-500">
-                                Informasi lengkap untuk booking <strong>{{ detailBooking?.code }}</strong>.
+                                Informasi lengkap untuk booking
+                                <strong>{{ detailBooking?.code }}</strong
+                                >.
                             </p>
                         </div>
 
@@ -534,40 +636,65 @@ function reject(id: number, code: string) {
                     <div class="space-y-4">
                         <div class="grid gap-4 md:grid-cols-2">
                             <div>
-                                <p class="text-sm text-gray-500">Kode Booking</p>
-                                <p class="mt-1 font-medium">{{ detailBooking?.code }}</p>
+                                <p class="text-sm text-gray-500">
+                                    Kode Booking
+                                </p>
+                                <p class="mt-1 font-medium">
+                                    {{ detailBooking?.code }}
+                                </p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-500">Status</p>
-                                <p class="mt-1 font-medium capitalize">{{ detailBooking?.status }}</p>
+                                <p class="mt-1 font-medium capitalize">
+                                    {{ detailBooking?.status }}
+                                </p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-500">Peminjam</p>
-                                <p class="mt-1 font-medium">{{ detailBooking?.borrower }}</p>
+                                <p class="mt-1 font-medium">
+                                    {{ detailBooking?.borrower }}
+                                </p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-500">Ruangan</p>
-                                <p class="mt-1 font-medium">{{ detailBooking?.room }}</p>
+                                <p class="mt-1 font-medium">
+                                    {{ detailBooking?.room }}
+                                </p>
                             </div>
                             <div class="md:col-span-2">
                                 <p class="text-sm text-gray-500">Kegiatan</p>
-                                <p class="mt-1 font-medium">{{ detailBooking?.activity }}</p>
+                                <p class="mt-1 font-medium">
+                                    {{ detailBooking?.activity }}
+                                </p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-500">Tanggal</p>
-                                <p class="mt-1 font-medium">{{ detailBooking?.date }}</p>
+                                <p class="mt-1 font-medium">
+                                    {{ detailBooking?.date }}
+                                </p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-500">Waktu</p>
-                                <p class="mt-1 font-medium">{{ detailBooking?.start }} - {{ detailBooking?.end }}</p>
+                                <p class="mt-1 font-medium">
+                                    {{ detailBooking?.start }} -
+                                    {{ detailBooking?.end }}
+                                </p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-500">Catatan/Request</p>
-                                <p class="mt-1 font-medium">{{ detailBooking?.request || '-' }}</p>
+                                <p class="text-sm text-gray-500">
+                                    Catatan/Request
+                                </p>
+                                <p class="mt-1 font-medium">
+                                    {{ detailBooking?.request || '-' }}
+                                </p>
                             </div>
                             <div v-if="detailBooking?.processed_notes">
-                                <p class="text-sm text-gray-500">Processed Note</p>
-                                <p class="mt-1 font-medium">{{ detailBooking?.processed_notes }}</p>
+                                <p class="text-sm text-gray-500">
+                                    Processed Note
+                                </p>
+                                <p class="mt-1 font-medium">
+                                    {{ detailBooking?.processed_notes }}
+                                </p>
                             </div>
                         </div>
 
@@ -594,9 +721,13 @@ function reject(id: number, code: string) {
                 <div class="add-booking-modal">
                     <div class="modal-header">
                         <div>
-                            <h2 class="text-xl font-semibold">Setujui Booking</h2>
+                            <h2 class="text-xl font-semibold">
+                                Setujui Booking
+                            </h2>
                             <p class="text-sm text-gray-500">
-                                Yakin ingin menyetujui booking <strong>{{ selectedBookingCode }}</strong>?
+                                Yakin ingin menyetujui booking
+                                <strong>{{ selectedBookingCode }}</strong
+                                >?
                             </p>
                         </div>
 
@@ -612,7 +743,9 @@ function reject(id: number, code: string) {
 
                     <div class="space-y-4">
                         <p class="text-sm text-gray-700">
-                            Booking akan langsung ditandai sebagai <strong>Approved</strong> dan tercatat sebagai diproses.
+                            Booking akan langsung ditandai sebagai
+                            <strong>Approved</strong> dan tercatat sebagai
+                            diproses.
                         </p>
 
                         <div class="flex justify-end gap-3">
@@ -647,7 +780,9 @@ function reject(id: number, code: string) {
                         <div>
                             <h2 class="text-xl font-semibold">Tolak Booking</h2>
                             <p class="text-sm text-gray-500">
-                                Masukkan alasan penolakan untuk booking <strong>{{ selectedBookingCode }}</strong>.
+                                Masukkan alasan penolakan untuk booking
+                                <strong>{{ selectedBookingCode }}</strong
+                                >.
                             </p>
                         </div>
 
@@ -663,13 +798,19 @@ function reject(id: number, code: string) {
 
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Alasan Penolakan</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Alasan Penolakan</label
+                            >
                             <textarea
                                 v-model="rejectReason"
                                 rows="4"
                                 class="mt-2 w-full rounded-lg border px-4 py-2"
                             ></textarea>
-                            <p v-if="rejectValidationErrors.reason" class="mt-2 text-sm text-red-600">
+                            <p
+                                v-if="rejectValidationErrors.reason"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 {{ rejectValidationErrors.reason }}
                             </p>
                         </div>

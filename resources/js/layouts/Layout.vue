@@ -16,7 +16,12 @@ const userMenus = [
 
 <template>
     <div class="layout">
-        <Sidebar :is-open="isOpen" :menus="userMenus" brand="User Menu" @toggle="isOpen = !isOpen">
+        <Sidebar
+            :is-open="isOpen"
+            :menus="userMenus"
+            brand="User Menu"
+            @toggle="isOpen = !isOpen"
+        >
             <template #sidebar-footer>
                 <LogoutButton />
             </template>

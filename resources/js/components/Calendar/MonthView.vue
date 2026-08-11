@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import dayjs from "dayjs";
-import type { Dayjs } from "dayjs";
-import { computed } from "vue";
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
+import { computed } from 'vue';
 
 interface CalendarEvent {
     id: number;
@@ -17,31 +17,25 @@ const props = defineProps<{
     events: CalendarEvent[];
 }>();
 
-const weekDays = [
-    "Sen",
-    "Sel",
-    "Rab",
-    "Kam",
-    "Jum",
-    "Sab",
-    "Min",
-];
+const weekDays = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 const days = computed(() => {
-    const firstDay = props.date.startOf("month");
-    const lastDay = props.date.endOf("month");
+    const firstDay = props.date.startOf('month');
+    const lastDay = props.date.endOf('month');
 
     const firstWeekday = firstDay.day();
     const daysToMonday = firstWeekday === 0 ? 6 : firstWeekday - 1;
-    const start = firstDay.subtract(daysToMonday, "day");
+    const start = firstDay.subtract(daysToMonday, 'day');
 
     const lastWeekday = lastDay.day();
     const daysToSunday = lastWeekday === 0 ? 0 : 7 - lastWeekday;
-    const end = lastDay.add(daysToSunday, "day");
+    const end = lastDay.add(daysToSunday, 'day');
 
-    const totalDays = end.diff(start, "day") + 1;
+    const totalDays = end.diff(start, 'day') + 1;
 
-    return Array.from({ length: totalDays }, (_, index) => start.add(index, "day"));
+    return Array.from({ length: totalDays }, (_, index) =>
+        start.add(index, 'day'),
+    );
 });
 
 const roomColors = [
@@ -58,12 +52,14 @@ const roomColors = [
 ];
 
 function getEventsForDate(day: Dayjs) {
-    return props.events.filter((event) => event.date === day.format("YYYY-MM-DD"));
+    return props.events.filter(
+        (event) => event.date === day.format('YYYY-MM-DD'),
+    );
 }
 
 function getRoomColor(event: CalendarEvent) {
     const hash = event.room
-        .split("")
+        .split('')
         .reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
     return roomColors[hash % roomColors.length];
@@ -104,13 +100,12 @@ function getRoomTextColor() {
                     }"
                 >
                     <span class="event-title">{{ event.title }}</span>
-                    <span class="event-time">{{ event.start_time }}-{{ event.end_time }}</span>
+                    <span class="event-time"
+                        >{{ event.start_time }}-{{ event.end_time }}</span
+                    >
                 </div>
 
-                <div
-                    v-if="getEventsForDate(day).length > 3"
-                    class="event-more"
-                >
+                <div v-if="getEventsForDate(day).length > 3" class="event-more">
                     +{{ getEventsForDate(day).length - 3 }} lagi
                 </div>
             </div>
