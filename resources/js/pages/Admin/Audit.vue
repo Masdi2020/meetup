@@ -67,7 +67,7 @@ const filteredCount = computed(() => props.audits.total);
 
 function applyFilter() {
     router.get(
-        '/audits',
+        '/admin/audits',
         {
             search: search.value || undefined,
             role: roleFilter.value || undefined,
