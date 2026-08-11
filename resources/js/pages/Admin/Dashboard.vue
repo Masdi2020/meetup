@@ -40,7 +40,7 @@ interface Activity {
     } | null;
 }
 
-function getEntityName(entityType: string) {
+function getEntityName(entityType: string | null) {
     if (!entityType) {
         return 'Data';
     }
