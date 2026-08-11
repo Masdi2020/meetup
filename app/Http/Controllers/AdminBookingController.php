@@ -120,7 +120,14 @@ class AdminBookingController extends Controller
         DB::transaction(function () use ($booking) {
             $oldStatus = $booking->status_id;
             $approved = BookingStatus::where('code', 'APPROVED')->firstOrFail();
-            $booking->update(['status_id' => $approved->id]);
+
+            $booking->forceFill([
+                'status_id' => $approved->id,
+                'processed_by' => Auth::id(),
+                'processed_at' => now(),
+                'processed_notes' => 'Disetujui oleh admin',
+            ])->save();
+
             Audit::create([
                 'entity_type' => 'Booking',
                 'entity_id' => $booking->id,
@@ -132,18 +139,30 @@ class AdminBookingController extends Controller
                 'comment' => 'booking disetujui',
             ]);
         });
+
         return back()->with('success', 'Booking approved successfully.');
     }
 
-    public function reject(Booking $booking) {
+    public function reject(Request $request, Booking $booking) {
         if ($booking->status->code !== 'PENDING') {
             return back()->with('error', 'Booking is not pending.');
         }
 
-        DB::transaction(function () use ($booking) {
+        $request->validate([
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        DB::transaction(function () use ($booking, $request) {
             $oldStatus = $booking->status_id;
             $rejected = BookingStatus::where('code', 'REJECTED')->firstOrFail();
-            $booking->update(['status_id' => $rejected->id]);
+
+            $booking->forceFill([
+                'status_id' => $rejected->id,
+                'processed_by' => Auth::id(),
+                'processed_at' => now(),
+                'processed_notes' => $request->reason,
+            ])->save();
+
             Audit::create([
                 'entity_type' => 'Booking',
                 'entity_id' => $booking->id,
@@ -155,6 +174,7 @@ class AdminBookingController extends Controller
                 'comment' => 'booking ditolak',
             ]);
         });
+
         return back()->with('success', 'Booking rejected successfully.');
     }
 

@@ -36,8 +36,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('admin.')
         ->group(function () {
             Route::get('/', AdminDashboardController::class)->name('dashboard');
-            // Route::inertia('/bookings', 'Admin/Booking')->name('booking');
             Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+            Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
             Route::patch('/bookings/{booking}/approve', [AdminBookingController::class, 'approve'])->name('bookings.approve');
             Route::patch('/bookings/{booking}/reject', [AdminBookingController::class, 'reject'])->name('bookings.reject');
             Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');

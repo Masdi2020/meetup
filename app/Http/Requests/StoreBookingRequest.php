@@ -31,6 +31,7 @@ class StoreBookingRequest extends FormRequest
             'participants' => ['required', 'integer', 'min:1'],
             'request' => ['nullable', 'string'],
             'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'status' => ['nullable', 'string', 'in:pending,approved'],
         ];
     }
 }

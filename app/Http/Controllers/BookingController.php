@@ -51,6 +51,26 @@ class BookingController extends Controller
         }
 
         DB::transaction(function () use ($request) {
+            $status = 'pending';
+
+            if (
+                Auth::user()->role === 'admin' &&
+                in_array($request->status, ['pending', 'approved'], true)
+            ) {
+                $status = $request->status;
+            }
+
+            $statusId = BookingStatus::where('code', strtoupper($status))->firstOrFail()->id;
+            $processedBy = null;
+            $processedAt = null;
+            $processedNotes = null;
+
+            if ($status === 'approved') {
+                $processedBy = Auth::id();
+                $processedAt = now();
+                $processedNotes = 'Disetujui oleh admin saat dibuat';
+            }
+
             $booking = Booking::create([
                 'room_id' => $request->room_id,
                 'user_id' => Auth::id(),
@@ -60,7 +80,10 @@ class BookingController extends Controller
                 'title' => $request->title,
                 'participants_count' => $request->participants,
                 'notes' => $request->input('request'),
-                'status_id' => 1,
+                'status_id' => $statusId,
+                'processed_by' => $processedBy,
+                'processed_at' => $processedAt,
+                'processed_notes' => $processedNotes,
             ]);
 
             Audit::create([
@@ -68,10 +91,10 @@ class BookingController extends Controller
                 'entity_id' => $booking->id,
                 'action' => 'created',
                 'old_values' => null,
-                'new_values' => ['status_id' => 1],
+                'new_values' => ['status_id' => $statusId],
                 'changed_by' => Auth::id(),
                 'ip_address' => $this->resolveIpAddress(),
-                'comment' => 'booking dibuat',
+                'comment' => $status === 'approved' ? 'booking dibuat dan disetujui' : 'booking dibuat',
             ]);
 
             if ($request->hasFile('banner')) {
