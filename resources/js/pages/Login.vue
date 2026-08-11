@@ -15,6 +15,8 @@
                         placeholder="Masukkan username"
                         required
                     />
+                    <p v-if="form.errors.username" class="error">{{ form.errors.username }}</p>
+                    <p v-else-if="showUsernameWarning" class="warning">Username wajib diisi</p>
                 </div>
 
                 <div class="form-group password-group">
@@ -40,9 +42,11 @@
                             </svg>
                         </button>
                     </div>
+                    <p v-if="form.errors.password" class="error">{{ form.errors.password }}</p>
+                    <p v-else-if="showPasswordWarning" class="warning">Password wajib diisi</p>
                 </div>
 
-                <button type="submit" class="login-btn">Login</button>
+                <button type="submit" class="login-btn" :disabled="form.processing">Login</button>
             </form>
         </div>
     </div>
@@ -58,7 +62,22 @@ const form = useForm({
 });
 const showPassword = ref(false);
 
+// client-side warning flags shown after a submit attempt
+const showUsernameWarning = ref(false);
+const showPasswordWarning = ref(false);
+
 const login = () => {
+    // reset server-side errors before attempting
+    form.clearErrors();
+
+    // mark warnings when inputs are empty and prevent submit
+    showUsernameWarning.value = form.username.trim() === '';
+    showPasswordWarning.value = form.password.trim() === '';
+
+    if (showUsernameWarning.value || showPasswordWarning.value) {
+        return;
+    }
+
     form.post('/login');
 };
 </script>
@@ -94,6 +113,11 @@ const login = () => {
 .title {
     font-size: 2rem;
     font-weight: 700;
+
+.warning {
+    color: #b45309;
+    font-size: 13px;
+}
     color: #1d3557;
     margin-bottom: 30px;
 }
