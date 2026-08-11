@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Room;
 use App\Services\CalendarService;
 use Carbon\Carbon;
-use App\Models\Room;
-use App\Models\Booking;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AvailabilityController extends Controller
 {
-    public function index (
+    public function index(
         Request $request,
         CalendarService $calendar
     ): Response {
@@ -47,7 +46,7 @@ class AvailabilityController extends Controller
             ),
             'selectedRoomId' => $selectedRoomId,
             'month' => $month,
-            'year'=> $year,
+            'year' => $year,
         ]);
     }
 }

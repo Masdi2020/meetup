@@ -1,17 +1,18 @@
 <?php
 
+use App\Http\Controllers\AdminAuditController;
 use App\Http\Controllers\AdminBookingController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminFacilityController;
 use App\Http\Controllers\AdminRoomController;
 use App\Http\Controllers\AdminUserController;
-use App\Http\Controllers\AdminAuditController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoomController;
-use App\Http\Controllers\AvailabilityController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/meeting/banner', [BannerController::class, 'index'])->name('meeting.banner');
@@ -26,10 +27,10 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
-    Route::post('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
-    Route::put('/profile/password', [App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('profile.password');
-    Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'destroy'])->name('logout');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
     Route::middleware('role:admin')
         ->prefix('admin')

@@ -40,7 +40,8 @@ class Audit extends Model
         return $this->belongsTo(User::class, 'changed_by');
     }
 
-    public function entity(): MorphTo {
+    public function entity(): MorphTo
+    {
         return $this->morphTo();
     }
 }

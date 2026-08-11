@@ -28,6 +28,7 @@ class Room extends Model
     protected $casts = [
         'is_available' => 'boolean',
     ];
+
     /**
      * Summary of bookings
      *

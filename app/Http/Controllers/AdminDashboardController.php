@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Booking;
 use App\Models\Audit;
+use App\Models\Booking;
 use App\Models\BookingStatus;
 use App\Models\Room;
 use App\Models\User;
@@ -46,7 +46,7 @@ class AdminDashboardController extends Controller
                     'entity_id', 'action',
                     'old_values', 'new_values',
                     'changed_by', 'ip_address',
-                    'comment', 'created_at'
+                    'comment', 'created_at',
                 ]),
         ]);
     }

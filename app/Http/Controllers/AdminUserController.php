@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminUserController extends Controller
 {
@@ -42,7 +42,8 @@ class AdminUserController extends Controller
         ]);
     }
 
-    public function resetPassword(User $user) {
+    public function resetPassword(User $user)
+    {
         $password = Str::password(
             length: 8
         );

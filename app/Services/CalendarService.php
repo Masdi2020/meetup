@@ -24,7 +24,7 @@ class CalendarService
             ->when($roomId, function ($query) use ($roomId) {
                 $query->where('room_id', $roomId);
             })
-            ->whereHas('status', function ($query) use ($roomId) {
+            ->whereHas('status', function ($query) {
                 $query->where('code', 'APPROVED');
             })
             ->orderBy('date')

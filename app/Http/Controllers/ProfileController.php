@@ -41,7 +41,7 @@ class ProfileController extends Controller
             'password' => ['required', 'confirmed', 'min:8'],
         ]);
 
-        if (!Hash::check($validated['current_password'], $request->user()->password)) {
+        if (! Hash::check($validated['current_password'], $request->user()->password)) {
             return back()->withErrors([
                 'current_password' => 'Password lama tidak sesuai.',
             ]);

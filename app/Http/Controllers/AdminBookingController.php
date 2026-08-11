@@ -116,7 +116,8 @@ class AdminBookingController extends Controller
         ]);
     }
 
-    public function approve(Booking $booking) {
+    public function approve(Booking $booking)
+    {
         if ($booking->status->code !== 'PENDING') {
             return back()->with('error', 'Booking is not pending.');
         }
@@ -147,7 +148,8 @@ class AdminBookingController extends Controller
         return back()->with('success', 'Booking approved successfully.');
     }
 
-    public function reject(Request $request, Booking $booking) {
+    public function reject(Request $request, Booking $booking)
+    {
         if ($booking->status->code !== 'PENDING') {
             return back()->with('error', 'Booking is not pending.');
         }

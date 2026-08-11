@@ -2,28 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Audit;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
 class AdminAuditController extends Controller
 {
-    public function index(Request $request): InertiaResponse {
+    public function index(Request $request): InertiaResponse
+    {
         $search = $request->string('search')->trim()->toString();
         $role = $request->string('role')->trim()->toString();
 
         $audits = Audit::query()
             ->with([
-                'user:id,name,role'
+                'user:id,name,role',
             ])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('action', 'like', "%{$search}%")
-                        ->orWhere('comment','like', "%{$search}%")
-                        ->orWhere("entity_type","like", "%{$search}%")
+                        ->orWhere('comment', 'like', "%{$search}%")
+                        ->orWhere('entity_type', 'like', "%{$search}%")
                         ->orWhereHas('user', function ($query) use ($search) {
                             $query->where('name', 'like', "%{$search}%");
                         });
@@ -65,7 +64,7 @@ class AdminAuditController extends Controller
             'stats' => $stats,
             'filters' => [
                 'search' => $search,
-                'role'=> $role,
+                'role' => $role,
             ],
         ]);
     }

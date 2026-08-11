@@ -15,7 +15,7 @@ class Facility extends Model
      * Summary of rooms
      *
      * @return BelongsToMany<Room, $this>
-    */
+     */
     public function rooms(): BelongsToMany
     {
         return $this->belongsToMany(

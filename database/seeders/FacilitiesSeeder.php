@@ -26,9 +26,9 @@ class FacilitiesSeeder extends Seeder
                 'name' => 'Speaker',
             ],
             [
-                'id'=> 4,
-                'name'=> 'Microphone',
-            ]
+                'id' => 4,
+                'name' => 'Microphone',
+            ],
         ]);
     }
 }

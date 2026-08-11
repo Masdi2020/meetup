@@ -45,7 +45,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['room_id', 'date']);
-            $table->index(['date','status_id']);
+            $table->index(['date', 'status_id']);
         });
     }
 
