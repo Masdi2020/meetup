@@ -8,7 +8,7 @@ const isOpen = ref(true);
 const userMenus = [
     { name: 'Halaman Utama', icon: '🏠', to: '/dashboard' },
     { name: 'Ruangan', icon: '🗓️', to: '/availability' },
-    { name: 'Peminjaman', icon: '📝', to: '/pinjam' },
+    { name: 'Peminjaman', icon: '📝', to: '/booking' },
     { name: 'Riwayat', icon: '📋', to: '/riwayat' },
     { name: 'Profil', icon: '👤', to: '/profile' },
 ];

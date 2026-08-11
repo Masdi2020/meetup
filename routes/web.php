@@ -52,11 +52,10 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:user')
         ->group(function () {
             Route::inertia('/dashboard', 'Dashboard')->name('home');
-            Route::get('/pinjam', [BookingController::class, 'index'])->name('booking.index');
+            Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');
             Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
             // Route::get('/kalender', [RoomController::class, 'index'])->name('calendar.index');
             Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability.index');
-            Route::get('/kalender', [AvailabilityController::class, 'index'])->name('calendar.events');
             Route::get('/riwayat', [HistoryController::class, 'index'])->name('history.index');
 
             Route::put('/booking/{booking}', [
