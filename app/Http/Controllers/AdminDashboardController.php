@@ -40,7 +40,7 @@ class AdminDashboardController extends Controller
             'activities' => Audit::query()
                 ->with(['user:id,name,role'])
                 ->latest()
-                ->take(10)
+                ->take(5)
                 ->get([
                     'id', 'entity_type',
                     'entity_id', 'action',
