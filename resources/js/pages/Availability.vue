@@ -49,7 +49,9 @@ const selectedRoom = computed(() => {
 });
 
 function booking(roomId: number) {
-    router.get(`/booking/${roomId}`);
+    localStorage.setItem('booking_room_id', String(roomId));
+
+    router.get('/booking');
 }
 
 function previousMonth() {

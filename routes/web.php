@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminFacilityController;
 use App\Http\Controllers\AdminRoomController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\AdminAuditController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\BookingController;
@@ -44,18 +45,17 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/rooms', [AdminRoomController::class, 'index'])->name('rooms.index');
             Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
             Route::post('users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
-            Route::inertia('/audits', 'Admin/Audit')->name('audit');
+            Route::get('/audits', [AdminAuditController::class, 'index'])->name('audits.index');
             Route::inertia('/settings', 'Admin/Setting')->name('setting');
         });
 
     Route::middleware('role:user')
         ->group(function () {
             Route::inertia('/dashboard', 'Dashboard')->name('home');
-            Route::get('/pinjam', [BookingController::class, 'index'])->name('booking.index');
+            Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');
             Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
             // Route::get('/kalender', [RoomController::class, 'index'])->name('calendar.index');
             Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability.index');
-            Route::get('/kalender', [AvailabilityController::class, 'index'])->name('calendar.events');
             Route::get('/riwayat', [HistoryController::class, 'index'])->name('history.index');
 
             Route::put('/booking/{booking}', [

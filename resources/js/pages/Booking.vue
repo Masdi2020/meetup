@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 
 interface Room {
     id: number;
@@ -115,6 +115,26 @@ const submitBooking = () => {
         },
     });
 };
+
+onMounted(() => {
+    const savedRoomId = localStorage.getItem('booking_room_id');
+
+    if (savedRoomId) {
+        form.room_id = Number(savedRoomId);
+    }
+});
+
+watch(
+    () => form.room_id,
+    (roomId) => {
+        if (roomId !== null) {
+            localStorage.setItem(
+                'booking_room_id',
+                String(roomId)
+            );
+        }
+    }
+);
 </script>
 
 <template>
