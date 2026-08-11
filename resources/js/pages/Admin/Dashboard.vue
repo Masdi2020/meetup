@@ -23,19 +23,45 @@ interface TodayBooking {
 
 interface Activity {
     id: number;
-    booking: {
-        title: string;
-    };
-    changed_by: {
-        name: string;
-    };
-    old_status: {
-        label: string;
-    } | null;
-    new_status: {
-        label: string;
-    };
+    entity_type: string | null;
+    entity_id: number | null;
+    action: string;
+    old_values: Record<string, unknown> | null;
+    new_values: Record<string, unknown> | null;
+    changed_by: number | null;
+    ip_address: string | null;
+    comment: string | null;
     created_at: string;
+
+    user: {
+        id: number;
+        name: string;
+        role: string;
+    } | null;
+}
+
+function getEntityName(entityType: string) {
+    if (!entityType) {
+        return 'Data';
+    }
+
+    const parts = entityType.split('\\');
+
+    return parts[parts.length - 1];
+}
+
+function formatTime(date: string) {
+    return new Intl.DateTimeFormat('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(new Date(date));
+}
+
+function formatDateTime(date: string) {
+    return new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+    }).format(new Date(date));
 }
 
 defineProps<{

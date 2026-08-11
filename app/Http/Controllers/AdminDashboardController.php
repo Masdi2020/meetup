@@ -17,32 +17,37 @@ class AdminDashboardController extends Controller
     {
         $pendingStatus = BookingStatus::where('code', 'PENDING')->value('id');
 
+        $today = Carbon::today();
+
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
                 'rooms' => Room::count(),
                 'users' => User::count(),
                 'bookings' => Booking::count(),
                 'pending' => Booking::where('status_id', $pendingStatus)->count(),
+                'today_bookings' => Booking::whereDate('date', $today)->count(),
+                'today_audits' => Audit::whereDate('created_at', $today)->count(),
             ],
 
             'todayBookings' => Booking::query()
                 ->with('room:id,name')
-                ->whereDate('date', Carbon::today())
+                ->whereDate('date', $today)
                 ->orderBy('start_time')
                 ->get([
-                    'id', 'room_id', 'title', 'start_time',
+                    'id', 'room_id', 'title', 'start_time', 'end_time',
                 ]),
 
             'activities' => Audit::query()
-                ->with([
-                    'booking:id,title',
-                    'changedBy:id,name',
-                    'oldStatus:id,label',
-                    'newStatus:id,label',
-                ])
+                ->with(['user:id,name,role'])
                 ->latest()
                 ->take(10)
-                ->get(),
+                ->get([
+                    'id', 'entity_type',
+                    'entity_id', 'action',
+                    'old_values', 'new_values',
+                    'changed_by', 'ip_address',
+                    'comment', 'created_at'
+                ]),
         ]);
     }
 }
