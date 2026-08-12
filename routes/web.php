@@ -45,6 +45,9 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/facilities', [AdminFacilityController::class, 'store'])->name('facilities.store');
             Route::put('/facilities/{facility}', [AdminFacilityController::class, 'update'])->name('facilities.update');
             Route::get('/rooms', [AdminRoomController::class, 'index'])->name('rooms.index');
+            Route::post('/rooms', [AdminRoomController::class, 'store'])->name('rooms.store');
+            Route::put('/rooms/{room}', [AdminRoomController::class, 'update'])->name('rooms.update');
+            Route::patch('/rooms/{room}/toggle-availability', [AdminRoomController::class, 'toggleAvailability'])->name('rooms.toggle-availability');
             Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
             Route::post('users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
             Route::get('/audits', [AdminAuditController::class, 'index'])->name('audits.index');

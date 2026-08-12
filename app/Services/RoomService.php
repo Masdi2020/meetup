@@ -27,7 +27,7 @@ class RoomService
     {
         return Room::with('facilities:id,name')
             ->select([
-                'id', 'name', 'capacity', 'floor',
+                'id', 'name', 'capacity', 'location',
                 'calendar_url',
             ])->get();
     }

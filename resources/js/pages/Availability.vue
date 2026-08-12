@@ -13,7 +13,7 @@ interface Room {
     id: number;
     name: string;
     capacity: number;
-    floor: string;
+    location: string;
     calendar_url: string;
     facilities: Facility[];
     image: null;
@@ -172,7 +172,7 @@ watch(selectedRoomId, (room) => {
 
                     <div class="meta">
                         <span>👥 {{ selectedRoom.capacity }} orang</span>
-                        <span>📍 Lantai {{ selectedRoom.floor }}</span>
+                        <span>📍 {{ selectedRoom.location }}</span>
                         <span>
                             🎥
                             <template
