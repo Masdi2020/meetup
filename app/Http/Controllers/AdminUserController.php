@@ -63,6 +63,7 @@ class AdminUserController extends Controller
 
         $user->update([
             'password' => Hash::make($password),
+            'force_change_password' => true,
         ]);
 
         return back()->with([

@@ -49,8 +49,25 @@ class ProfileController extends Controller
 
         $request->user()->update([
             'password' => Hash::make($validated['password']),
+            'force_change_password' => false,
         ]);
 
         return back()->with('success', 'Password berhasil diubah.');
+    }
+
+    public function updateForcedPassword(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->force_change_password, 403);
+
+        $validated = $request->validate([
+            'password' => ['required', 'confirmed', 'min:8'],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($validated['password']),
+            'force_change_password' => false,
+        ]);
+
+        return back()->with('success', 'Password berhasil dibuat.');
     }
 }

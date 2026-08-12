@@ -7,6 +7,7 @@ export type User = {
     created_at: string;
     updated_at: string;
     [key: string]: unknown;
+    force_change_password: boolean;
 };
 
 export type Auth = {

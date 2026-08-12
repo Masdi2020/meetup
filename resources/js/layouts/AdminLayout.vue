@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import LogoutButton from '@/components/LogoutButton.vue';
 import Sidebar from '@/components/Sidebar.vue';
+import ForceChangePasswordModal from '@/components/ForceChangePasswordModal.vue';
 
 const isOpen = ref(true);
 
@@ -28,6 +29,7 @@ const adminMenus = [
                 <LogoutButton />
             </template>
         </Sidebar>
+        <ForceChangePasswordModal />
 
         <main class="admin-content" :class="{ collapsed: !isOpen }">
             <slot />

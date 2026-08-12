@@ -7,19 +7,20 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-#[Fillable(['name', 'username', 'password', 'role'])]
+#[Fillable(['name', 'username', 'password', 'role', 'force_change_password'])]
 #[Hidden(['password'])]
 class User extends Authenticatable
 {
     /**
      * Summary of casts
      *
-     * @return array{password: string}
+     * @return array{password: string, force_change_password: boolean}
      */
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
+            'force_change_password' => 'boolean',
         ];
     }
 

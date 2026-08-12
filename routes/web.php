@@ -29,6 +29,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::put('/profile/forced-password', [ProfileController::class, 'updateForcedPassword'])->name('profile.forced-password');
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
     Route::middleware('role:admin')
