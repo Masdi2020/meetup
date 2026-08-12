@@ -46,7 +46,7 @@ class AdminUserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username,'.$user->id],
             'role' => ['required', 'in:admin,user'],
         ]);
 
@@ -55,7 +55,7 @@ class AdminUserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'Data pengguna berhasil diperbarui.');
     }
 
-    public function resetPassword(User $user)
+    public function resetPassword(User $user): RedirectResponse
     {
         $password = Str::password(
             length: 8

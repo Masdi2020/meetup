@@ -8,7 +8,14 @@ use Carbon\Carbon;
 class CalendarService
 {
     /**
-     * Create a new class instance.
+     * @return array<int, array{
+     *      id: int,
+     *      title: string,
+     *      room: string,
+     *      date: string,
+     *      start_time: string,
+     *      end_time: string
+     * }>
      */
     public function events(
         Carbon $start,

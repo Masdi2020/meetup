@@ -350,7 +350,9 @@ function closeModal() {
 
                 <form @submit.prevent="submitEdit" class="space-y-4">
                     <div>
-                        <label class="mb-1 block text-sm font-medium">Nama</label>
+                        <label class="mb-1 block text-sm font-medium"
+                            >Nama</label
+                        >
                         <input
                             v-model="editForm.name"
                             type="text"
@@ -360,7 +362,9 @@ function closeModal() {
                     </div>
 
                     <div>
-                        <label class="mb-1 block text-sm font-medium">Username</label>
+                        <label class="mb-1 block text-sm font-medium"
+                            >Username</label
+                        >
                         <input
                             v-model="editForm.username"
                             type="text"
@@ -370,7 +374,9 @@ function closeModal() {
                     </div>
 
                     <div>
-                        <label class="mb-1 block text-sm font-medium">Role</label>
+                        <label class="mb-1 block text-sm font-medium"
+                            >Role</label
+                        >
                         <select
                             v-model="editForm.role"
                             class="w-full rounded-lg border px-4 py-2"

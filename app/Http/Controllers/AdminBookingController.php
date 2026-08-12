@@ -6,6 +6,7 @@ use App\Models\Audit;
 use App\Models\Booking;
 use App\Models\BookingStatus;
 use App\Models\Room;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -116,7 +117,7 @@ class AdminBookingController extends Controller
         ]);
     }
 
-    public function approve(Booking $booking)
+    public function approve(Booking $booking): RedirectResponse
     {
         if ($booking->status->code !== 'PENDING') {
             return back()->with('error', 'Booking is not pending.');
@@ -148,7 +149,7 @@ class AdminBookingController extends Controller
         return back()->with('success', 'Booking approved successfully.');
     }
 
-    public function reject(Request $request, Booking $booking)
+    public function reject(Request $request, Booking $booking): RedirectResponse
     {
         if ($booking->status->code !== 'PENDING') {
             return back()->with('error', 'Booking is not pending.');

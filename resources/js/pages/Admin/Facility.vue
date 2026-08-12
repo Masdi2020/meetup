@@ -41,7 +41,10 @@ const filteredFacilities = computed(() =>
 );
 
 const totalUsage = computed(() =>
-    facilities.value.reduce((total, facility) => total + facility.rooms_count, 0),
+    facilities.value.reduce(
+        (total, facility) => total + facility.rooms_count,
+        0,
+    ),
 );
 
 function openAddModal() {
@@ -240,7 +243,9 @@ function submitEditFacility() {
 
                 <div class="mt-5 space-y-4">
                     <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-700">
+                        <label
+                            class="mb-2 block text-sm font-medium text-gray-700"
+                        >
                             Nama fasilitas
                         </label>
 
@@ -337,7 +342,9 @@ function submitEditFacility() {
 
                 <div class="mt-5 space-y-4">
                     <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-700">
+                        <label
+                            class="mb-2 block text-sm font-medium text-gray-700"
+                        >
                             Nama fasilitas
                         </label>
 

@@ -122,13 +122,21 @@ function submitRoomForm() {
 }
 
 function toggleAvailability(room: Room) {
-    if (!confirm(`${room.is_available ? 'Nonaktifkan' : 'Aktifkan'} ruangan ${room.name}?`)) {
+    if (
+        !confirm(
+            `${room.is_available ? 'Nonaktifkan' : 'Aktifkan'} ruangan ${room.name}?`,
+        )
+    ) {
         return;
     }
 
-    router.patch(`/admin/rooms/${room.id}/toggle-availability`, {}, {
-        preserveScroll: true,
-    });
+    router.patch(
+        `/admin/rooms/${room.id}/toggle-availability`,
+        {},
+        {
+            preserveScroll: true,
+        },
+    );
 }
 </script>
 
@@ -267,7 +275,11 @@ function toggleAvailability(room: Room) {
                                     "
                                     class="rounded-lg px-3 py-2 text-white"
                                 >
-                                    {{ room.is_available ? 'Nonaktifkan' : 'Aktifkan' }}
+                                    {{
+                                        room.is_available
+                                            ? 'Nonaktifkan'
+                                            : 'Aktifkan'
+                                    }}
                                 </button>
                             </div>
                         </td>
@@ -284,7 +296,10 @@ function toggleAvailability(room: Room) {
                 <div class="mb-4 flex items-center justify-between">
                     <h2 class="text-2xl font-bold">Detail Ruangan</h2>
 
-                    <button @click="closeDetailModal" class="text-gray-500 hover:text-gray-700">
+                    <button
+                        @click="closeDetailModal"
+                        class="text-gray-500 hover:text-gray-700"
+                    >
                         ✕
                     </button>
                 </div>
@@ -316,7 +331,11 @@ function toggleAvailability(room: Room) {
                                 "
                                 class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
                             >
-                                {{ selectedRoom.is_available ? 'Aktif' : 'Nonaktif' }}
+                                {{
+                                    selectedRoom.is_available
+                                        ? 'Aktif'
+                                        : 'Nonaktif'
+                                }}
                             </span>
                         </p>
                     </div>
@@ -347,14 +366,19 @@ function toggleAvailability(room: Room) {
                         {{ isEditing ? 'Edit Ruangan' : 'Tambah Ruangan' }}
                     </h2>
 
-                    <button @click="closeFormModal" class="text-gray-500 hover:text-gray-700">
+                    <button
+                        @click="closeFormModal"
+                        class="text-gray-500 hover:text-gray-700"
+                    >
                         ✕
                     </button>
                 </div>
 
                 <form @submit.prevent="submitRoomForm" class="space-y-4">
                     <div>
-                        <label class="mb-1 block text-sm font-medium">Nama Ruangan</label>
+                        <label class="mb-1 block text-sm font-medium"
+                            >Nama Ruangan</label
+                        >
                         <input
                             v-model="roomForm.name"
                             type="text"
@@ -365,7 +389,9 @@ function toggleAvailability(room: Room) {
 
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label class="mb-1 block text-sm font-medium">Kapasitas</label>
+                            <label class="mb-1 block text-sm font-medium"
+                                >Kapasitas</label
+                            >
                             <input
                                 v-model.number="roomForm.capacity"
                                 type="number"
@@ -376,7 +402,9 @@ function toggleAvailability(room: Room) {
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-sm font-medium">Lokasi</label>
+                            <label class="mb-1 block text-sm font-medium"
+                                >Lokasi</label
+                            >
                             <input
                                 v-model="roomForm.location"
                                 type="text"
@@ -387,7 +415,9 @@ function toggleAvailability(room: Room) {
                     </div>
 
                     <div>
-                        <label class="mb-2 block text-sm font-medium">Fasilitas</label>
+                        <label class="mb-2 block text-sm font-medium"
+                            >Fasilitas</label
+                        >
                         <div class="grid gap-2 md:grid-cols-2">
                             <label
                                 v-for="facility in props.facilities ?? []"
@@ -405,8 +435,13 @@ function toggleAvailability(room: Room) {
                     </div>
 
                     <div>
-                        <label class="flex items-center gap-2 text-sm font-medium">
-                            <input v-model="roomForm.is_available" type="checkbox" />
+                        <label
+                            class="flex items-center gap-2 text-sm font-medium"
+                        >
+                            <input
+                                v-model="roomForm.is_available"
+                                type="checkbox"
+                            />
                             Aktif tersedia untuk booking
                         </label>
                     </div>
@@ -425,7 +460,11 @@ function toggleAvailability(room: Room) {
                             class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                             :disabled="roomForm.processing"
                         >
-                            {{ isEditing ? 'Simpan Perubahan' : 'Tambah Ruangan' }}
+                            {{
+                                isEditing
+                                    ? 'Simpan Perubahan'
+                                    : 'Tambah Ruangan'
+                            }}
                         </button>
                     </div>
                 </form>
