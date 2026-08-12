@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { useForm } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 
 defineOptions({
@@ -16,20 +17,96 @@ const props = defineProps<{
     facilities: Facility[];
 }>();
 
+const facilities = ref<Facility[]>([...props.facilities]);
 const search = ref('');
+const showAddModal = ref(false);
+const showDetailModal = ref(false);
+const showEditModal = ref(false);
+const selectedFacility = ref<Facility | null>(null);
+const addFacilityForm = useForm({ name: '' });
+const editFacilityForm = useForm({ name: '' });
+
+watch(
+    () => props.facilities,
+    (value) => {
+        facilities.value = [...value];
+    },
+    { immediate: true },
+);
 
 const filteredFacilities = computed(() =>
-    props.facilities.filter((facility) =>
+    facilities.value.filter((facility) =>
         facility.name.toLowerCase().includes(search.value.toLowerCase()),
     ),
 );
 
 const totalUsage = computed(() =>
-    props.facilities.reduce(
-        (total, facility) => total + facility.rooms_count,
-        0,
-    ),
+    facilities.value.reduce((total, facility) => total + facility.rooms_count, 0),
 );
+
+function openAddModal() {
+    addFacilityForm.reset();
+    showAddModal.value = true;
+}
+
+function closeAddModal() {
+    showAddModal.value = false;
+    addFacilityForm.reset();
+}
+
+function submitAddFacility() {
+    if (!addFacilityForm.name.trim()) {
+        return;
+    }
+
+    addFacilityForm.post('/admin/facilities', {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeAddModal();
+        },
+    });
+}
+
+function openDetailModal(facility: Facility) {
+    selectedFacility.value = facility;
+    showDetailModal.value = true;
+}
+
+function closeDetailModal() {
+    showDetailModal.value = false;
+    selectedFacility.value = null;
+}
+
+function openEditModal(facility: Facility) {
+    selectedFacility.value = facility;
+    editFacilityForm.name = facility.name;
+    showEditModal.value = true;
+}
+
+function closeEditModal() {
+    showEditModal.value = false;
+    selectedFacility.value = null;
+    editFacilityForm.reset();
+}
+
+function submitEditFacility() {
+    if (!selectedFacility.value) {
+        return;
+    }
+
+    const name = editFacilityForm.name.trim();
+
+    if (!name) {
+        return;
+    }
+
+    editFacilityForm.put(`/admin/facilities/${selectedFacility.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeEditModal();
+        },
+    });
+}
 </script>
 
 <template>
@@ -46,6 +123,7 @@ const totalUsage = computed(() =>
 
             <button
                 class="rounded-lg bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700"
+                @click="openAddModal"
             >
                 + Tambah Fasilitas
             </button>
@@ -57,7 +135,7 @@ const totalUsage = computed(() =>
                 <p class="text-sm text-gray-500">Total Fasilitas</p>
 
                 <h2 class="mt-2 text-3xl font-bold">
-                    {{ props.facilities.length }}
+                    {{ facilities.length }}
                 </h2>
             </div>
 
@@ -111,18 +189,22 @@ const totalUsage = computed(() =>
                             <div class="flex justify-end gap-2">
                                 <button
                                     class="rounded-lg border px-3 py-2 transition hover:bg-gray-100"
+                                    @click="openDetailModal(facility)"
                                 >
                                     Detail
                                 </button>
 
                                 <button
                                     class="rounded-lg bg-yellow-500 px-3 py-2 text-white transition hover:bg-yellow-600"
+                                    @click="openEditModal(facility)"
                                 >
                                     Edit
                                 </button>
 
                                 <button
-                                    class="rounded-lg bg-red-600 px-3 py-2 text-white transition hover:bg-red-700"
+                                    class="cursor-not-allowed rounded-lg bg-red-600 px-3 py-2 text-white opacity-50"
+                                    title="Hapus akan dibuat nanti"
+                                    disabled
                                 >
                                     Hapus
                                 </button>
@@ -137,6 +219,153 @@ const totalUsage = computed(() =>
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div
+            v-if="showAddModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            @click.self="closeAddModal"
+        >
+            <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold">Tambah Fasilitas</h2>
+
+                    <button
+                        class="text-xl text-gray-500 hover:text-gray-700"
+                        @click="closeAddModal"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div class="mt-5 space-y-4">
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-gray-700">
+                            Nama fasilitas
+                        </label>
+
+                        <input
+                            v-model="addFacilityForm.name"
+                            type="text"
+                            placeholder="Masukkan nama fasilitas"
+                            class="w-full rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
+                            @keyup.enter="submitAddFacility"
+                        />
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button
+                            class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-100"
+                            @click="closeAddModal"
+                        >
+                            Batal
+                        </button>
+
+                        <button
+                            class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                            @click="submitAddFacility"
+                        >
+                            Simpan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            v-if="showDetailModal && selectedFacility"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            @click.self="closeDetailModal"
+        >
+            <div class="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold">Detail Fasilitas</h2>
+
+                    <button
+                        class="text-xl text-gray-500 hover:text-gray-700"
+                        @click="closeDetailModal"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div class="mt-5 space-y-4">
+                    <div class="rounded-lg bg-gray-50 p-4">
+                        <p class="text-sm text-gray-500">Nama fasilitas</p>
+
+                        <p class="mt-1 text-lg font-semibold">
+                            {{ selectedFacility.name }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-lg bg-gray-50 p-4">
+                        <p class="text-sm text-gray-500">Dipakai di ruangan</p>
+
+                        <p class="mt-1 text-lg font-semibold">
+                            {{ selectedFacility.rooms_count }} Ruangan
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button
+                        class="rounded-lg bg-gray-800 px-4 py-2 text-white hover:bg-gray-900"
+                        @click="closeDetailModal"
+                    >
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div
+            v-if="showEditModal && selectedFacility"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            @click.self="closeEditModal"
+        >
+            <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold">Edit Fasilitas</h2>
+
+                    <button
+                        class="text-xl text-gray-500 hover:text-gray-700"
+                        @click="closeEditModal"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div class="mt-5 space-y-4">
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-gray-700">
+                            Nama fasilitas
+                        </label>
+
+                        <input
+                            v-model="editFacilityForm.name"
+                            type="text"
+                            class="w-full rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
+                            @keyup.enter="submitEditFacility"
+                        />
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button
+                            class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-100"
+                            @click="closeEditModal"
+                        >
+                            Batal
+                        </button>
+
+                        <button
+                            class="rounded-lg bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
+                            @click="submitEditFacility"
+                        >
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>

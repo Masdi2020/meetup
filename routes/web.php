@@ -43,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
             Route::patch('/bookings/{booking}/reject', [AdminBookingController::class, 'reject'])->name('bookings.reject');
             Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');
             Route::post('/facilities', [AdminFacilityController::class, 'store'])->name('facilities.store');
+            Route::put('/facilities/{facility}', [AdminFacilityController::class, 'update'])->name('facilities.update');
             Route::get('/rooms', [AdminRoomController::class, 'index'])->name('rooms.index');
             Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
             Route::post('users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
