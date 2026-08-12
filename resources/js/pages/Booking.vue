@@ -187,7 +187,6 @@ watch(
                         v-model="form.start_time"
                         :min="minStartTime"
                         max="23:59"
-                        step="1800"
                     />
                     <p v-if="hasWarning('start_time')" class="warning-text">
                         Waktu mulai wajib diisi.
@@ -204,7 +203,6 @@ watch(
                         v-model="form.end_time"
                         :min="minEndTime"
                         max="23:59"
-                        step="1800"
                     />
                     <p v-if="hasWarning('end_time')" class="warning-text">
                         Waktu selesai wajib diisi.
