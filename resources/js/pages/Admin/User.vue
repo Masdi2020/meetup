@@ -134,6 +134,53 @@ function closeModal() {
     generatedPassword.value = '';
     showPasswordModal.value = false;
 }
+
+const showCreateModal = ref(false);
+
+const createForm = ref ({
+    name: '',
+    username: '',
+    role: 'user' as Role,
+});
+
+function openCreate() {
+    createForm.value = {
+        name: '',
+        username: '',
+        role: 'user',
+    };
+
+    showCreateModal.value = true;
+}
+
+function closeCreate() {
+    showCreateModal.value = false;
+
+    createForm.value = {
+        name: '',
+        username: '',
+        role: 'user',
+    };
+}
+
+function submitCreate() {
+    router.post('/admin/users', createForm.value, {
+        preserveScroll: true,
+
+        onSuccess: () => {
+            closeCreate();
+
+            const password = page.props.flash?.generated_password;
+
+            if (!password) {
+                return;
+            }
+
+            generatedPassword.value = password;
+            showPasswordModal.value = true;
+        },
+    });
+}
 </script>
 
 <template>
@@ -146,6 +193,7 @@ function closeModal() {
             </div>
 
             <button
+                @click="openCreate"
                 class="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
             >
                 + Tambah Pengguna
@@ -400,6 +448,116 @@ function closeModal() {
                             class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                         >
                             Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div
+            v-if="showCreateModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+        >
+            <div class="w-full max-w-xl rounded-xl bg-white p-6">
+                <div class="mb-5 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold">
+                            Tambah Pengguna
+                        </h2>
+
+                        <p class="mt-1 text-sm text-gray-500">
+                            Password akan dibuat secara otomatis oleh sistem.
+                        </p>
+                    </div>
+
+                    <button
+                        @click="closeCreate"
+                        class="text-gray-500 hover:text-gray-700"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <form
+                    @submit.prevent="submitCreate"
+                    class="space-y-4"
+                >
+                    <div>
+                        <label class="mb-1 block text-sm font-medium">
+                            Nama
+                        </label>
+
+                        <input
+                            v-model="createForm.name"
+                            type="text"
+                            class="w-full rounded-lg border px-4 py-2"
+                            placeholder="Nama pengguna"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-sm font-medium">
+                            Username
+                        </label>
+
+                        <input
+                            v-model="createForm.username"
+                            type="text"
+                            class="w-full rounded-lg border px-4 py-2"
+                            placeholder="Username"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-sm font-medium">
+                            Role
+                        </label>
+
+                        <select
+                            v-model="createForm.role"
+                            class="w-full rounded-lg border px-4 py-2"
+                            required
+                        >
+                            <option value="user">
+                                User
+                            </option>
+
+                            <option value="admin">
+                                Admin
+                            </option>
+                        </select>
+                    </div>
+
+                    <div
+                        class="rounded-lg bg-blue-50 p-4 text-sm text-blue-700"
+                    >
+                        <p class="font-semibold">
+                            Password otomatis
+                        </p>
+
+                        <p class="mt-1">
+                            Sistem akan membuat password secara otomatis.
+                            Pengguna akan diwajibkan mengganti password
+                            tersebut saat login pertama kali.
+                        </p>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            @click="closeCreate"
+                            class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                        >
+                            Batal
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                        >
+                            Buat Pengguna
                         </button>
                     </div>
                 </form>

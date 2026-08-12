@@ -71,4 +71,27 @@ class AdminUserController extends Controller
             'generated_password' => $password,
         ]);
     }
+
+    public function store(Request $request) {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username,'],
+            'role' => ['required', 'in:admin,user'],
+        ]);
+
+        $generatedPassword = Str::password(8);
+
+        User::create([
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'role' => $validated['role'],
+            'password' => Hash::make($generatedPassword),
+            'force_change_password' => true,
+        ]);
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'Pengguna berhasil dibuat.')
+            ->with('generated_password', $generatedPassword);
+    }
 }
