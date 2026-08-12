@@ -14,7 +14,6 @@ interface User {
     id: number;
     name: string;
     username: string;
-    email: string;
     role: Role;
 }
 
@@ -40,6 +39,15 @@ const users = computed(() => props.users);
 
 const search = ref(props.filters.search ?? '');
 const roleFilter = ref(props.filters.role ?? '');
+const selectedUser = ref<User | null>(null);
+const showDetailModal = ref(false);
+const showEditModal = ref(false);
+const editForm = ref({
+    id: 0,
+    name: '',
+    username: '',
+    role: 'user' as Role,
+});
 
 function initials(name: string) {
     return name
@@ -48,6 +56,44 @@ function initials(name: string) {
         .join('')
         .substring(0, 2)
         .toUpperCase();
+}
+
+function openDetail(user: User) {
+    selectedUser.value = user;
+    showDetailModal.value = true;
+}
+
+function closeDetail() {
+    selectedUser.value = null;
+    showDetailModal.value = false;
+}
+
+function openEdit(user: User) {
+    editForm.value = {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        role: user.role,
+    };
+
+    showEditModal.value = true;
+}
+
+function closeEdit() {
+    showEditModal.value = false;
+    editForm.value = {
+        id: 0,
+        name: '',
+        username: '',
+        role: 'user',
+    };
+}
+
+function submitEdit() {
+    router.put(`/admin/users/${editForm.value.id}`, editForm.value, {
+        preserveScroll: true,
+        onSuccess: () => closeEdit(),
+    });
 }
 
 const showPasswordModal = ref(false);
@@ -106,8 +152,6 @@ function closeModal() {
             </button>
         </div>
 
-        <!-- Statistik -->
-
         <div class="grid gap-4 md:grid-cols-4">
             <div class="rounded-xl bg-white p-5 shadow">
                 <p class="text-sm text-gray-500">Total</p>
@@ -134,8 +178,6 @@ function closeModal() {
             </div>
         </div>
 
-        <!-- Filter -->
-
         <div class="rounded-xl bg-white p-5 shadow">
             <div class="grid gap-4 lg:grid-cols-3">
                 <input
@@ -157,8 +199,6 @@ function closeModal() {
                 </select>
             </div>
         </div>
-
-        <!-- Table -->
 
         <div class="overflow-hidden rounded-xl bg-white shadow">
             <table class="min-w-full">
@@ -216,12 +256,14 @@ function closeModal() {
                         <td class="px-5 py-4">
                             <div class="flex justify-end gap-2">
                                 <button
+                                    @click="openDetail(user)"
                                     class="rounded-lg border px-3 py-2 hover:bg-gray-100"
                                 >
                                     Detail
                                 </button>
 
                                 <button
+                                    @click="openEdit(user)"
                                     class="rounded-lg bg-yellow-500 px-3 py-2 text-white hover:bg-yellow-600"
                                 >
                                     Edit
@@ -244,6 +286,118 @@ function closeModal() {
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div
+            v-if="showDetailModal && selectedUser"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+        >
+            <div class="w-full max-w-lg rounded-xl bg-white p-6">
+                <div class="mb-4 flex items-center justify-between">
+                    <h2 class="text-xl font-bold">Detail Pengguna</h2>
+
+                    <button
+                        @click="closeDetail"
+                        class="text-gray-500 hover:text-gray-700"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <div class="space-y-4 text-sm text-gray-700">
+                    <div>
+                        <p class="font-semibold text-gray-500">Nama</p>
+                        <p>{{ selectedUser.name }}</p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-gray-500">Username</p>
+                        <p>{{ selectedUser.username }}</p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-gray-500">Role</p>
+                        <span
+                            :class="
+                                selectedUser.role === 'admin'
+                                    ? 'bg-indigo-100 text-indigo-700'
+                                    : 'bg-green-100 text-green-700'
+                            "
+                            class="mt-1 inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase"
+                        >
+                            {{ selectedUser.role }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            v-if="showEditModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+        >
+            <div class="w-full max-w-xl rounded-xl bg-white p-6">
+                <div class="mb-5 flex items-center justify-between">
+                    <h2 class="text-xl font-bold">Edit Pengguna</h2>
+
+                    <button
+                        @click="closeEdit"
+                        class="text-gray-500 hover:text-gray-700"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <form @submit.prevent="submitEdit" class="space-y-4">
+                    <div>
+                        <label class="mb-1 block text-sm font-medium">Nama</label>
+                        <input
+                            v-model="editForm.name"
+                            type="text"
+                            class="w-full rounded-lg border px-4 py-2"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-sm font-medium">Username</label>
+                        <input
+                            v-model="editForm.username"
+                            type="text"
+                            class="w-full rounded-lg border px-4 py-2"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-sm font-medium">Role</label>
+                        <select
+                            v-model="editForm.role"
+                            class="w-full rounded-lg border px-4 py-2"
+                        >
+                            <option value="admin">Admin</option>
+                            <option value="user">User</option>
+                        </select>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            @click="closeEdit"
+                            class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                        >
+                            Batal
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                        >
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div
