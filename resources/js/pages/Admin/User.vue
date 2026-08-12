@@ -137,7 +137,7 @@ function closeModal() {
 
 const showCreateModal = ref(false);
 
-const createForm = ref ({
+const createForm = ref({
     name: '',
     username: '',
     role: 'user' as Role,
@@ -461,9 +461,7 @@ function submitCreate() {
             <div class="w-full max-w-xl rounded-xl bg-white p-6">
                 <div class="mb-5 flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl font-bold">
-                            Tambah Pengguna
-                        </h2>
+                        <h2 class="text-xl font-bold">Tambah Pengguna</h2>
 
                         <p class="mt-1 text-sm text-gray-500">
                             Password akan dibuat secara otomatis oleh sistem.
@@ -478,10 +476,7 @@ function submitCreate() {
                     </button>
                 </div>
 
-                <form
-                    @submit.prevent="submitCreate"
-                    class="space-y-4"
-                >
+                <form @submit.prevent="submitCreate" class="space-y-4">
                     <div>
                         <label class="mb-1 block text-sm font-medium">
                             Nama
@@ -520,27 +515,21 @@ function submitCreate() {
                             class="w-full rounded-lg border px-4 py-2"
                             required
                         >
-                            <option value="user">
-                                User
-                            </option>
+                            <option value="user">User</option>
 
-                            <option value="admin">
-                                Admin
-                            </option>
+                            <option value="admin">Admin</option>
                         </select>
                     </div>
 
                     <div
                         class="rounded-lg bg-blue-50 p-4 text-sm text-blue-700"
                     >
-                        <p class="font-semibold">
-                            Password otomatis
-                        </p>
+                        <p class="font-semibold">Password otomatis</p>
 
                         <p class="mt-1">
                             Sistem akan membuat password secara otomatis.
-                            Pengguna akan diwajibkan mengganti password
-                            tersebut saat login pertama kali.
+                            Pengguna akan diwajibkan mengganti password tersebut
+                            saat login pertama kali.
                         </p>
                     </div>
 

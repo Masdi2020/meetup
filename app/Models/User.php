@@ -14,13 +14,13 @@ class User extends Authenticatable
     /**
      * Summary of casts
      *
-     * @return array{password: string, force_change_password: boolean}
+     * @return array{password: 'hashed', force_change_password: 'bool'}
      */
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
-            'force_change_password' => 'boolean',
+            'force_change_password' => 'bool',
         ];
     }
 
