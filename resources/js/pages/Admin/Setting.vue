@@ -1,35 +1,24 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { useForm } from "@inertiajs/vue3";
 import AdminLayout from '@/layouts/AdminLayout.vue';
 
 defineOptions({
     layout: AdminLayout,
 });
 
-const settings = ref({
-    appName: 'Meeting Room',
+const props = defineProps<{
+    settings: {
+        appName: string;
+        sessionTimeout: number;
+    }
+}>()
 
-    organization: 'Diskominfo',
-
-    allowSameDayBooking: true,
-
-    maxBookingHour: 4,
-
-    maxBookingDay: 30,
-
-    openTime: '07:30',
-
-    closeTime: '17:30',
-
-    emailNotification: true,
-
-    dashboardNotification: true,
-
-    sessionTimeout: 60,
-});
+const form = useForm({
+    ...props.settings
+})
 
 function save() {
-    alert('Simpan konfigurasi');
+    form.put('/admin/settings')
 }
 </script>
 
@@ -57,18 +46,7 @@ function save() {
                     </label>
 
                     <input
-                        v-model="settings.appName"
-                        class="w-full rounded-lg border px-4 py-2"
-                    />
-                </div>
-
-                <div>
-                    <label class="mb-2 block font-medium">
-                        Nama Instansi
-                    </label>
-
-                    <input
-                        v-model="settings.organization"
+                        v-model="form.appName"
                         class="w-full rounded-lg border px-4 py-2"
                     />
                 </div>
@@ -94,7 +72,7 @@ function save() {
                 </label>
 
                 <input
-                    v-model="settings.sessionTimeout"
+                    v-model="form.sessionTimeout"
                     type="number"
                     class="w-full rounded-lg border px-4 py-2"
                 />

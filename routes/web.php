@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminFacilityController;
 use App\Http\Controllers\AdminRoomController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\AdminSettingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\BannerController;
@@ -53,7 +54,16 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
             Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
             Route::get('/audits', [AdminAuditController::class, 'index'])->name('audits.index');
-            Route::inertia('/settings', 'Admin/Setting')->name('setting');
+
+            Route::get(
+                '/settings',
+                [AdminSettingController::class, 'edit']
+            )->name('settings');
+
+            Route::put(
+                '/settings',
+                [AdminSettingController::class,'update']
+            )->name('settings.update');
         });
 
     Route::middleware('role:user')
