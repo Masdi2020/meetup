@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckBookingOwnership;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ])->alias([
             'role' => CheckRole::class,
+            'booking.owner' => CheckBookingOwnership::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
