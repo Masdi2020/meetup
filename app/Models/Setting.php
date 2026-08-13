@@ -2,18 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
 #[Fillable(['key', 'value', 'type'])]
 class Setting extends Model
 {
-    public static function get (string $key, mixed $default = null): mixed {
+    public static function get(string $key, mixed $default = null): mixed
+    {
         return Cache::rememberForever(
             "setting:{$key}",
             function () use ($key, $default) {
-                $setting = static::where("key", $key)->first();
+                $setting = static::where('key', $key)->first();
 
                 if ($setting === null) {
                     return $default;
@@ -49,10 +50,10 @@ class Setting extends Model
         };
 
         static::updateOrCreate(
-            ['key'=> $key],
+            ['key' => $key],
             [
-                'value'=> $storedValue,
-                'type'=> $type,
+                'value' => $storedValue,
+                'type' => $type,
             ]
         );
 

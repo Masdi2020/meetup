@@ -10,7 +10,8 @@ use Inertia\Response;
 
 class AdminSettingController extends Controller
 {
-    public function edit(): Response {
+    public function edit(): Response
+    {
         return Inertia::render('Admin/Setting', [
             'settings' => [
                 'appName' => Setting::get('app_name', 'Metting Room'),
@@ -19,9 +20,10 @@ class AdminSettingController extends Controller
         ]);
     }
 
-    public function update(Request $request): RedirectResponse {
+    public function update(Request $request): RedirectResponse
+    {
         $validated = $request->validate([
-            'appName' => ['required','string','max:255'],
+            'appName' => ['required', 'string', 'max:255'],
             'sessionTimeout' => [
                 'required',
                 'integer',
@@ -31,8 +33,8 @@ class AdminSettingController extends Controller
         ]);
 
         Setting::set('app_name', $validated['appName'], 'string');
-        Setting::set('session_timeout', $validated['sessionTimeout'],'integer');
+        Setting::set('session_timeout', $validated['sessionTimeout'], 'integer');
 
-        return back()->with('success','Pengaturan berhasil diperbarui');
+        return back()->with('success', 'Pengaturan berhasil diperbarui');
     }
 }

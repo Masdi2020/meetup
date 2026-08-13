@@ -15,14 +15,14 @@ class SettingSeeder extends Seeder
         $settings = [
             [
                 'key' => 'app_name',
-                'value'=> 'Meeting Room',
+                'value' => 'Meeting Room',
                 'type' => 'string',
             ],
             [
-                'key'=> 'session_timeout',
-                'value'=> '60',
-                'type'=> 'integer'
-            ]
+                'key' => 'session_timeout',
+                'value' => '60',
+                'type' => 'integer',
+            ],
         ];
 
         foreach ($settings as $setting) {
