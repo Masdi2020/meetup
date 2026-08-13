@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from "@inertiajs/vue3";
+import { useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 
 defineOptions({
@@ -10,15 +10,15 @@ const props = defineProps<{
     settings: {
         appName: string;
         sessionTimeout: number;
-    }
-}>()
+    };
+}>();
 
 const form = useForm({
-    ...props.settings
-})
+    ...props.settings,
+});
 
 function save() {
-    form.put('/admin/settings')
+    form.put('/admin/settings');
 }
 </script>
 

@@ -122,7 +122,7 @@ const isInvalidTimeRange = computed(() => {
     }
 
     return form.end_time <= form.start_time;
-})
+});
 
 onMounted(() => {
     const savedRoomId = localStorage.getItem('booking_room_id');
@@ -213,10 +213,7 @@ watch(
                         max="23:59"
                     />
 
-                    <p
-                        v-if="isInvalidTimeRange"
-                        class="warning-text"
-                    >
+                    <p v-if="isInvalidTimeRange" class="warning-text">
                         Waktu selesai harus lebih besar dari waktu mulai
                     </p>
 
