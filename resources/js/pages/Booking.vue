@@ -41,7 +41,9 @@ const hasWarning = (field: string): boolean => {
         case 'date':
             return !form.date || form.date < today;
         case 'start_time':
+            return !form.start_time;
         case 'end_time':
+            return !form.end_time || isInvalidTimeRange.value;
         case 'title':
             return !form[field];
         case 'participants':
@@ -96,7 +98,8 @@ const submitBooking = () => {
         hasWarning('start_time') ||
         hasWarning('end_time') ||
         hasWarning('title') ||
-        hasWarning('participants')
+        hasWarning('participants') ||
+        isInvalidTimeRange.value
     ) {
         return;
     }
@@ -110,11 +113,16 @@ const submitBooking = () => {
             preview.value = null;
             submitted.value = false;
         },
-        onError: (err) => {
-            console.log(err);
-        },
     });
 };
+
+const isInvalidTimeRange = computed(() => {
+    if (!form.start_time || !form.end_time) {
+        return false;
+    }
+
+    return form.end_time <= form.start_time;
+})
 
 onMounted(() => {
     const savedRoomId = localStorage.getItem('booking_room_id');
@@ -204,6 +212,14 @@ watch(
                         :min="minEndTime"
                         max="23:59"
                     />
+
+                    <p
+                        v-if="isInvalidTimeRange"
+                        class="warning-text"
+                    >
+                        Waktu selesai harus lebih besar dari waktu mulai
+                    </p>
+
                     <p v-if="hasWarning('end_time')" class="warning-text">
                         Waktu selesai wajib diisi.
                     </p>
