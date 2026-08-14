@@ -26,15 +26,15 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             return match (Auth::user()->role) {
-                'admin' => to_route('admin.dashboard'),
-                'user' => to_route('home'),
+                'admin' => to_route('admin.dashboard')->with('success', 'Login Berhasil'),
+                'user' => to_route('home')->with('success', 'Login Berhasil'),
                 default => abort(403),
             };
         }
 
         return back()->withErrors([
             'username' => 'Username atau password salah',
-        ]);
+        ])->withInput();
     }
 
     public function destroy(Request $request): RedirectResponse

@@ -52,7 +52,7 @@ class AdminUserController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('admin.users.index')->with('success', 'Data pengguna berhasil diperbarui.');
+        return to_route('admin.users.index')->with('success', 'Data pengguna berhasil diperbarui.');
     }
 
     public function resetPassword(User $user): RedirectResponse
