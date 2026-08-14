@@ -44,6 +44,8 @@ return new class extends Migration
 
             $table->timestamps();
 
+            $table->softDeletes();
+
             $table->index(['room_id', 'date']);
             $table->index(['date', 'status_id']);
         });

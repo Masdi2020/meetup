@@ -31,6 +31,8 @@ return new class extends Migration
 
             $table->timestamp('created_at')->useCurrent();
 
+            $table->softDeletes();
+
             $table->index('booking_id');
         });
     }
