@@ -5,8 +5,8 @@ use App\Http\Controllers\AdminBookingController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminFacilityController;
 use App\Http\Controllers\AdminRoomController;
-use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminSettingController;
+use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\BannerController;
@@ -62,7 +62,7 @@ Route::middleware(['auth'])->group(function () {
 
             Route::put(
                 '/settings',
-                [AdminSettingController::class,'update']
+                [AdminSettingController::class, 'update']
             )->name('settings.update');
         });
 

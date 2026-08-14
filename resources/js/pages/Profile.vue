@@ -30,8 +30,6 @@ const originalProfile = ref({
 });
 
 const activeTab = ref<'profile' | 'password'>('profile');
-const toast = ref<{ message: string; type: 'success' | 'error' } | null>(null);
-let toastTimer = 0;
 const showCurrentPassword = ref(false);
 const showNewPassword = ref(false);
 const showConfirmPassword = ref(false);
@@ -43,15 +41,6 @@ const profileChanged = computed(() => {
     );
 });
 
-function showToast(message: string, type: 'success' | 'error') {
-    toast.value = { message, type };
-    window.clearTimeout(toastTimer);
-
-    toastTimer = window.setTimeout(() => {
-        toast.value = null;
-    }, 3500);
-}
-
 function saveProfile() {
     form.post('/profile', {
         preserveState: true,
@@ -62,10 +51,6 @@ function saveProfile() {
                 name: form.name,
                 username: form.username,
             };
-            showToast('Profil berhasil diperbarui.', 'success');
-        },
-        onError: () => {
-            showToast('Gagal memperbarui profil.', 'error');
         },
     });
 }
@@ -79,10 +64,6 @@ function changePassword() {
             form.current_password = '';
             form.password = '';
             form.password_confirmation = '';
-            showToast('Password berhasil diubah.', 'success');
-        },
-        onError: () => {
-            showToast('Gagal mengubah password.', 'error');
         },
     });
 }
@@ -111,10 +92,6 @@ function changePassword() {
         </div>
 
         <div class="content">
-            <div v-if="toast" :class="['toast', toast.type]">
-                {{ toast.message }}
-            </div>
-
             <form v-if="activeTab === 'profile'" @submit.prevent="saveProfile">
                 <div class="field">
                     <label>Nama</label>
@@ -432,24 +409,5 @@ button[type='submit']:disabled {
 
 .password-toggle svg {
     display: block;
-}
-
-.toast {
-    position: fixed;
-    top: 24px;
-    right: 24px;
-    z-index: 50;
-    padding: 14px 18px;
-    border-radius: 12px;
-    color: white;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
-}
-
-.toast.success {
-    background: #16a34a;
-}
-
-.toast.error {
-    background: #dc2626;
 }
 </style>
