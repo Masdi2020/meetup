@@ -131,8 +131,21 @@ const isInvalidTimeRange = computed(() => {
 onMounted(() => {
     const savedRoomId = localStorage.getItem('booking_room_id');
 
-    if (savedRoomId) {
-        form.room_id = Number(savedRoomId);
+    if (!savedRoomId) {
+        return;
+    }
+
+    const roomId = Number(savedRoomId);
+
+    const roomExists = rooms.some(
+        (room) => room.id === roomId
+    );
+
+    if (roomExists) {
+        form.room_id = roomId;
+    } else {
+        localStorage.removeItem('booking_room_id');
+        form.room_id = null;
     }
 });
 
