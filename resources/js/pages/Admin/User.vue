@@ -181,6 +181,16 @@ function submitCreate() {
         },
     });
 }
+
+function deleteUser(user:User) {
+    if (!confirm(`Hapus pengguna ${user.name}?`)) {
+        return;
+    }
+
+    router.delete(`/admin/users/${user.id}`, {
+        preserveScroll: true,
+    });
+}
 </script>
 
 <template>
@@ -326,6 +336,7 @@ function submitCreate() {
 
                                 <button
                                     class="rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700"
+                                    @click="deleteUser(user)"
                                 >
                                     Hapus
                                 </button>

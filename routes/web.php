@@ -49,10 +49,13 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/rooms', [AdminRoomController::class, 'store'])->name('rooms.store');
             Route::put('/rooms/{room}', [AdminRoomController::class, 'update'])->name('rooms.update');
             Route::patch('/rooms/{room}/toggle-availability', [AdminRoomController::class, 'toggleAvailability'])->name('rooms.toggle-availability');
+
             Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
             Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
             Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
             Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
+            Route::delete('/users/{user}', [AdminUserController::class,'destroy'])->name('users.destroy');
+
             Route::get('/audits', [AdminAuditController::class, 'index'])->name('audits.index');
 
             Route::get(

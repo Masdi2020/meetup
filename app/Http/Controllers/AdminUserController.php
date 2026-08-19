@@ -95,4 +95,10 @@ class AdminUserController extends Controller
             ->with('success', 'Pengguna berhasil dibuat.')
             ->with('generated_password', $generatedPassword);
     }
+
+    public function destroy(User $user): RedirectResponse {
+        $user->delete();
+
+        return back()->with('success', 'Pengguna berhasil dihapus.');
+    }
 }

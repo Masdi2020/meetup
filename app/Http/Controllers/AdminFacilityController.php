@@ -54,4 +54,10 @@ class AdminFacilityController extends Controller
 
         return redirect()->back()->with('success', 'Fasilitas berhasil diperbarui.');
     }
+
+    public function destroy(Facility $facility): RedirectResponse {
+        $facility->delete();
+
+        return back()->with('success','Fasilitas berhasil dihapus');
+    }
 }
