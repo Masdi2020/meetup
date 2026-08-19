@@ -31,6 +31,10 @@ const form = useForm({
 const submitted = ref(false);
 
 const hasWarning = (field: string): boolean => {
+    if (form.errors[field as keyof typeof form.errors]) {
+        return true;
+    }
+
     if (!submitted.value) {
         return false;
     }
@@ -134,6 +138,9 @@ onMounted(() => {
 
 watch(
     () => form.room_id,
+    () => {
+        form.clearErrors('room_id');
+    },
     (roomId) => {
         if (roomId !== null) {
             localStorage.setItem('booking_room_id', String(roomId));
@@ -162,7 +169,13 @@ watch(
                         {{ room.name }}
                     </option>
                 </select>
-                <p v-if="hasWarning('room_id')" class="warning-text">
+                <p
+                    v-if="form.errors.room_id"
+                    class="warning-text"
+                >
+                    {{ form.errors.room_id }}
+                </p>
+                <p v-else-if="hasWarning('room_id')" class="warning-text">
                     Ruangan wajib dipilih.
                 </p>
             </div>

@@ -8,6 +8,7 @@ use App\Models\Audit;
 use App\Models\Booking;
 use App\Models\BookingAttachment;
 use App\Models\BookingStatus;
+use App\Models\Room;
 use App\Services\RoomService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +31,17 @@ class BookingController extends Controller
 
     public function store(StoreBookingRequest $request): RedirectResponse
     {
+        $room = Room::query()
+            ->whereKey($request->room_id)
+            ->where('is_available', true)
+            ->first();
+
+        if (!$room) {
+            return back()->withErrors([
+                'room_id'=> 'Ruangan tidak tersedia untuk dipinjam',
+            ]);
+        }
+
         $exists = Booking::query()
             ->where('room_id', '=', $request->room_id)
             ->where('date', '=', $request->date)
