@@ -5,6 +5,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 interface Room {
     id: number;
     name: string;
+    has_display: boolean;
 }
 
 const today = new Date().toISOString().split('T')[0];
@@ -127,6 +128,14 @@ const isInvalidTimeRange = computed(() => {
 
     return form.end_time <= form.start_time;
 });
+
+const selectedRoom = computed(() => {
+    return rooms.find((room) => room.id === form.room_id);
+});
+
+const hasDisplay = computed(() => {
+    return selectedRoom.value?.has_display ?? false;
+})
 
 onMounted(() => {
     const savedRoomId = localStorage.getItem('booking_room_id');
@@ -285,7 +294,7 @@ watch(
                     ></textarea>
                 </div>
 
-                <div class="form-group" v-if="form.room_id === 1">
+                <div class="form-group" v-if="hasDisplay">
                     <label>Unggah Banner Rapat</label>
 
                     <input

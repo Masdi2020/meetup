@@ -24,14 +24,9 @@ class AvailabilityController extends Controller
         $roomId = null;
         $selectedRoomId = 0;
 
-        if ($roomValue !== null && $roomValue !== '') {
-            if ((string) $roomValue !== '0') {
-                $roomId = (int) $roomValue;
-                $selectedRoomId = $roomId;
-            }
-        } elseif ($rooms->isNotEmpty()) {
-            $selectedRoomId = $rooms->first()->id;
-            $roomId = $selectedRoomId;
+        if ($roomValue !== null && $roomValue !== '' && (string) $roomValue !== '0') {
+            $roomId = (int) $roomValue;
+            $selectedRoomId = $roomId;
         }
 
         $start = Carbon::create($year, $month, 1)->startOfMonth();

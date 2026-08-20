@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'path',
     'mime_type',
     'size',
-    'uploaded_by',
 ])]
 class BookingAttachment extends Model
 {

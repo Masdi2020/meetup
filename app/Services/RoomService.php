@@ -14,7 +14,7 @@ class RoomService
      */
     public function list(): Collection
     {
-        return Room::select('id', 'name')
+        return Room::select('id', 'name', 'has_display')
             ->where('is_available', true)
             ->get();
     }

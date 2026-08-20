@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'capacity',
     'location',
     'is_available',
+    'has_display',
 ])]
 
 /**
@@ -27,6 +28,7 @@ class Room extends Model
      */
     protected $casts = [
         'is_available' => 'boolean',
+        'has_display'=> 'boolean',
     ];
 
     /**

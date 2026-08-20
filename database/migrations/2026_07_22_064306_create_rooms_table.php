@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('location');
             $table->string('image_path')->nullable();
             $table->boolean('is_available')->default(true);
+            $table->boolean('has_display')->default(false);
 
             $table->timestamps();
 
