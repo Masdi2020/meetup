@@ -47,7 +47,7 @@ class AdminUserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username,'.$user->id],
-            'role' => ['required', 'in:admin,user'],
+            'role' => ['required', 'in:admin,user,display'],
         ]);
 
         $user->update($validated);
@@ -77,7 +77,7 @@ class AdminUserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username,'],
-            'role' => ['required', 'in:admin,user'],
+            'role' => ['required', 'in:admin,user,display'],
         ]);
 
         $generatedPassword = Str::password(8);

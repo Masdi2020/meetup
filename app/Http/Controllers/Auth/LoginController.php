@@ -27,7 +27,8 @@ class LoginController extends Controller
 
             return match (Auth::user()->role) {
                 'admin' => to_route('admin.dashboard')->with('success', 'Login Berhasil'),
-                'user' => to_route('home')->with('success', 'Login Berhasil'),
+                'user' => to_route('availability.index')->with('success', 'Login Berhasil'),
+                'display' => to_route('display.index')->with('success', 'Login Berhasil'),
                 default => abort(403),
             };
         }

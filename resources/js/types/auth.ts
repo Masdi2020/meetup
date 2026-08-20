@@ -8,6 +8,7 @@ export type User = {
     updated_at: string;
     [key: string]: unknown;
     force_change_password: boolean;
+    role: 'admin' | 'display' | 'user';
 };
 
 export type Auth = {
