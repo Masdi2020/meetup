@@ -2,13 +2,7 @@
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import AdminLayout from '@/layouts/AdminLayout.vue';
-
-defineOptions({
-    layout: AdminLayout,
-});
-
-type Role = 'admin' | 'user';
+type Role = 'admin' | 'user' | 'display';
 
 interface User {
     id: number;
@@ -254,6 +248,8 @@ function deleteUser(user:User) {
                     <option value="admin">Admin</option>
 
                     <option value="user">User</option>
+
+                    <option value="display">Display</option>
                 </select>
             </div>
         </div>
@@ -303,7 +299,9 @@ function deleteUser(user:User) {
                                 :class="
                                     user.role === 'admin'
                                         ? 'bg-indigo-100 text-indigo-700'
-                                        : 'bg-green-100 text-green-700'
+                                        : user.role === 'display'
+                                          ? 'bg-amber-100 text-amber-700'
+                                          : 'bg-green-100 text-green-700'
                                 "
                                 class="rounded-full px-3 py-1 text-xs font-semibold uppercase"
                             >
@@ -380,7 +378,7 @@ function deleteUser(user:User) {
                             :class="
                                 selectedUser.role === 'admin'
                                     ? 'bg-indigo-100 text-indigo-700'
-                                    : 'bg-green-100 text-green-700'
+                                          : 'bg-green-100 text-green-700'
                             "
                             class="mt-1 inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase"
                         >
@@ -421,7 +419,7 @@ function deleteUser(user:User) {
                     </div>
 
                     <div>
-                        <label class="mb-1 block text-sm font-medium"
+                        <label class="mb-1 blo  ck text-sm font-medium"
                             >Username</label
                         >
                         <input
@@ -442,6 +440,8 @@ function deleteUser(user:User) {
                         >
                             <option value="admin">Admin</option>
                             <option value="user">User</option>
+
+                    <option value="display">Display</option>
                         </select>
                     </div>
 
@@ -529,6 +529,8 @@ function deleteUser(user:User) {
                             <option value="user">User</option>
 
                             <option value="admin">Admin</option>
+
+                            <option value="display">Display</option>
                         </select>
                     </div>
 

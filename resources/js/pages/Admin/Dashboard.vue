@@ -1,10 +1,4 @@
 <script setup lang="ts">
-import AdminLayout from '@/layouts/AdminLayout.vue';
-
-defineOptions({
-    layout: AdminLayout,
-});
-
 interface Stats {
     rooms: number;
     users: number;

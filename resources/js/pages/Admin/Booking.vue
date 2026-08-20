@@ -2,12 +2,6 @@
 import { router, useForm } from '@inertiajs/vue3';
 import { watchDebounced } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
-import AdminLayout from '@/layouts/AdminLayout.vue';
-
-defineOptions({
-    layout: AdminLayout,
-});
-
 type BookingStatus =
     'pending' | 'approved' | 'rejected' | 'cancelled' | 'finished';
 

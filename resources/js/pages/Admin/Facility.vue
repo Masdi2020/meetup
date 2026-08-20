@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
-import AdminLayout from '@/layouts/AdminLayout.vue';
-
-defineOptions({
-    layout: AdminLayout,
-});
-
 interface Facility {
     id: number;
     name: string;

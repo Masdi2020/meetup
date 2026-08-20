@@ -1,11 +1,5 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import AdminLayout from '@/layouts/AdminLayout.vue';
-
-defineOptions({
-    layout: AdminLayout,
-});
-
 const props = defineProps<{
     settings: {
         appName: string;

@@ -14,6 +14,7 @@ const adminMenus = [
     { name: 'Pengguna', icon: '👤', to: '/admin/users' },
     { name: 'Audit', icon: '📜', to: '/admin/audits' },
     { name: 'Pengaturan', icon: '⚙️', to: '/admin/settings' },
+    { name: 'Profil', icon: '👤', to: '/profile' }
 ];
 </script>
 
