@@ -28,7 +28,7 @@ class Room extends Model
      */
     protected $casts = [
         'is_available' => 'boolean',
-        'has_display'=> 'boolean',
+        'has_display' => 'boolean',
     ];
 
     /**

@@ -8,7 +8,8 @@ use Inertia\Response;
 
 class DisplayController extends Controller
 {
-    public function index(): Response {
+    public function index(): Response
+    {
         $rooms = Room::query()
             ->with('facilities:id,name')
             ->select([
@@ -21,9 +22,9 @@ class DisplayController extends Controller
             ->get()
             ->map(fn (Room $room) => [
                 'id' => $room->id,
-                'name'=> $room->name,
-                'location'=> $room->location,
-                'capacity'=> $room->capacity,
+                'name' => $room->name,
+                'location' => $room->location,
+                'capacity' => $room->capacity,
                 'is_available' => $room->is_available,
                 'facilities' => $room->facilities
                     ->pluck('name')
@@ -32,7 +33,7 @@ class DisplayController extends Controller
             ]);
 
         return Inertia::render('Display', [
-            'rooms'=> $rooms
+            'rooms' => $rooms,
         ]);
     }
 }

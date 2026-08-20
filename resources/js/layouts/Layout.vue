@@ -5,7 +5,7 @@ import ForceChangePasswordModal from '@/components/ForceChangePasswordModal.vue'
 import LogoutButton from '@/components/LogoutButton.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import { navigationByRole } from '@/config/navigation';
-import type { UserRole } from '@/config/navigation'
+import type { UserRole } from '@/config/navigation';
 import type { Auth } from '@/types/auth';
 
 const isOpen = ref(true);

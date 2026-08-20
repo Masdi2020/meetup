@@ -12,11 +12,13 @@ export const roomColors = [
 ];
 
 export function getRoomColor(roomName: string) {
-    const hash = roomName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hash = roomName
+        .split('')
+        .reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
     return roomColors[hash % roomColors.length];
 }
 
 export function getRoomTextColor() {
-    return '#1f2937'
+    return '#1f2937';
 }

@@ -18,21 +18,21 @@ class RoomSeeder extends Seeder
                 'name' => 'Ruang Rapat Besar',
                 'capacity' => 50,
                 'location' => 'Lantai 2',
-                'has_display'=> true,
+                'has_display' => true,
             ],
             [
                 'id' => 2,
                 'name' => 'Ruang Rapat Kecil',
                 'capacity' => 10,
                 'location' => 'Lantai 2',
-                'has_display'=> false,
+                'has_display' => false,
             ],
             [
                 'id' => 3,
                 'name' => 'Ruang Kepala',
                 'capacity' => 20,
                 'location' => 'Lantai 2',
-                'has_display'=> false,
+                'has_display' => false,
             ],
         ]);
     }

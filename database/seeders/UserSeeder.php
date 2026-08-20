@@ -26,11 +26,11 @@ class UserSeeder extends Seeder
                 'role' => 'admin',
             ],
             [
-                'name'=> 'display',
-                'username'=> 'display',
-                'password'=> bcrypt('display123'),
-                'role'=> 'display',
-            ]
+                'name' => 'display',
+                'username' => 'display',
+                'password' => bcrypt('display123'),
+                'role' => 'display',
+            ],
         ];
 
         foreach ($users as $user) {

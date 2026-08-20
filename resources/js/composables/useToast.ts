@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { ref } from 'vue';
 
 export type ToastType = 'success' | 'error';
 
@@ -11,7 +11,11 @@ const toast = ref<ToastState | null>(null);
 let timer = 0;
 
 export function useToast() {
-    function showToast(message: string, type: ToastType = 'success', duration = 3500) {
+    function showToast(
+        message: string,
+        type: ToastType = 'success',
+        duration = 3500,
+    ) {
         toast.value = { message, type };
         window.clearTimeout(timer);
 

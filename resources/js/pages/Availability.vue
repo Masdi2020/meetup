@@ -3,7 +3,7 @@ import { router } from '@inertiajs/vue3';
 import dayjs from 'dayjs';
 import { ref, computed, watch } from 'vue';
 import Calendar from '@/components/Calendar/Calendar.vue';
-import { getRoomColor } from "@/components/Calendar/roomColors";
+import { getRoomColor } from '@/components/Calendar/roomColors';
 
 interface Facility {
     id: number;
@@ -211,7 +211,9 @@ watch(selectedRoomId, (room) => {
                     >
                         <span
                             class="legend-swatch"
-                            :style="{ backgroundColor: getRoomColor(room.name) }"
+                            :style="{
+                                backgroundColor: getRoomColor(room.name),
+                            }"
                         ></span>
                         <span>{{ room.name }}</span>
                     </div>

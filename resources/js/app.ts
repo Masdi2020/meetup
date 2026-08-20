@@ -34,29 +34,25 @@ createInertiaApp({
                 const { showToast } = useToast();
 
                 router.on('success', (event) => {
-                    const flash = (event.detail.page.props as {
-                        flash?: Flash
-                    }).flash;
+                    const flash = (
+                        event.detail.page.props as {
+                            flash?: Flash;
+                        }
+                    ).flash;
 
                     if (flash?.success) {
-                        showToast(flash.success, 'success')
+                        showToast(flash.success, 'success');
                     }
 
                     if (flash?.error) {
-                        showToast(flash.error, 'error')
+                        showToast(flash.error, 'error');
                     }
-                })
+                });
 
-                return () =>
-                    h('div', [
-                        h(Toast),
-                        h(App, props),
-                    ]);
+                return () => h('div', [h(Toast), h(App, props)]);
             },
         });
 
-        app
-            .use(plugin)
-            .mount(el);
+        app.use(plugin).mount(el);
     },
 });

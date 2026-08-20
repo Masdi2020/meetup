@@ -36,9 +36,9 @@ class BookingController extends Controller
             ->where('is_available', true)
             ->first();
 
-        if (!$room) {
+        if (! $room) {
             return back()->withErrors([
-                'room_id'=> 'Ruangan tidak tersedia untuk dipinjam',
+                'room_id' => 'Ruangan tidak tersedia untuk dipinjam',
             ]);
         }
 

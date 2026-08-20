@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useToast } from "@/composables/useToast";
+import { useToast } from '@/composables/useToast';
 
 const { toast } = useToast();
 </script>
@@ -34,7 +34,9 @@ const { toast } = useToast();
 
 .toast-fade-enter-active,
 .toast-fade-leave-active {
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
 }
 
 .toast-fade-enter-from,

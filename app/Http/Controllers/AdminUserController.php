@@ -72,7 +72,7 @@ class AdminUserController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -96,7 +96,8 @@ class AdminUserController extends Controller
             ->with('generated_password', $generatedPassword);
     }
 
-    public function destroy(User $user): RedirectResponse {
+    public function destroy(User $user): RedirectResponse
+    {
         $user->delete();
 
         return back()->with('success', 'Pengguna berhasil dihapus.');

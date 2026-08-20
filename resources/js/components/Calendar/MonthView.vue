@@ -2,7 +2,7 @@
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { computed } from 'vue';
-import { getRoomColor, getRoomTextColor } from "./roomColors";
+import { getRoomColor, getRoomTextColor } from './roomColors';
 
 interface CalendarEvent {
     id: number;

@@ -59,7 +59,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');
             Route::post('/facilities', [AdminFacilityController::class, 'store'])->name('facilities.store');
             Route::put('/facilities/{facility}', [AdminFacilityController::class, 'update'])->name('facilities.update');
-            Route::delete('/facilities/{facility}', [AdminFacilityController::class,'destroy'])->name('facilities.destroy');
+            Route::delete('/facilities/{facility}', [AdminFacilityController::class, 'destroy'])->name('facilities.destroy');
 
             Route::get('/rooms', [AdminRoomController::class, 'index'])->name('rooms.index');
             Route::post('/rooms', [AdminRoomController::class, 'store'])->name('rooms.store');
@@ -70,7 +70,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
             Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
             Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
-            Route::delete('/users/{user}', [AdminUserController::class,'destroy'])->name('users.destroy');
+            Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 
             Route::get('/audits', [AdminAuditController::class, 'index'])->name('audits.index');
 

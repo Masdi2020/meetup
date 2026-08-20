@@ -105,7 +105,7 @@ function submitEditFacility() {
     });
 }
 
-function deleteFacility(facility:Facility) {
+function deleteFacility(facility: Facility) {
     if (!confirm(`Hapus fasilitas ${facility.name}?`)) {
         return;
     }
@@ -113,7 +113,7 @@ function deleteFacility(facility:Facility) {
     router.delete(`/admin/facilities/${facility.id}`, {
         preserveScroll: true,
     });
-};
+}
 </script>
 
 <template>
@@ -209,7 +209,7 @@ function deleteFacility(facility:Facility) {
                                 </button>
 
                                 <button
-                                    class="rounded-lg bg-red-600 px-3 py-2 text-white transitiom hover:bg-red-700"
+                                    class="transitiom rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700"
                                     @click="deleteFacility(facility)"
                                 >
                                     Hapus

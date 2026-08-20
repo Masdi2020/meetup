@@ -34,9 +34,7 @@ function closeDetailModal() {
         <div>
             <h1 class="text-3xl font-bold">Ruangan</h1>
 
-            <p class="text-gray-500">
-                Lihat daftar ruangan yang tersedia.
-            </p>
+            <p class="text-gray-500">Lihat daftar ruangan yang tersedia.</p>
         </div>
 
         <!-- Total Ruangan -->
@@ -50,10 +48,7 @@ function closeDetailModal() {
 
         <!-- Room List -->
         <div class="overflow-hidden rounded-xl bg-white shadow">
-            <div
-                v-if="props.rooms.length"
-                class="divide-y"
-            >
+            <div v-if="props.rooms.length" class="divide-y">
                 <div
                     v-for="room in props.rooms"
                     :key="room.id"
@@ -72,9 +67,7 @@ function closeDetailModal() {
                                 {{ room.location }}
                             </span>
 
-                            <span>
-                                {{ room.capacity }} orang
-                            </span>
+                            <span> {{ room.capacity }} orang </span>
 
                             <span
                                 :class="
@@ -105,10 +98,7 @@ function closeDetailModal() {
             </div>
 
             <!-- Empty State -->
-            <div
-                v-else
-                class="px-5 py-12 text-center text-gray-500"
-            >
+            <div v-else class="px-5 py-12 text-center text-gray-500">
                 Belum ada ruangan.
             </div>
         </div>
@@ -119,9 +109,7 @@ function closeDetailModal() {
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
             @click.self="closeDetailModal"
         >
-            <div
-                class="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl"
-            >
+            <div class="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
                 <!-- Modal Header -->
                 <div class="mb-5 flex items-center justify-between">
                     <h2 class="text-xl font-bold text-gray-900">
@@ -150,9 +138,7 @@ function closeDetailModal() {
                     </div>
 
                     <div>
-                        <p class="text-sm font-medium text-gray-500">
-                            Lokasi
-                        </p>
+                        <p class="text-sm font-medium text-gray-500">Lokasi</p>
 
                         <p class="mt-1 text-gray-900">
                             {{ selectedRoom.location }}
@@ -170,9 +156,7 @@ function closeDetailModal() {
                     </div>
 
                     <div>
-                        <p class="text-sm font-medium text-gray-500">
-                            Status
-                        </p>
+                        <p class="text-sm font-medium text-gray-500">Status</p>
 
                         <span
                             :class="
@@ -208,10 +192,7 @@ function closeDetailModal() {
                             </span>
                         </div>
 
-                        <p
-                            v-else
-                            class="mt-1 text-sm text-gray-400"
-                        >
+                        <p v-else class="mt-1 text-sm text-gray-400">
                             Tidak ada fasilitas.
                         </p>
                     </div>
