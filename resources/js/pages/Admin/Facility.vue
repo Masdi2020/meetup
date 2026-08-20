@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 interface Facility {
     id: number;
@@ -104,6 +104,16 @@ function submitEditFacility() {
         },
     });
 }
+
+function deleteFacility(facility:Facility) {
+    if (!confirm(`Hapus fasilitas ${facility.name}?`)) {
+        return;
+    }
+
+    router.delete(`/admin/facilities/${facility.id}`, {
+        preserveScroll: true,
+    });
+};
 </script>
 
 <template>
@@ -199,9 +209,8 @@ function submitEditFacility() {
                                 </button>
 
                                 <button
-                                    class="cursor-not-allowed rounded-lg bg-red-600 px-3 py-2 text-white opacity-50"
-                                    title="Hapus akan dibuat nanti"
-                                    disabled
+                                    class="rounded-lg bg-red-600 px-3 py-2 text-white transitiom hover:bg-red-700"
+                                    @click="deleteFacility(facility)"
                                 >
                                     Hapus
                                 </button>

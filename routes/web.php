@@ -59,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');
             Route::post('/facilities', [AdminFacilityController::class, 'store'])->name('facilities.store');
             Route::put('/facilities/{facility}', [AdminFacilityController::class, 'update'])->name('facilities.update');
+            Route::delete('/facilities/{facility}', [AdminFacilityController::class,'destroy'])->name('facilities.destroy');
 
             Route::get('/rooms', [AdminRoomController::class, 'index'])->name('rooms.index');
             Route::post('/rooms', [AdminRoomController::class, 'store'])->name('rooms.store');
