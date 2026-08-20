@@ -3,6 +3,7 @@ import { router } from '@inertiajs/vue3';
 import dayjs from 'dayjs';
 import { ref, computed, watch } from 'vue';
 import Calendar from '@/components/Calendar/Calendar.vue';
+import { getRoomColor } from "@/components/Calendar/roomColors";
 
 interface Facility {
     id: number;
@@ -199,6 +200,24 @@ watch(selectedRoomId, (room) => {
                 </div>
             </div>
 
+            <div class="room-legend" v-else-if="rooms.length">
+                <span class="legend-title">Legenda Ruangan</span>
+
+                <div class="legend-items">
+                    <div
+                        class="legend-item"
+                        v-for="room in rooms"
+                        :key="room.id"
+                    >
+                        <span
+                            class="legend-swatch"
+                            :style="{ backgroundColor: getRoomColor(room.name) }"
+                        ></span>
+                        <span>{{ room.name }}</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="calendar-card">
                 <Calendar
                     :events="events"
@@ -294,6 +313,46 @@ h2 {
     border: none;
     border-radius: 8px;
     cursor: pointer;
+}
+
+.room-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 20px;
+}
+
+.legend-title {
+    font-weight: 600;
+    color: #173b7a;
+    white-space: nowrap;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #374151;
+}
+
+.legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .calendar-card {

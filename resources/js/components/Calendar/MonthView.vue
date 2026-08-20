@@ -2,6 +2,7 @@
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { computed } from 'vue';
+import { getRoomColor, getRoomTextColor } from "./roomColors";
 
 interface CalendarEvent {
     id: number;
@@ -38,35 +39,10 @@ const days = computed(() => {
     );
 });
 
-const roomColors = [
-    '#fbcfe8',
-    '#c7d2fe',
-    '#bbf7d0',
-    '#fed7aa',
-    '#a5f3fc',
-    '#fde68a',
-    '#f5d0fe',
-    '#d8b4fe',
-    '#fef08a',
-    '#a7f3d0',
-];
-
 function getEventsForDate(day: Dayjs) {
     return props.events.filter(
         (event) => event.date === day.format('YYYY-MM-DD'),
     );
-}
-
-function getRoomColor(event: CalendarEvent) {
-    const hash = event.room
-        .split('')
-        .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-
-    return roomColors[hash % roomColors.length];
-}
-
-function getRoomTextColor() {
-    return '#1f2937';
 }
 </script>
 
@@ -95,7 +71,7 @@ function getRoomTextColor() {
                     :key="`${event.id}-${event.date}`"
                     class="event-pill"
                     :style="{
-                        backgroundColor: getRoomColor(event),
+                        backgroundColor: getRoomColor(event.room),
                         color: getRoomTextColor(),
                     }"
                 >
