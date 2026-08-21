@@ -36,9 +36,15 @@ class BannerService
         $nextChange = null;
 
         if ($booking) {
-            $nextChange = $booking->date->format('Y-m-d').' '.$booking->end_time;
+            $nextChange = $now->copy()
+                ->setDateFrom($booking->date)
+                ->setTimeFromTimeString($booking->end_time->format('H:i:s'))
+                ->toIso8601String();
         } elseif ($nextBooking) {
-            $nextChange = $nextBooking->date->format('Y-m-d').' '.$nextBooking->start_time;
+            $nextChange = $now->copy()
+                ->setDateFrom($nextBooking->date)
+                ->setTimeFromTimeString($nextBooking->start_time->format('H:i:s'))
+                ->toIso8601String();
         }
 
         return [

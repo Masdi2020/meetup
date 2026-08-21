@@ -6,6 +6,11 @@ import type { DefineComponent } from 'vue';
 import Toast from '@/components/Toast.vue';
 import { useToast } from '@/composables/useToast';
 import Layout from '@/layouts/Layout.vue';
+import { configureEcho } from '@laravel/echo-vue';
+
+configureEcho({
+    broadcaster: 'reverb',
+});
 
 interface Flash {
     success?: string;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BannerUpdated;
 use App\Models\Audit;
 use App\Models\Booking;
 use App\Models\BookingStatus;
@@ -145,6 +146,8 @@ class AdminBookingController extends Controller
                 'comment' => 'booking disetujui',
             ]);
         });
+
+        broadcast(new BannerUpdated());
 
         return back()->with('success', 'Booking approved successfully.');
     }

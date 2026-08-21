@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BannerUpdated;
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Audit;
@@ -62,7 +63,9 @@ class BookingController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($request) {
+        $isApproved = false;
+
+        DB::transaction(function () use ($request, &$isApproved) {
             $status = 'pending';
 
             if (
@@ -78,6 +81,7 @@ class BookingController extends Controller
             $processedNotes = null;
 
             if ($status === 'approved') {
+                $isApproved = true;
                 $processedBy = Auth::id();
                 $processedAt = now();
                 $processedNotes = 'Disetujui oleh admin saat dibuat';
@@ -125,6 +129,10 @@ class BookingController extends Controller
                 ]);
             }
         });
+
+        if ($isApproved) {
+            broadcast(new BannerUpdated());
+        }
 
         return back()->with('success', 'Booking berhasil dibuat.');
     }
