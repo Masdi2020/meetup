@@ -3,7 +3,7 @@ import { router, useForm } from '@inertiajs/vue3';
 import { watchDebounced } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
 type BookingStatus =
-    'pending' | 'approved' | 'rejected' | 'cancelled' | 'finished';
+    'pending' | 'approved' | 'rejected' | 'cancelled';
 
 interface Booking {
     id: number;
@@ -28,7 +28,6 @@ interface Stats {
     total: number;
     pending: number;
     approved: number;
-    finished: number;
 }
 
 interface Pagination<T> {
@@ -236,7 +235,6 @@ function badgeClass(status: BookingStatus) {
         approved: 'bg-green-100 text-green-700',
         rejected: 'bg-red-100 text-red-700',
         cancelled: 'bg-gray-200 text-gray-700',
-        finished: 'bg-blue-100 text-blue-700',
     }[status];
 }
 
@@ -854,14 +852,6 @@ function reject(id: number, code: string) {
                     {{ stats?.approved }}
                 </h2>
             </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Selesai</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-blue-600">
-                    {{ stats?.finished }}
-                </h2>
-            </div>
         </div>
 
         <!-- Filter -->
@@ -884,7 +874,6 @@ function reject(id: number, code: string) {
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                     <option value="cancelled">Cancelled</option>
-                    <option value="finished">Finished</option>
                 </select>
 
                 <select
