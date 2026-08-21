@@ -15,7 +15,7 @@ const { toast } = useToast();
 <style scoped>
 .toast {
     position: fixed;
-    top: 24px;
+    bottom: 24px;
     right: 24px;
     z-index: 50;
     padding: 14px 18px;
@@ -42,6 +42,6 @@ const { toast } = useToast();
 .toast-fade-enter-from,
 .toast-fade-leave-to {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(8px);
 }
 </style>
