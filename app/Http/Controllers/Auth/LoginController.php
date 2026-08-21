@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Response;
 
 class LoginController extends Controller
@@ -22,13 +24,26 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
+        $user = User::where('username', $credentials['username'])->first();
 
-            return match (Auth::user()->role) {
-                'admin' => to_route('admin.dashboard')->with('success', 'Login Berhasil'),
-                'user' => to_route('availability.index')->with('success', 'Login Berhasil'),
-                'display' => to_route('display.index')->with('success', 'Login Berhasil'),
+        if (
+            $user &&
+            Hash::check($credentials['password'], $user->password)
+        ) {
+            $remember = $user->role === 'display';
+
+            Auth::login($user, $remember);
+
+            return match ($user->role) {
+                'admin' => to_route('admin.dashboard')
+                    ->with('success', 'Login Berhasil'),
+
+                'user' => to_route('availability.index')
+                    ->with('success', 'Login Berhasil'),
+
+                'display' => to_route('meeting.banner')
+                    ->with('success', 'Login Berhasil'),
+
                 default => abort(403),
             };
         }
@@ -45,6 +60,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return to_route('login');
+        return to_route('login')->with('success','Berhasil Keluar');
     }
 }
