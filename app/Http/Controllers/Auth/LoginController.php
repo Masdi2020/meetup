@@ -20,8 +20,11 @@ class LoginController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'username' => ['required'],
-            'password' => ['required'],
+            'username' => ['required', 'string', 'regex:/^\S+$/u'],
+            'password' => ['required', 'string', 'regex:/^\S+$/u'],
+        ], [
+            'username.regex' => 'Username tidak boleh mengandung spasi.',
+            'password.regex' => 'Password tidak boleh mengandung spasi.',
         ]);
 
         $user = User::where('username', $credentials['username'])->first();

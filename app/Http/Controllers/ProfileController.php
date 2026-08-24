@@ -25,9 +25,10 @@ class ProfileController extends Controller
                 'required',
                 'string',
                 'max:50',
+                'regex:/^\S+$/u',
                 Rule::unique('users')->ignore($request->user()->id),
             ],
-        ]);
+        ], ['username.regex' => 'Username tidak boleh mengandung spasi.']);
 
         $request->user()->update($validated);
 
@@ -37,8 +38,13 @@ class ProfileController extends Controller
     public function updatePassword(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'current_password' => ['required'],
-            'password' => ['required', 'confirmed', 'min:8'],
+            'current_password' => ['required', 'string', 'regex:/^\S+$/u'],
+            'password' => ['required', 'string', 'confirmed', 'min:8', 'regex:/^\S+$/u'],
+            'password_confirmation' => ['required', 'string', 'regex:/^\S+$/u'],
+        ], [
+            'current_password.regex' => 'Password lama tidak boleh mengandung spasi.',
+            'password.regex' => 'Password baru tidak boleh mengandung spasi.',
+            'password_confirmation.regex' => 'Konfirmasi password tidak boleh mengandung spasi.',
         ]);
 
         if (! Hash::check($validated['current_password'], $request->user()->password)) {
@@ -60,7 +66,11 @@ class ProfileController extends Controller
         abort_unless($request->user()->force_change_password, 403);
 
         $validated = $request->validate([
-            'password' => ['required', 'confirmed', 'min:8'],
+            'password' => ['required', 'string', 'confirmed', 'min:8', 'regex:/^\S+$/u'],
+            'password_confirmation' => ['required', 'string', 'regex:/^\S+$/u'],
+        ], [
+            'password.regex' => 'Password baru tidak boleh mengandung spasi.',
+            'password_confirmation.regex' => 'Konfirmasi password tidak boleh mengandung spasi.',
         ]);
 
         $request->user()->update([

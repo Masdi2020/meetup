@@ -9,6 +9,14 @@ const isRequired = computed(
 );
 const form = useForm({ password: '', password_confirmation: '' });
 
+function removePasswordWhitespace(
+    event: Event,
+    field: 'password' | 'password_confirmation',
+) {
+    const input = event.target as HTMLInputElement;
+    form[field] = input.value.replace(/\s/g, '');
+}
+
 function submit() {
     form.put('/profile/forced-password', {
         preserveScroll: true,
@@ -40,6 +48,8 @@ function submit() {
                 id="new-password"
                 v-model="form.password"
                 type="password"
+                @keydown.space.prevent
+                @input="removePasswordWhitespace($event, 'password')"
                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
                 autocomplete="new-password"
                 required
@@ -54,6 +64,10 @@ function submit() {
                 id="confirm-password"
                 v-model="form.password_confirmation"
                 type="password"
+                @keydown.space.prevent
+                @input="
+                    removePasswordWhitespace($event, 'password_confirmation')
+                "
                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
                 autocomplete="new-password"
                 required

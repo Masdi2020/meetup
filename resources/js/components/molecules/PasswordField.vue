@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Eye, EyeOff } from '@lucide/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
 defineProps<{
@@ -11,16 +11,23 @@ defineProps<{
 }>();
 const model = defineModel<string>({ default: '' });
 const visible = ref(false);
+const password = computed({
+    get: () => model.value,
+    set: (value: string) => {
+        model.value = value.replace(/\s/g, '');
+    },
+});
 </script>
 
 <template>
     <FormField :label="label" :error="error" :required="required"
         ><div class="password-field">
             <AppInput
-                v-model="model"
+                v-model="password"
                 :type="visible ? 'text' : 'password'"
                 :placeholder="placeholder"
                 :required="required"
+                @keydown.space.prevent
             /><button
                 type="button"
                 class="password-field__toggle"

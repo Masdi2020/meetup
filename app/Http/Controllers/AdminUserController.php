@@ -46,9 +46,9 @@ class AdminUserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,'.$user->id],
+            'username' => ['required', 'string', 'max:255', 'regex:/^\S+$/u', 'unique:users,username,'.$user->id],
             'role' => ['required', 'in:admin,user,display'],
-        ]);
+        ], ['username.regex' => 'Username tidak boleh mengandung spasi.']);
 
         $user->update($validated);
 
@@ -77,9 +77,9 @@ class AdminUserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,'],
+            'username' => ['required', 'string', 'max:255', 'regex:/^\S+$/u', 'unique:users,username'],
             'role' => ['required', 'in:admin,user,display'],
-        ]);
+        ], ['username.regex' => 'Username tidak boleh mengandung spasi.']);
 
         $generatedPassword = Str::password(8);
 

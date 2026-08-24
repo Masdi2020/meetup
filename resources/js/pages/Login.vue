@@ -20,6 +20,10 @@ function login() {
         form.post('/login');
     }
 }
+function removeUsernameWhitespace(event: Event) {
+    const input = event.target as HTMLInputElement;
+    form.username = input.value.replace(/\s/g, '');
+}
 </script>
 
 <template>
@@ -41,6 +45,8 @@ function login() {
                         v-model="form.username"
                         type="text"
                         placeholder="Masukkan username"
+                        @keydown.space.prevent
+                        @input="removeUsernameWhitespace"
                         required
                     />
                 </FormField>

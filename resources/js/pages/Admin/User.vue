@@ -90,6 +90,17 @@ function submitEdit() {
     });
 }
 
+function removeUsernameWhitespace(event: Event, target: 'edit' | 'create') {
+    const input = event.target as HTMLInputElement;
+    const username = input.value.replace(/\s/g, '');
+
+    if (target === 'edit') {
+        editForm.value.username = username;
+    } else {
+        createForm.value.username = username;
+    }
+}
+
 const showPasswordModal = computed(() => isModalOpen('password'));
 const generatedPassword = ref('');
 
@@ -384,9 +395,12 @@ function deleteUser(user: User) {
                 /></FormField>
 
                 <FormField label="Username" appearance="admin" required
+                    :error="page.props.errors.username"
                     ><AppInput
                         v-model="editForm.username"
                         appearance="admin"
+                        @keydown.space.prevent
+                        @input="removeUsernameWhitespace($event, 'edit')"
                         required
                 /></FormField>
 
@@ -436,10 +450,13 @@ function deleteUser(user: User) {
                 /></FormField>
 
                 <FormField label="Username" appearance="admin" required
+                    :error="page.props.errors.username"
                     ><AppInput
                         v-model="createForm.username"
                         appearance="admin"
                         placeholder="Username"
+                        @keydown.space.prevent
+                        @input="removeUsernameWhitespace($event, 'create')"
                         required
                 /></FormField>
 

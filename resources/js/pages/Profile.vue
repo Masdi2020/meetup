@@ -55,6 +55,19 @@ function saveProfile() {
     });
 }
 
+function removeUsernameWhitespace(event: Event) {
+    const input = event.target as HTMLInputElement;
+    form.username = input.value.replace(/\s/g, '');
+}
+
+function removePasswordWhitespace(
+    event: Event,
+    field: 'current_password' | 'password' | 'password_confirmation',
+) {
+    const input = event.target as HTMLInputElement;
+    form[field] = input.value.replace(/\s/g, '');
+}
+
 function changePassword() {
     form.put('/profile/password', {
         preserveState: true,
@@ -103,7 +116,13 @@ function changePassword() {
 
                 <div class="field">
                     <label>Username</label>
-                    <input v-model="form.username" type="text" required />
+                    <input
+                        v-model="form.username"
+                        type="text"
+                        @keydown.space.prevent
+                        @input="removeUsernameWhitespace"
+                        required
+                    />
                     <p v-if="form.errors.username" class="error">
                         {{ form.errors.username }}
                     </p>
@@ -127,6 +146,13 @@ function changePassword() {
                         <input
                             v-model="form.current_password"
                             :type="showCurrentPassword ? 'text' : 'password'"
+                            @keydown.space.prevent
+                            @input="
+                                removePasswordWhitespace(
+                                    $event,
+                                    'current_password',
+                                )
+                            "
                             required
                         />
                         <button
@@ -186,6 +212,10 @@ function changePassword() {
                         <input
                             v-model="form.password"
                             :type="showNewPassword ? 'text' : 'password'"
+                            @keydown.space.prevent
+                            @input="
+                                removePasswordWhitespace($event, 'password')
+                            "
                             required
                         />
                         <button
@@ -245,6 +275,13 @@ function changePassword() {
                         <input
                             v-model="form.password_confirmation"
                             :type="showConfirmPassword ? 'text' : 'password'"
+                            @keydown.space.prevent
+                            @input="
+                                removePasswordWhitespace(
+                                    $event,
+                                    'password_confirmation',
+                                )
+                            "
                             required
                         />
                         <button
