@@ -131,7 +131,7 @@ class BookingController extends Controller
         });
 
         if ($isApproved) {
-            broadcast(new BannerUpdated());
+            broadcast(new BannerUpdated);
         }
 
         return back()->with('success', 'Booking berhasil dibuat.');

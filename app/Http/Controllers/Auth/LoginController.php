@@ -60,6 +60,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return to_route('login')->with('success','Berhasil Keluar');
+        return to_route('login')->with('success', 'Berhasil Keluar');
     }
 }

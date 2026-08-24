@@ -58,7 +58,8 @@ class AdminUserController extends Controller
     public function resetPassword(User $user): RedirectResponse
     {
         $password = Str::password(
-            length: 8
+            length: 8,
+            symbols: false
         );
 
         $user->update([

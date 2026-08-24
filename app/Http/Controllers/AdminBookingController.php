@@ -147,7 +147,7 @@ class AdminBookingController extends Controller
             ]);
         });
 
-        broadcast(new BannerUpdated());
+        broadcast(new BannerUpdated);
 
         return back()->with('success', 'Booking approved successfully.');
     }
