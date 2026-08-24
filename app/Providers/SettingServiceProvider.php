@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Setting;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\ServiceProvider;
 
 class SettingServiceProvider extends ServiceProvider
@@ -20,11 +21,14 @@ class SettingServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        config([
-            'session.lifetime' => Setting::get(
-                'session_timeout',
-                60,
-            ),
-        ]);
+        try {
+            $sessionLifetime = Setting::get('session_timeout', 60);
+        } catch (QueryException) {
+            // The database may not exist yet while Composer discovers packages
+            // or before the application's initial migrations have run.
+            $sessionLifetime = 60;
+        }
+
+        config(['session.lifetime' => $sessionLifetime]);
     }
 }
