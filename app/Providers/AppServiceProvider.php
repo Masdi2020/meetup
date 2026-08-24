@@ -6,7 +6,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -35,8 +34,8 @@ class AppServiceProvider extends ServiceProvider
                 return route('admin.dashboard');
             }
 
-            if (Route::has('home')) {
-                return route('home');
+            if ($user && $user->role === 'display') {
+                return route('meeting.banner');
             }
 
             return '/';

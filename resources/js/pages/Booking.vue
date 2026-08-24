@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 
 interface Room {
     id: number;
     name: string;
+    has_display: boolean;
 }
 
 const today = new Date().toISOString().split('T')[0];
 
 const preview = ref<string | null>(null);
+
+const showSuccessDialog = ref(false);
 
 const { rooms } = defineProps<{
     rooms: Room[];
@@ -25,6 +28,35 @@ const form = useForm({
     request: '',
     banner: null as File | null,
 });
+
+const submitted = ref(false);
+
+const hasWarning = (field: string): boolean => {
+    if (form.errors[field as keyof typeof form.errors]) {
+        return true;
+    }
+
+    if (!submitted.value) {
+        return false;
+    }
+
+    switch (field) {
+        case 'room_id':
+            return form.room_id === null;
+        case 'date':
+            return !form.date || form.date < today;
+        case 'start_time':
+            return !form.start_time;
+        case 'end_time':
+            return !form.end_time || isInvalidTimeRange.value;
+        case 'title':
+            return !form[field];
+        case 'participants':
+            return !form.participants || form.participants < 1;
+        default:
+            return false;
+    }
+};
 
 const minStartTime = computed(() => {
     if (form.date !== today) {
@@ -43,7 +75,7 @@ const minStartTime = computed(() => {
         minute = 0;
     }
 
-    return `${String(hour).padStart(2, '0')}"${String(minute).padStart(2, '0')}"`;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 });
 
 const minEndTime = computed(() => {
@@ -63,16 +95,82 @@ const handleFile = (event: Event) => {
 };
 
 const submitBooking = () => {
+    submitted.value = true;
+
+    if (
+        hasWarning('room_id') ||
+        hasWarning('date') ||
+        hasWarning('start_time') ||
+        hasWarning('end_time') ||
+        hasWarning('title') ||
+        hasWarning('participants') ||
+        isInvalidTimeRange.value
+    ) {
+        return;
+    }
+
     form.post('/booking', {
         forceFormData: true,
         onSuccess: () => {
-            console.log('Berhasil');
-        },
-        onError: (err) => {
-            console.log(err);
+            showSuccessDialog.value = true;
+
+            form.reset();
+            preview.value = null;
+            submitted.value = false;
         },
     });
 };
+
+const isInvalidTimeRange = computed(() => {
+    if (!form.start_time || !form.end_time) {
+        return false;
+    }
+
+    return form.end_time <= form.start_time;
+});
+
+const selectedRoom = computed(() => {
+    return rooms.find((room) => room.id === form.room_id);
+});
+
+const hasDisplay = computed(() => {
+    return selectedRoom.value?.has_display ?? false;
+});
+
+onMounted(() => {
+    const savedRoomId = localStorage.getItem('booking_room_id');
+
+    if (!savedRoomId) {
+        return;
+    }
+
+    const roomId = Number(savedRoomId);
+
+    const roomExists = rooms.some((room) => room.id === roomId);
+
+    if (roomExists) {
+        form.room_id = roomId;
+    } else {
+        localStorage.removeItem('booking_room_id');
+        form.room_id = null;
+    }
+});
+
+watch(
+    () => form.room_id,
+    () => {
+        form.clearErrors('room_id');
+    },
+);
+
+watch(
+    () => form.room_id,
+    (roomId) => {
+        if (roomId !== null) {
+            localStorage.setItem('booking_room_id', String(roomId));
+        }
+    },
+);
 </script>
 
 <template>
@@ -80,7 +178,11 @@ const submitBooking = () => {
         <h2>Formulir Peminjaman</h2>
 
         <div class="page-card">
-            <div class="room-selector">
+            <div
+                class="room-selector"
+                :class="{ warning: hasWarning('room_id') }"
+            >
+                <label> Ruangan <span class="required">*</span> </label>
                 <select v-model.number="form.room_id">
                     <option :value="null" disabled hidden>Pilih Ruangan</option>
                     <option
@@ -91,48 +193,95 @@ const submitBooking = () => {
                         {{ room.name }}
                     </option>
                 </select>
+                <p v-if="form.errors.room_id" class="warning-text">
+                    {{ form.errors.room_id }}
+                </p>
+                <p v-else-if="hasWarning('room_id')" class="warning-text">
+                    Ruangan wajib dipilih.
+                </p>
             </div>
 
             <div class="booking-card">
-                <div class="form-group">
-                    <label>Tanggal</label>
+                <div
+                    class="form-group"
+                    :class="{ warning: hasWarning('date') }"
+                >
+                    <label> Tanggal <span class="required">*</span> </label>
                     <input type="date" v-model="form.date" :min="today" />
+                    <p
+                        v-if="form.date && form.date < today"
+                        class="warning-text"
+                    >
+                        Tanggal tidak boleh kurang dari hari ini.
+                    </p>
+                    <p v-else-if="hasWarning('date')" class="warning-text">
+                        Tanggal wajib diisi.
+                    </p>
                 </div>
 
-                <div class="form-group">
-                    <label>Dari Jam</label>
+                <div
+                    class="form-group"
+                    :class="{ warning: hasWarning('start_time') }"
+                >
+                    <label> Dari Jam <span class="required">*</span> </label>
                     <input
                         type="time"
                         v-model="form.start_time"
                         :min="minStartTime"
                         max="23:59"
-                        step="1800"
                     />
+                    <p v-if="hasWarning('start_time')" class="warning-text">
+                        Waktu mulai wajib diisi.
+                    </p>
                 </div>
 
-                <div class="form-group">
-                    <label>Sampai Jam</label>
+                <div
+                    class="form-group"
+                    :class="{ warning: hasWarning('end_time') }"
+                >
+                    <label> Sampai Jam <span class="required">*</span> </label>
                     <input
                         type="time"
                         v-model="form.end_time"
                         :min="minEndTime"
                         max="23:59"
-                        step="1800"
                     />
+
+                    <p v-if="isInvalidTimeRange" class="warning-text">
+                        Waktu selesai harus lebih besar dari waktu mulai
+                    </p>
+
+                    <p v-if="hasWarning('end_time')" class="warning-text">
+                        Waktu selesai wajib diisi.
+                    </p>
                 </div>
 
-                <div class="form-group">
-                    <label>Judul Rapat</label>
+                <div
+                    class="form-group"
+                    :class="{ warning: hasWarning('title') }"
+                >
+                    <label> Judul Rapat <span class="required">*</span> </label>
                     <input type="text" v-model="form.title" />
+                    <p v-if="hasWarning('title')" class="warning-text">
+                        Judul rapat wajib diisi.
+                    </p>
                 </div>
 
-                <div class="form-group">
-                    <label>Jumlah Orang</label>
+                <div
+                    class="form-group"
+                    :class="{ warning: hasWarning('participants') }"
+                >
+                    <label>
+                        Jumlah Orang <span class="required">*</span>
+                    </label>
                     <input
                         type="number"
                         min="1"
                         v-model.number="form.participants"
                     />
+                    <p v-if="hasWarning('participants')" class="warning-text">
+                        Jumlah orang wajib diisi dan minimal 1.
+                    </p>
                 </div>
 
                 <div class="form-group">
@@ -144,7 +293,7 @@ const submitBooking = () => {
                     ></textarea>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" v-if="hasDisplay">
                     <label>Unggah Banner Rapat</label>
 
                     <input
@@ -172,6 +321,25 @@ const submitBooking = () => {
                     </form>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div
+        v-if="showSuccessDialog"
+        class="dialog-overlay"
+        @click.self="showSuccessDialog = false"
+    >
+        <div class="dialog">
+            <div class="dialog-icon">✓</div>
+
+            <h3>Booking Berhasil Diajukan</h3>
+
+            <p>
+                Permintaan peminjaman ruangan telah berhasil dikirim dan sedang
+                menunggu persetujuan admin.
+            </p>
+
+            <button @click="showSuccessDialog = false">Tutup</button>
         </div>
     </div>
 </template>
@@ -236,6 +404,24 @@ textarea {
     box-sizing: border-box;
 }
 
+.form-group.warning input,
+.form-group.warning select,
+.room-selector.warning select,
+.form-group.warning textarea {
+    border: 1px solid #dc3545;
+    background: #fff5f5;
+}
+
+.required {
+    color: #dc3545;
+}
+
+.warning-text {
+    margin-top: 6px;
+    color: #dc3545;
+    font-size: 13px;
+}
+
 textarea {
     resize: vertical;
 }
@@ -286,5 +472,72 @@ button:hover {
     margin-top: 5px;
     color: #dc3545;
     font-size: 13px;
+}
+
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 9999;
+}
+
+.dialog {
+    background: white;
+    width: 420px;
+    max-width: 90%;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+
+    animation: popup 0.2s ease;
+}
+
+.dialog-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #28a745;
+    color: white;
+
+    margin: 0 auto 20px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.dialog h3 {
+    margin-bottom: 10px;
+    color: #173b7a;
+}
+
+.dialog p {
+    color: #555;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.dialog button {
+    min-width: 120px;
+}
+
+@keyframes popup {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 </style>

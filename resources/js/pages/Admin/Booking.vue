@@ -1,46 +1,22 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import { watchDebounced } from '@vueuse/core';
-import { ref, watch } from 'vue';
-import AdminLayout from '@/layouts/AdminLayout.vue';
-
-defineOptions({
-    layout: AdminLayout,
-});
-
-type BookingStatus =
-    'pending' | 'approved' | 'rejected' | 'cancelled' | 'finished';
-
-interface Booking {
-    id: number;
-    code: string;
-    room: string;
-    borrower: string;
-    activity: string;
-    date: string;
-    start: string;
-    end: string;
-    status: BookingStatus;
-}
-
-interface Room {
-    id: number;
-    name: string;
-}
-
-interface Stats {
-    total: number;
-    pending: number;
-    approved: number;
-    finished: number;
-}
-
-interface Pagination<T> {
-    data: T[];
-    current_page: number;
-    last_page: number;
-}
-
+import { computed, ref, watch } from 'vue';
+import AppInput from '@/components/atoms/AppInput.vue';
+import AppSelect from '@/components/atoms/AppSelect.vue';
+import AppTextarea from '@/components/atoms/AppTextarea.vue';
+import FormField from '@/components/molecules/FormField.vue';
+import StatCard from '@/components/molecules/StatCard.vue';
+import AppModal from '@/components/organisms/AppModal.vue';
+import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useModalManager } from '@/composables/useModal';
+import type {
+    AdminBooking as Booking,
+    BookingStatus,
+    BookingStats as Stats,
+    Pagination,
+    RoomOption as Room,
+} from '@/types/admin';
 const props = defineProps<{
     bookings: Pagination<Booking>;
     rooms?: Room[];
@@ -55,6 +31,165 @@ const props = defineProps<{
 const search = ref(props.filters?.search ?? '');
 const statusFilter = ref(props.filters?.status ?? '');
 const roomFilter = ref(props.filters?.room ?? '');
+const today = new Date().toISOString().split('T')[0];
+
+const showAddBookingModal = computed(() => isModalOpen('add'));
+const showAddBookingSuccess = ref(false);
+const { openModal, closeModal, isModalOpen } = useModalManager<
+    'add' | 'approve' | 'reject' | 'detail'
+>();
+const showApproveModal = computed(() => isModalOpen('approve'));
+const showRejectModal = computed(() => isModalOpen('reject'));
+const showDetailModal = computed(() => isModalOpen('detail'));
+const selectedBookingId = ref<number | null>(null);
+const selectedBookingCode = ref<string | null>(null);
+const detailBooking = ref<Booking | null>(null);
+const rejectReason = ref('');
+const rejectValidationErrors = ref({ reason: '' });
+const addBookingPreview = ref<string | null>(null);
+const addBookingSubmitted = ref(false);
+
+const addBookingForm = useForm({
+    room_id: null as number | null,
+    date: '',
+    start_time: '',
+    end_time: '',
+    title: '',
+    participants: null as number | null,
+    request: '',
+    status: 'pending' as 'pending' | 'approved',
+    banner: null as File | null,
+});
+
+const addBookingHasWarning = (field: string): boolean => {
+    if (!addBookingSubmitted.value) {
+        return false;
+    }
+
+    switch (field) {
+        case 'room_id':
+            return addBookingForm.room_id === null;
+        case 'date':
+            return !addBookingForm.date;
+        case 'start_time':
+        case 'end_time':
+        case 'title':
+            return !addBookingForm[field];
+        case 'participants':
+            return (
+                !addBookingForm.participants || addBookingForm.participants < 1
+            );
+        default:
+            return false;
+    }
+};
+
+const addBookingMinStartTime = computed(() => {
+    if (addBookingForm.date !== today) {
+        return '07:00';
+    }
+
+    const now = new Date();
+
+    let hour = now.getHours();
+    let minute = now.getMinutes();
+
+    if (minute > 0 && minute <= 30) {
+        minute = 30;
+    } else if (minute > 30) {
+        hour++;
+        minute = 0;
+    }
+
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+});
+
+const addBookingMinEndTime = computed(() => {
+    return addBookingForm.start_time || addBookingMinStartTime.value;
+});
+
+function closeAddBookingModal() {
+    closeModal();
+    showAddBookingSuccess.value = false;
+    addBookingForm.reset();
+    addBookingPreview.value = null;
+    addBookingSubmitted.value = false;
+}
+
+function openApproveModal(id: number, code: string) {
+    selectedBookingId.value = id;
+    selectedBookingCode.value = code;
+    openModal('approve');
+}
+
+function closeApproveModal() {
+    closeModal();
+    selectedBookingId.value = null;
+    selectedBookingCode.value = null;
+}
+
+function openRejectModal(id: number, code: string) {
+    selectedBookingId.value = id;
+    selectedBookingCode.value = code;
+    rejectReason.value = '';
+    rejectValidationErrors.value.reason = '';
+    openModal('reject');
+}
+
+function closeRejectModal() {
+    closeModal();
+    selectedBookingId.value = null;
+    selectedBookingCode.value = null;
+    rejectReason.value = '';
+    rejectValidationErrors.value.reason = '';
+}
+
+function openDetailModal(booking: Booking) {
+    detailBooking.value = booking;
+    openModal('detail');
+}
+
+function closeDetailModal() {
+    closeModal();
+    detailBooking.value = null;
+}
+
+function handleAddBookingFile(event: Event) {
+    const target = event.target as HTMLInputElement;
+
+    if (!target.files?.length) {
+        return;
+    }
+
+    const file = target.files[0];
+    addBookingForm.banner = file;
+    addBookingPreview.value = URL.createObjectURL(file);
+}
+
+function submitAddBooking() {
+    addBookingSubmitted.value = true;
+
+    if (
+        addBookingHasWarning('room_id') ||
+        addBookingHasWarning('date') ||
+        addBookingHasWarning('start_time') ||
+        addBookingHasWarning('end_time') ||
+        addBookingHasWarning('title') ||
+        addBookingHasWarning('participants')
+    ) {
+        return;
+    }
+
+    addBookingForm.post('/admin/bookings', {
+        forceFormData: true,
+        onSuccess: () => {
+            showAddBookingSuccess.value = true;
+            addBookingForm.reset();
+            addBookingPreview.value = null;
+            addBookingSubmitted.value = false;
+        },
+    });
+}
 
 function fetchBookings() {
     router.get(
@@ -84,69 +219,408 @@ function badgeClass(status: BookingStatus) {
         approved: 'bg-green-100 text-green-700',
         rejected: 'bg-red-100 text-red-700',
         cancelled: 'bg-gray-200 text-gray-700',
-        finished: 'bg-blue-100 text-blue-700',
     }[status];
+}
+
+function confirmApprove() {
+    if (!selectedBookingId.value) {
+        return;
+    }
+
+    router.patch(
+        `/admin/bookings/${selectedBookingId.value}/approve`,
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                closeApproveModal();
+            },
+        },
+    );
+}
+
+function confirmReject() {
+    rejectValidationErrors.value.reason = '';
+
+    if (!rejectReason.value.trim()) {
+        rejectValidationErrors.value.reason = 'Alasan penolakan wajib diisi.';
+
+        return;
+    }
+
+    if (!selectedBookingId.value) {
+        return;
+    }
+
+    router.patch(
+        `/admin/bookings/${selectedBookingId.value}/reject`,
+        { reason: rejectReason.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                closeRejectModal();
+            },
+        },
+    );
+}
+
+function approve(id: number, code: string) {
+    openApproveModal(id, code);
+}
+
+function reject(id: number, code: string) {
+    openRejectModal(id, code);
 }
 </script>
 
 <template>
     <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div
+            class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+        >
             <div>
                 <h1 class="text-3xl font-bold">Booking</h1>
 
                 <p class="text-gray-500">Kelola seluruh peminjaman ruangan.</p>
             </div>
+
+            <button
+                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                @click="openModal('add')"
+            >
+                Tambah Peminjaman
+            </button>
         </div>
 
-        <!-- Statistik -->
+        <AppModal
+            v-if="showAddBookingModal"
+            title="Tambah Peminjaman"
+            max-width="3xl"
+            @close="closeAddBookingModal"
+        >
+            <div
+                v-if="showAddBookingSuccess"
+                class="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700"
+            >
+                Peminjaman berhasil ditambahkan.
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <FormField label="Status" appearance="admin">
+                    <AppSelect v-model="addBookingForm.status">
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                    </AppSelect>
+                </FormField>
+                <FormField
+                    label="Ruangan"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.room_id ||
+                        (addBookingHasWarning('room_id')
+                            ? 'Ruangan wajib dipilih.'
+                            : '')
+                    "
+                >
+                    <AppSelect v-model="addBookingForm.room_id">
+                        <option :value="null" disabled hidden>
+                            Pilih Ruangan
+                        </option>
+                        <option
+                            v-for="room in rooms"
+                            :key="room.id"
+                            :value="room.id"
+                        >
+                            {{ room.name }}
+                        </option>
+                    </AppSelect>
+                </FormField>
+                <FormField
+                    label="Tanggal"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.date ||
+                        (addBookingHasWarning('date')
+                            ? 'Tanggal wajib diisi.'
+                            : '')
+                    "
+                >
+                    <AppInput
+                        v-model="addBookingForm.date"
+                        appearance="admin"
+                        type="date"
+                    />
+                </FormField>
+                <FormField
+                    label="Dari Jam"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.start_time ||
+                        (addBookingHasWarning('start_time')
+                            ? 'Waktu mulai wajib diisi.'
+                            : '')
+                    "
+                >
+                    <AppInput
+                        v-model="addBookingForm.start_time"
+                        appearance="admin"
+                        type="time"
+                        :min="addBookingMinStartTime"
+                        max="23:59"
+                    />
+                </FormField>
+                <FormField
+                    label="Sampai Jam"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.end_time ||
+                        (addBookingHasWarning('end_time')
+                            ? 'Waktu selesai wajib diisi.'
+                            : '')
+                    "
+                >
+                    <AppInput
+                        v-model="addBookingForm.end_time"
+                        appearance="admin"
+                        type="time"
+                        :min="addBookingMinEndTime"
+                        max="23:59"
+                        step="1800"
+                    />
+                </FormField>
+                <FormField
+                    label="Judul Kegiatan"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.title ||
+                        (addBookingHasWarning('title')
+                            ? 'Judul wajib diisi.'
+                            : '')
+                    "
+                >
+                    <AppInput
+                        v-model="addBookingForm.title"
+                        appearance="admin"
+                    />
+                </FormField>
+                <FormField
+                    label="Jumlah Orang"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.participants ||
+                        (addBookingHasWarning('participants')
+                            ? 'Jumlah orang wajib diisi dan minimal 1.'
+                            : '')
+                    "
+                >
+                    <AppInput
+                        v-model="addBookingForm.participants"
+                        appearance="admin"
+                        type="number"
+                        min="1"
+                    />
+                </FormField>
+                <FormField
+                    class="md:col-span-2"
+                    label="Permintaan Khusus"
+                    appearance="admin"
+                    :error="addBookingForm.errors.request"
+                >
+                    <AppTextarea v-model="addBookingForm.request" rows="3" />
+                </FormField>
+                <FormField
+                    v-if="addBookingForm.room_id === 1"
+                    class="md:col-span-2"
+                    label="Unggah Banner Rapat"
+                    appearance="admin"
+                    hint="Format yang didukung: JPG, JPEG, PNG"
+                    :error="addBookingForm.errors.banner"
+                >
+                    <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png"
+                        class="w-full"
+                        @change="handleAddBookingFile"
+                    />
+                    <div v-if="addBookingPreview" class="banner-preview mt-3">
+                        <img :src="addBookingPreview" alt="Preview Banner" />
+                    </div>
+                </FormField>
+                <div class="flex justify-end gap-3 md:col-span-2">
+                    <button
+                        type="button"
+                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        @click="closeAddBookingModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        :disabled="addBookingForm.processing"
+                        @click="submitAddBooking"
+                    >
+                        {{
+                            addBookingForm.processing
+                                ? 'Menyimpan...'
+                                : 'Simpan'
+                        }}
+                    </button>
+                </div>
+            </div>
+        </AppModal>
+
+        <DetailModal
+            v-if="showDetailModal"
+            title="Detail Booking"
+            max-width="3xl"
+            @close="closeDetailModal"
+        >
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <p class="text-sm text-gray-500">Kode Booking</p>
+                    <p class="mt-1 font-medium">{{ detailBooking?.code }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Status</p>
+                    <p class="mt-1 font-medium capitalize">
+                        {{ detailBooking?.status }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Peminjam</p>
+                    <p class="mt-1 font-medium">
+                        {{ detailBooking?.borrower }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Ruangan</p>
+                    <p class="mt-1 font-medium">{{ detailBooking?.room }}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-500">Kegiatan</p>
+                    <p class="mt-1 font-medium">
+                        {{ detailBooking?.activity }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Tanggal</p>
+                    <p class="mt-1 font-medium">{{ detailBooking?.date }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Waktu</p>
+                    <p class="mt-1 font-medium">
+                        {{ detailBooking?.start }} - {{ detailBooking?.end }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Catatan/Request</p>
+                    <p class="mt-1 font-medium">
+                        {{ detailBooking?.request || '-' }}
+                    </p>
+                </div>
+                <div v-if="detailBooking?.processed_notes">
+                    <p class="text-sm text-gray-500">Processed Note</p>
+                    <p class="mt-1 font-medium">
+                        {{ detailBooking.processed_notes }}
+                    </p>
+                </div>
+            </div>
+        </DetailModal>
+
+        <AppModal
+            v-if="showApproveModal"
+            title="Setujui Booking"
+            max-width="lg"
+            @close="closeApproveModal"
+        >
+            <div class="space-y-4">
+                <p class="text-sm text-gray-700">
+                    Booking <strong>{{ selectedBookingCode }}</strong> akan
+                    langsung ditandai sebagai <strong>Approved</strong> dan
+                    tercatat sebagai diproses.
+                </p>
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        @click="closeApproveModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                        @click="confirmApprove"
+                    >
+                        Setujui
+                    </button>
+                </div>
+            </div>
+        </AppModal>
+
+        <AppModal
+            v-if="showRejectModal"
+            title="Tolak Booking"
+            max-width="lg"
+            @close="closeRejectModal"
+        >
+            <div class="space-y-4">
+                <FormField
+                    label="Alasan Penolakan"
+                    appearance="admin"
+                    required
+                    :error="rejectValidationErrors.reason"
+                    ><AppTextarea v-model="rejectReason" rows="4"
+                /></FormField>
+
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        @click="closeRejectModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                        @click="confirmReject"
+                    >
+                        Tolak
+                    </button>
+                </div>
+            </div>
+        </AppModal>
 
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Total</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ stats?.total }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Pending</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-yellow-600">
-                    {{ stats?.pending }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Approved</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-green-600">
-                    {{ stats?.approved }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Selesai</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-blue-600">
-                    {{ stats?.finished }}
-                </h2>
-            </div>
+            <StatCard label="Total" :value="stats?.total" />
+            <StatCard label="Pending" :value="stats?.pending" tone="warning" />
+            <StatCard
+                label="Approved"
+                :value="stats?.approved"
+                tone="success"
+            />
         </div>
-
         <!-- Filter -->
 
         <div class="rounded-xl bg-white p-5 shadow">
             <div class="grid gap-4 md:grid-cols-3">
-                <input
+                <AppInput
                     v-model="search"
+                    appearance="admin"
                     type="text"
                     placeholder="Cari booking..."
                     class="rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
                 />
 
-                <select
+                <AppSelect
                     v-model="statusFilter"
                     class="rounded-lg border px-4 py-2"
                 >
@@ -155,10 +629,9 @@ function badgeClass(status: BookingStatus) {
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                     <option value="cancelled">Cancelled</option>
-                    <option value="finished">Finished</option>
-                </select>
+                </AppSelect>
 
-                <select
+                <AppSelect
                     v-model="roomFilter"
                     class="rounded-lg border px-4 py-2"
                 >
@@ -170,7 +643,7 @@ function badgeClass(status: BookingStatus) {
                     >
                         {{ room.name }}
                     </option>
-                </select>
+                </AppSelect>
             </div>
         </div>
 
@@ -233,6 +706,7 @@ function badgeClass(status: BookingStatus) {
                             <div class="flex justify-end gap-2">
                                 <button
                                     class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-100"
+                                    @click="openDetailModal(booking)"
                                 >
                                     Detail
                                 </button>
@@ -240,6 +714,7 @@ function badgeClass(status: BookingStatus) {
                                 <button
                                     v-if="booking.status === 'pending'"
                                     class="rounded-lg bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"
+                                    @click="approve(booking.id, booking.code)"
                                 >
                                     Approve
                                 </button>
@@ -247,6 +722,7 @@ function badgeClass(status: BookingStatus) {
                                 <button
                                     v-if="booking.status === 'pending'"
                                     class="rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700"
+                                    @click="reject(booking.id, booking.code)"
                                 >
                                     Reject
                                 </button>
@@ -292,3 +768,13 @@ function badgeClass(status: BookingStatus) {
         </div>
     </div>
 </template>
+
+<style scoped>
+.banner-preview img {
+    width: 100%;
+    max-width: 350px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    object-fit: cover;
+}
+</style>

@@ -26,24 +26,4 @@ class BookingStatus extends Model
     {
         return $this->hasMany(Booking::class, 'status_id');
     }
-
-    /**
-     * Summary of oldStatusAudits
-     *
-     * @return HasMany<BookingAudit, $this>
-     */
-    public function oldStatusAudits(): HasMany
-    {
-        return $this->hasMany(BookingAudit::class, 'old_status_id');
-    }
-
-    /**
-     * Summary of newStatusAudits
-     *
-     * @return HasMany<BookingAudit, $this>
-     */
-    public function newStatusAudits(): HasMany
-    {
-        return $this->hasMany(BookingAudit::class, 'new_status_id');
-    }
 }

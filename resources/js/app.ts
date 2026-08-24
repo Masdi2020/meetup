@@ -1,9 +1,21 @@
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
+import { configureEcho } from '@laravel/echo-vue';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import type { DefineComponent } from 'vue';
 
+import Toast from '@/components/Toast.vue';
+import { useToast } from '@/composables/useToast';
 import Layout from '@/layouts/Layout.vue';
+
+configureEcho({
+    broadcaster: 'reverb',
+});
+
+interface Flash {
+    success?: string;
+    error?: string;
+}
 
 createInertiaApp({
     resolve: async (name) => {
@@ -22,10 +34,30 @@ createInertiaApp({
     },
 
     setup({ el, App, props, plugin }) {
-        createApp({
-            render: () => h(App, props),
-        })
-            .use(plugin)
-            .mount(el);
+        const app = createApp({
+            setup() {
+                const { showToast } = useToast();
+
+                router.on('success', (event) => {
+                    const flash = (
+                        event.detail.page.props as {
+                            flash?: Flash;
+                        }
+                    ).flash;
+
+                    if (flash?.success) {
+                        showToast(flash.success, 'success');
+                    }
+
+                    if (flash?.error) {
+                        showToast(flash.error, 'error');
+                    }
+                });
+
+                return () => h('div', [h(Toast), h(App, props)]);
+            },
+        });
+
+        app.use(plugin).mount(el);
     },
 });

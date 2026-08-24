@@ -1,35 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import AdminLayout from '@/layouts/AdminLayout.vue';
+import { useForm } from '@inertiajs/vue3';
+import AppInput from '@/components/atoms/AppInput.vue';
+import FormField from '@/components/molecules/FormField.vue';
+const props = defineProps<{
+    settings: {
+        appName: string;
+        sessionTimeout: number;
+    };
+}>();
 
-defineOptions({
-    layout: AdminLayout,
-});
-
-const settings = ref({
-    appName: 'Meeting Room',
-
-    organization: 'Diskominfo',
-
-    allowSameDayBooking: true,
-
-    maxBookingHour: 4,
-
-    maxBookingDay: 30,
-
-    openTime: '07:30',
-
-    closeTime: '17:30',
-
-    emailNotification: true,
-
-    dashboardNotification: true,
-
-    sessionTimeout: 60,
+const form = useForm({
+    ...props.settings,
 });
 
 function save() {
-    alert('Simpan konfigurasi');
+    form.put('/admin/settings');
 }
 </script>
 
@@ -51,134 +36,13 @@ function save() {
             </div>
 
             <div class="grid gap-5 p-6">
-                <div>
-                    <label class="mb-2 block font-medium">
-                        Nama Aplikasi
-                    </label>
+                <FormField label="Nama Aplikasi" appearance="admin"
+                    ><AppInput v-model="form.appName" appearance="admin"
+                /></FormField>
 
-                    <input
-                        v-model="settings.appName"
-                        class="w-full rounded-lg border px-4 py-2"
-                    />
-                </div>
-
-                <div>
-                    <label class="mb-2 block font-medium">
-                        Nama Instansi
-                    </label>
-
-                    <input
-                        v-model="settings.organization"
-                        class="w-full rounded-lg border px-4 py-2"
-                    />
-                </div>
-
-                <div>
-                    <label class="mb-2 block font-medium"> Logo </label>
-
-                    <input type="file" class="w-full rounded-lg border p-2" />
-                </div>
-            </div>
-        </div>
-
-        <!-- Booking -->
-
-        <div class="rounded-xl bg-white shadow">
-            <div class="border-b px-6 py-4">
-                <h2 class="text-lg font-semibold">Pengaturan Booking</h2>
-            </div>
-
-            <div class="space-y-5 p-6">
-                <label class="flex items-center gap-3">
-                    <input
-                        v-model="settings.allowSameDayBooking"
-                        type="checkbox"
-                    />
-
-                    Izinkan booking pada hari yang sama
-                </label>
-
-                <div>
-                    <label class="mb-2 block font-medium">
-                        Maksimal Lama Booking (Jam)
-                    </label>
-
-                    <input
-                        v-model="settings.maxBookingHour"
-                        type="number"
-                        class="w-full rounded-lg border px-4 py-2"
-                    />
-                </div>
-
-                <div>
-                    <label class="mb-2 block font-medium">
-                        Maksimal Hari Sebelum Booking
-                    </label>
-
-                    <input
-                        v-model="settings.maxBookingDay"
-                        type="number"
-                        class="w-full rounded-lg border px-4 py-2"
-                    />
-                </div>
-            </div>
-        </div>
-
-        <!-- Jam Operasional -->
-
-        <div class="rounded-xl bg-white shadow">
-            <div class="border-b px-6 py-4">
-                <h2 class="text-lg font-semibold">Jam Operasional</h2>
-            </div>
-
-            <div class="grid gap-5 p-6 md:grid-cols-2">
-                <div>
-                    <label class="mb-2 block font-medium"> Jam Mulai </label>
-
-                    <input
-                        v-model="settings.openTime"
-                        type="time"
-                        class="w-full rounded-lg border px-4 py-2"
-                    />
-                </div>
-
-                <div>
-                    <label class="mb-2 block font-medium"> Jam Selesai </label>
-
-                    <input
-                        v-model="settings.closeTime"
-                        type="time"
-                        class="w-full rounded-lg border px-4 py-2"
-                    />
-                </div>
-            </div>
-        </div>
-
-        <!-- Notifikasi -->
-
-        <div class="rounded-xl bg-white shadow">
-            <div class="border-b px-6 py-4">
-                <h2 class="text-lg font-semibold">Notifikasi</h2>
-            </div>
-
-            <div class="space-y-4 p-6">
-                <label class="flex items-center gap-3">
-                    <input
-                        v-model="settings.emailNotification"
-                        type="checkbox"
-                    />
-
-                    Aktifkan Email
-                </label>
-
-                <label class="flex items-center gap-3">
-                    <input
-                        v-model="settings.dashboardNotification"
-                        type="checkbox"
-                    />
-
-                    Aktifkan Notifikasi Dashboard
-                </label>
+                <FormField label="Logo" appearance="admin"
+                    ><input type="file" class="w-full rounded-lg border p-2"
+                /></FormField>
             </div>
         </div>
 
@@ -190,15 +54,12 @@ function save() {
             </div>
 
             <div class="p-6">
-                <label class="mb-2 block font-medium">
-                    Session Timeout (Menit)
-                </label>
-
-                <input
-                    v-model="settings.sessionTimeout"
-                    type="number"
-                    class="w-full rounded-lg border px-4 py-2"
-                />
+                <FormField label="Session Timeout (Menit)" appearance="admin"
+                    ><AppInput
+                        v-model="form.sessionTimeout"
+                        type="number"
+                        appearance="admin"
+                /></FormField>
             </div>
         </div>
 

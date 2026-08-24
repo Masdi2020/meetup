@@ -1,140 +1,95 @@
+<script setup lang="ts">
+import { useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import AppButton from '@/components/atoms/AppButton.vue';
+import AppInput from '@/components/atoms/AppInput.vue';
+import FormField from '@/components/molecules/FormField.vue';
+import PasswordField from '@/components/molecules/PasswordField.vue';
+import SurfaceCard from '@/components/molecules/SurfaceCard.vue';
+
+const form = useForm({ username: '', password: '' });
+const showUsernameWarning = ref(false);
+const showPasswordWarning = ref(false);
+
+function login() {
+    form.clearErrors();
+    showUsernameWarning.value = form.username.trim() === '';
+    showPasswordWarning.value = form.password.trim() === '';
+
+    if (!showUsernameWarning.value && !showPasswordWarning.value) {
+        form.post('/login');
+    }
+}
+function removeUsernameWhitespace(event: Event) {
+    const input = event.target as HTMLInputElement;
+    form.username = input.value.replace(/\s/g, '');
+}
+</script>
+
 <template>
     <div class="login-page">
-        <div class="login-card">
-            <!-- <img src="@/assets/logo.png" alt="Logo" class="logo" /> -->
-
+        <SurfaceCard class="login-card">
             <h1 class="title">Masuk</h1>
 
             <form @submit.prevent="login">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input
+                <FormField
+                    label="Username"
+                    :error="
+                        form.errors.username ||
+                        (showUsernameWarning ? 'Username wajib diisi' : '')
+                    "
+                    required
+                >
+                    <AppInput
                         id="username"
                         v-model="form.username"
                         type="text"
                         placeholder="Masukkan username"
+                        @keydown.space.prevent
+                        @input="removeUsernameWhitespace"
                         required
                     />
-                </div>
+                </FormField>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input
-                        id="password"
-                        v-model="form.password"
-                        type="password"
-                        placeholder="Masukkan password"
-                        required
-                    />
-                </div>
+                <PasswordField
+                    v-model="form.password"
+                    label="Password"
+                    :error="
+                        form.errors.password ||
+                        (showPasswordWarning ? 'Password wajib diisi' : '')
+                    "
+                    placeholder="Masukkan password"
+                    required
+                />
 
-                <button type="submit" class="login-btn">Login</button>
+                <AppButton type="submit" :disabled="form.processing">
+                    Login
+                </AppButton>
             </form>
-
-            <p class="extra-text">
-                Belum punya akun?
-                <a href="/register">Daftar sekarang</a>
-            </p>
-        </div>
+        </SurfaceCard>
     </div>
 </template>
-
-<script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
-
-const form = useForm({
-    username: '',
-    password: '',
-});
-
-const login = () => {
-    form.post('/login');
-};
-</script>
 
 <style scoped>
 * {
     box-sizing: border-box;
 }
-
 .login-page {
-    min-height: 100vh;
     display: flex;
-    justify-content: center;
     align-items: center;
-    background: #ffffff;
+    justify-content: center;
+    min-height: 100vh;
     padding: 20px;
+    background: #fff;
 }
-
 .login-card {
     width: 360px;
-    background: #cfe2ff;
-    border-radius: 10px;
-    padding: 28px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     text-align: center;
 }
-
-/* .logo {
-  width: 95px;
-  margin-bottom: 16px;
-} */
-
 .title {
+    margin-bottom: 30px;
+    color: #1d3557;
     font-size: 2rem;
     font-weight: 700;
-    color: #1d3557;
-    margin-bottom: 30px;
-}
-
-.form-group {
-    text-align: left;
-    margin-bottom: 18px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-.form-group input {
-    width: 100%;
-    height: 48px;
-    border: 1px solid #d9d9d9;
-    border-radius: 10px;
-    padding: 0 15px;
-    font-size: 15px;
-    transition: 0.2s;
-    outline: none;
-}
-
-.form-group input:focus {
-    border-color: #4d8df7;
-    box-shadow: 0 0 0 3px rgba(77, 141, 247, 0.15);
-}
-
-.login-btn {
-    width: 140px;
-    height: 44px;
-    border: none;
-    border-radius: 999px;
-    background: #4d8df7;
-    color: white;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
-    margin-top: 12px;
-}
-
-.login-btn:hover {
-    background: #397cf0;
-}
-
-.login-btn:active {
-    transform: scale(0.98);
 }
 </style>

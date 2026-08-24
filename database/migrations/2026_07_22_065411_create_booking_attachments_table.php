@@ -15,18 +15,21 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('booking_id')
-                ->constrained()
+                ->constrained('bookings')
                 ->cascadeOnDelete();
 
+            $table->string('original_filename');
             $table->string('filename');
             $table->string('path');
+
             $table->string('mime_type');
             $table->unsignedBigInteger('size');
 
-            $table->foreignId('uploaded_by')
-                ->constrained('users');
-
             $table->timestamp('created_at')->useCurrent();
+
+            $table->softDeletes();
+
+            $table->index('booking_id');
         });
     }
 

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Response;
 
 class LoginController extends Controller
@@ -15,25 +18,46 @@ class LoginController extends Controller
         return inertia('Login');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'username' => ['required'],
-            'password' => ['required'],
-        ]);
+        $credentials = $request->validated();
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
+        $user = User::where('username', $credentials['username'])->first();
 
-            return match (Auth::user()->role) {
-                'admin' => to_route('admin.dashboard'),
-                'user' => to_route('home'),
+        if (
+            $user &&
+            Hash::check($credentials['password'], $user->password)
+        ) {
+            $remember = $user->role === 'display';
+
+            Auth::login($user, $remember);
+
+            return match ($user->role) {
+                'admin' => to_route('admin.dashboard')
+                    ->with('success', 'Login Berhasil'),
+
+                'user' => to_route('availability.index')
+                    ->with('success', 'Login Berhasil'),
+
+                'display' => to_route('display.index')
+                    ->with('success', 'Login Berhasil'),
+
                 default => abort(403),
             };
         }
 
         return back()->withErrors([
             'username' => 'Username atau password salah',
-        ]);
+        ])->withInput();
+    }
+
+    public function destroy(Request $request): RedirectResponse
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return to_route('login')->with('success', 'Berhasil Keluar');
     }
 }

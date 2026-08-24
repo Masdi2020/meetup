@@ -1,14 +1,38 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import ForceChangePasswordModal from '@/components/ForceChangePasswordModal.vue';
+import LogoutButton from '@/components/LogoutButton.vue';
 import Sidebar from '@/components/Sidebar.vue';
+import { navigationByRole } from '@/config/navigation';
+import type { UserRole } from '@/config/navigation';
+import type { Auth } from '@/types/auth';
 
 const isOpen = ref(true);
+
+const page = usePage<{ auth: Auth }>();
+
+const navigation = computed(() => {
+    const role = page.props.auth.user?.role as UserRole | undefined;
+
+    return navigationByRole[role ?? 'user'];
+});
 </script>
 
 <template>
     <div class="layout">
-        <Sidebar :is-open="isOpen" @toggle="isOpen = !isOpen" />
+        <Sidebar
+            :is-open="isOpen"
+            :menus="navigation.items"
+            :brand="navigation.brand"
+            @toggle="isOpen = !isOpen"
+        >
+            <template #sidebar-footer>
+                <LogoutButton />
+            </template>
+        </Sidebar>
 
+        <ForceChangePasswordModal />
         <main class="content" :class="{ collapsed: !isOpen }">
             <slot />
         </main>

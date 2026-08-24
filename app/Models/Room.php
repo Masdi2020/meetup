@@ -10,8 +10,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'name',
     'capacity',
-    'floor',
-    'calendar_url',
+    'location',
+    'is_available',
+    'has_display',
 ])]
 
 /**
@@ -20,6 +21,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Room extends Model
 {
+    /**
+     * Summary of casts
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'is_available' => 'boolean',
+        'has_display' => 'boolean',
+    ];
+
     /**
      * Summary of bookings
      *

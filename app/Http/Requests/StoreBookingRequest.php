@@ -24,13 +24,14 @@ class StoreBookingRequest extends FormRequest
     {
         return [
             'room_id' => ['required', 'exists:rooms,id'],
-            'date' => ['required', 'date'],
+            'date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required'],
-            'end_time' => ['required'],
+            'end_time' => ['required', 'after:start_time'],
             'title' => ['required', 'string', 'max:255'],
             'participants' => ['required', 'integer', 'min:1'],
             'request' => ['nullable', 'string'],
             'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'status' => ['nullable', 'string', 'in:pending,approved'],
         ];
     }
 }

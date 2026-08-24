@@ -5,21 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-#[Fillable(['name', 'username', 'email', 'password', 'role'])]
-#[Hidden(['password'])]
+#[Fillable(['name', 'username', 'password', 'role', 'force_change_password'])]
+#[Hidden(['password', 'active_username'])]
 class User extends Authenticatable
 {
+    use SoftDeletes;
+
     /**
      * Summary of casts
      *
-     * @return array{password: string}
+     * @return array{password: 'hashed', force_change_password: 'bool'}
      */
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
+            'force_change_password' => 'bool',
         ];
     }
 
@@ -31,15 +35,5 @@ class User extends Authenticatable
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
-    }
-
-    /**
-     * Summary of bookingAudits
-     *
-     * @return HasMany<BookingAudit, $this>
-     */
-    public function bookingAudits(): HasMany
-    {
-        return $this->hasMany(BookingAudit::class, 'changed_by');
     }
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useEchoPublic } from '@laravel/echo-vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<{
     booking: any;
@@ -50,20 +51,32 @@ const remainingTime = computed(() => {
     return `${minutes} menit ${seconds} detik`;
 });
 
+function reloadBanner() {
+    router.reload({
+        only: ['booking', 'next_change', 'now'],
+        onFinish: scheduleReload,
+    });
+}
+
 function scheduleReload() {
+    if (timer) {
+        clearTimeout(timer);
+    }
+
     if (!props.next_change) {
         return;
     }
 
     const target = new Date(props.next_change).getTime();
-
     const delay = Math.max(target - Date.now(), 1000);
 
-    timer = window.setTimeout(() => {
-        router.reload({
-            only: ['booking', 'next_change'],
-        });
-    }, delay);
+    timer = window.setTimeout(reloadBanner, delay);
+}
+
+function refreshWhenVisible() {
+    if (!document.hidden) {
+        reloadBanner();
+    }
 }
 
 async function toggleFullscreen() {
@@ -82,6 +95,8 @@ function onFullscreenChange() {
     isFullscreen.value = !!document.fullscreenElement;
 }
 
+useEchoPublic('meeting-banner', '.banner.updated', reloadBanner);
+
 onMounted(() => {
     scheduleReload();
 
@@ -90,7 +105,20 @@ onMounted(() => {
     }, 1000);
 
     document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
 });
+
+watch(
+    () => props.now,
+    (now) => {
+        currentTime.value = new Date(now);
+    },
+);
+
+watch(
+    () => props.next_change,
+    () => scheduleReload(),
+);
 
 onUnmounted(() => {
     if (timer) {
@@ -102,6 +130,7 @@ onUnmounted(() => {
     }
 
     document.removeEventListener('fullscreenchange', onFullscreenChange);
+    document.removeEventListener('visibilitychange', refreshWhenVisible);
 });
 </script>
 
@@ -133,6 +162,15 @@ onUnmounted(() => {
 
             <p class="remaining">Berakhir dalam {{ remainingTime }}</p>
         </div>
+
+        <video
+            v-else
+            src="/storage/videos/Contoh.mp4"
+            autoplay
+            muted
+            loop
+            playsinline
+        />
     </div>
 </template>
 
@@ -200,7 +238,7 @@ onUnmounted(() => {
 }
 
 .fullscreen-btn:hover {
-    background: rgba(255, 2555, 2555, 0.2);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .fullscreen-btn:active {

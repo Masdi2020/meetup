@@ -16,10 +16,14 @@ return new class extends Migration
 
             $table->string('name');
             $table->integer('capacity');
-            $table->string('floor');
-            $table->text('calendar_url')->nullable();
+            $table->string('location');
+            $table->string('image_path')->nullable();
+            $table->boolean('is_available')->default(true);
+            $table->boolean('has_display')->default(false);
 
             $table->timestamps();
+
+            $table->softDeletes();
         });
     }
 

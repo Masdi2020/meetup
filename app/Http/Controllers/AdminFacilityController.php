@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SaveFacilityRequest;
 use App\Models\Facility;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,14 +22,28 @@ class AdminFacilityController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(SaveFacilityRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         Facility::create($validated);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Fasilitas berhasil ditambahkan.');
+    }
+
+    public function update(SaveFacilityRequest $request, Facility $facility): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        $facility->update($validated);
+
+        return redirect()->back()->with('success', 'Fasilitas berhasil diperbarui.');
+    }
+
+    public function destroy(Facility $facility): RedirectResponse
+    {
+        $facility->delete();
+
+        return back()->with('success', 'Fasilitas berhasil dihapus');
     }
 }

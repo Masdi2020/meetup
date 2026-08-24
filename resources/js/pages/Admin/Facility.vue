@@ -1,35 +1,123 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import AdminLayout from '@/layouts/AdminLayout.vue';
-
-defineOptions({
-    layout: AdminLayout,
-});
-
-interface Facility {
-    id: number;
-    name: string;
-    rooms_count: number;
-}
-
+import { router, useForm } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
+import AppInput from '@/components/atoms/AppInput.vue';
+import FormField from '@/components/molecules/FormField.vue';
+import StatCard from '@/components/molecules/StatCard.vue';
+import AppModal from '@/components/organisms/AppModal.vue';
+import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useModalManager } from '@/composables/useModal';
+import type { Facility } from '@/types/admin';
 const props = defineProps<{
     facilities: Facility[];
 }>();
 
+const facilities = ref<Facility[]>([...props.facilities]);
 const search = ref('');
+const showAddModal = computed(() => isModalOpen('add'));
+const { openModal, closeModal, isModalOpen } = useModalManager<
+    'add' | 'detail' | 'edit'
+>();
+const showDetailModal = computed(() => isModalOpen('detail'));
+const showEditModal = computed(() => isModalOpen('edit'));
+const selectedFacility = ref<Facility | null>(null);
+const addFacilityForm = useForm({ name: '' });
+const editFacilityForm = useForm({ name: '' });
+
+watch(
+    () => props.facilities,
+    (value) => {
+        facilities.value = [...value];
+    },
+    { immediate: true },
+);
 
 const filteredFacilities = computed(() =>
-    props.facilities.filter((facility) =>
+    facilities.value.filter((facility) =>
         facility.name.toLowerCase().includes(search.value.toLowerCase()),
     ),
 );
 
 const totalUsage = computed(() =>
-    props.facilities.reduce(
+    facilities.value.reduce(
         (total, facility) => total + facility.rooms_count,
         0,
     ),
 );
+
+function openAddModal() {
+    addFacilityForm.reset();
+    openModal('add');
+}
+
+function closeAddModal() {
+    closeModal();
+    addFacilityForm.reset();
+}
+
+function submitAddFacility() {
+    if (!addFacilityForm.name.trim()) {
+        return;
+    }
+
+    addFacilityForm.post('/admin/facilities', {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeAddModal();
+        },
+    });
+}
+
+function openDetailModal(facility: Facility) {
+    selectedFacility.value = facility;
+    openModal('detail');
+}
+
+function closeDetailModal() {
+    closeModal();
+    selectedFacility.value = null;
+}
+
+function openEditModal(facility: Facility) {
+    selectedFacility.value = facility;
+    editFacilityForm.name = facility.name;
+    openModal('edit');
+}
+
+function closeEditModal() {
+    closeModal();
+    selectedFacility.value = null;
+    editFacilityForm.reset();
+}
+
+function submitEditFacility() {
+    if (!selectedFacility.value) {
+        return;
+    }
+
+    const name = editFacilityForm.name.trim();
+
+    if (!name) {
+        return;
+    }
+
+    editFacilityForm.put(`/admin/facilities/${selectedFacility.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeEditModal();
+        },
+    });
+}
+
+function deleteFacility(facility: Facility) {
+    if (!confirm(`Hapus fasilitas ${facility.name}?`)) {
+        return;
+    }
+
+    router.delete(`/admin/facilities/${facility.id}`, {
+        preserveScroll: true,
+    });
+}
 </script>
 
 <template>
@@ -46,6 +134,7 @@ const totalUsage = computed(() =>
 
             <button
                 class="rounded-lg bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700"
+                @click="openAddModal"
             >
                 + Tambah Fasilitas
             </button>
@@ -53,27 +142,15 @@ const totalUsage = computed(() =>
 
         <!-- Statistik -->
         <div class="grid gap-4 md:grid-cols-2">
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Total Fasilitas</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ props.facilities.length }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Digunakan di Ruangan</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ totalUsage }}
-                </h2>
-            </div>
+            <StatCard label="Total Fasilitas" :value="facilities.length" />
+            <StatCard label="Digunakan di Ruangan" :value="totalUsage" />
         </div>
 
         <!-- Filter -->
         <div class="rounded-xl bg-white p-5 shadow">
-            <input
+            <AppInput
                 v-model="search"
+                appearance="admin"
                 type="text"
                 placeholder="Cari fasilitas..."
                 class="w-full rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
@@ -111,18 +188,21 @@ const totalUsage = computed(() =>
                             <div class="flex justify-end gap-2">
                                 <button
                                     class="rounded-lg border px-3 py-2 transition hover:bg-gray-100"
+                                    @click="openDetailModal(facility)"
                                 >
                                     Detail
                                 </button>
 
                                 <button
                                     class="rounded-lg bg-yellow-500 px-3 py-2 text-white transition hover:bg-yellow-600"
+                                    @click="openEditModal(facility)"
                                 >
                                     Edit
                                 </button>
 
                                 <button
-                                    class="rounded-lg bg-red-600 px-3 py-2 text-white transition hover:bg-red-700"
+                                    class="transitiom rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700"
+                                    @click="deleteFacility(facility)"
                                 >
                                     Hapus
                                 </button>
@@ -138,5 +218,89 @@ const totalUsage = computed(() =>
                 </tbody>
             </table>
         </div>
+
+        <AppModal
+            v-if="showAddModal"
+            title="Tambah Fasilitas"
+            max-width="md"
+            @close="closeAddModal"
+        >
+            <div class="space-y-4">
+                <FormField label="Nama fasilitas" appearance="admin" required
+                    ><AppInput
+                        v-model="addFacilityForm.name"
+                        appearance="admin"
+                        placeholder="Masukkan nama fasilitas"
+                        required
+                        @keyup.enter="submitAddFacility"
+                /></FormField>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button
+                        class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-100"
+                        @click="closeAddModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                        @click="submitAddFacility"
+                    >
+                        Simpan
+                    </button>
+                </div>
+            </div>
+        </AppModal>
+
+        <DetailModal
+            v-if="showDetailModal && selectedFacility"
+            title="Detail Fasilitas"
+            @close="closeDetailModal"
+        >
+            <div class="space-y-4">
+                <div class="rounded-lg bg-gray-50 p-4">
+                    <p class="text-sm text-gray-500">Nama fasilitas</p>
+                    <p class="mt-1 text-lg font-semibold">
+                        {{ selectedFacility.name }}
+                    </p>
+                </div>
+                <div class="rounded-lg bg-gray-50 p-4">
+                    <p class="text-sm text-gray-500">Dipakai di ruangan</p>
+                    <p class="mt-1 text-lg font-semibold">
+                        {{ selectedFacility.rooms_count }} Ruangan
+                    </p>
+                </div>
+            </div>
+        </DetailModal>
+
+        <AppModal
+            v-if="showEditModal && selectedFacility"
+            title="Edit Fasilitas"
+            max-width="md"
+            @close="closeEditModal"
+        >
+            <div class="space-y-4">
+                <FormField label="Nama fasilitas" appearance="admin" required
+                    ><AppInput
+                        v-model="editFacilityForm.name"
+                        appearance="admin"
+                        required
+                        @keyup.enter="submitEditFacility"
+                /></FormField>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button
+                        class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-100"
+                        @click="closeEditModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        class="rounded-lg bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
+                        @click="submitEditFacility"
+                    >
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+        </AppModal>
     </div>
 </template>
