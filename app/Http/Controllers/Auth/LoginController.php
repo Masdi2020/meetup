@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,15 +18,9 @@ class LoginController extends Controller
         return inertia('Login');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'username' => ['required', 'string', 'regex:/^\S+$/u'],
-            'password' => ['required', 'string', 'regex:/^\S+$/u'],
-        ], [
-            'username.regex' => 'Username tidak boleh mengandung spasi.',
-            'password.regex' => 'Password tidak boleh mengandung spasi.',
-        ]);
+        $credentials = $request->validated();
 
         $user = User::where('username', $credentials['username'])->first();
 

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SaveUserRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -43,19 +43,9 @@ class AdminUserController extends Controller
         ]);
     }
 
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(SaveUserRequest $request, User $user): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^\S+$/u',
-                Rule::unique('users', 'username')->withoutTrashed()->ignore($user->id),
-            ],
-            'role' => ['required', 'in:admin,user,display'],
-        ], ['username.regex' => 'Username tidak boleh mengandung spasi.']);
+        $validated = $request->validated();
 
         $user->update($validated);
 
@@ -80,19 +70,9 @@ class AdminUserController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(SaveUserRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^\S+$/u',
-                Rule::unique('users', 'username')->withoutTrashed(),
-            ],
-            'role' => ['required', 'in:admin,user,display'],
-        ], ['username.regex' => 'Username tidak boleh mengandung spasi.']);
+        $validated = $request->validated();
 
         $generatedPassword = Str::password(8);
 

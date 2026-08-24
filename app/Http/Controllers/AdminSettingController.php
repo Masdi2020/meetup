@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateSettingRequest;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,17 +20,9 @@ class AdminSettingController extends Controller
         ]);
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(UpdateSettingRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'appName' => ['required', 'string', 'max:255'],
-            'sessionTimeout' => [
-                'required',
-                'integer',
-                'min:1',
-                'max:43200',
-            ],
-        ]);
+        $validated = $request->validated();
 
         Setting::set('app_name', $validated['appName'], 'string');
         Setting::set('session_timeout', $validated['sessionTimeout'], 'integer');

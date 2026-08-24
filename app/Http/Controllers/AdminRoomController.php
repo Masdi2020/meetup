@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SaveRoomRequest;
 use App\Models\Facility;
 use App\Models\Room;
 use Illuminate\Http\RedirectResponse;
@@ -49,16 +50,9 @@ class AdminRoomController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(SaveRoomRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'capacity' => ['required', 'integer', 'min:1'],
-            'location' => ['required', 'string', 'max:255'],
-            'is_available' => ['sometimes', 'boolean'],
-            'facilities' => ['sometimes', 'array'],
-            'facilities.*' => ['integer', 'exists:facilities,id'],
-        ]);
+        $validated = $request->validated();
 
         $room = Room::create([
             'name' => $validated['name'],
@@ -74,16 +68,9 @@ class AdminRoomController extends Controller
         return redirect()->route('admin.rooms.index')->with('success', 'Ruangan berhasil ditambahkan.');
     }
 
-    public function update(Request $request, Room $room): RedirectResponse
+    public function update(SaveRoomRequest $request, Room $room): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'capacity' => ['required', 'integer', 'min:1'],
-            'location' => ['required', 'string', 'max:255'],
-            'is_available' => ['sometimes', 'boolean'],
-            'facilities' => ['sometimes', 'array'],
-            'facilities.*' => ['integer', 'exists:facilities,id'],
-        ]);
+        $validated = $request->validated();
 
         $room->update([
             'name' => $validated['name'],
