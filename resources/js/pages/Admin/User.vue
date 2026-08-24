@@ -2,15 +2,15 @@
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import StatCard from '@/components/molecules/StatCard.vue';
-import AppModal from '@/components/organisms/AppModal.vue';
-import DetailModal from '@/components/organisms/DetailModal.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import FormField from '@/components/molecules/FormField.vue';
+import StatCard from '@/components/molecules/StatCard.vue';
+import AppModal from '@/components/organisms/AppModal.vue';
+import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useModalManager } from '@/composables/useModal';
 import type { AdminUser as User } from '@/types/admin';
 import type { UserRole as Role } from '@/types/auth';
-import { useModalManager } from '@/composables/useModal';
 interface pageProps extends InertiaPageProps {
     flash: {
         success?: string;
@@ -394,7 +394,10 @@ function deleteUser(user: User) {
                         required
                 /></FormField>
 
-                <FormField label="Username" appearance="admin" required
+                <FormField
+                    label="Username"
+                    appearance="admin"
+                    required
                     :error="page.props.errors.username"
                     ><AppInput
                         v-model="editForm.username"
@@ -449,7 +452,10 @@ function deleteUser(user: User) {
                         required
                 /></FormField>
 
-                <FormField label="Username" appearance="admin" required
+                <FormField
+                    label="Username"
+                    appearance="admin"
+                    required
                     :error="page.props.errors.username"
                     ><AppInput
                         v-model="createForm.username"

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import AppInput from '@/components/atoms/AppInput.vue';
+import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
-import AppInput from '@/components/atoms/AppInput.vue';
-import FormField from '@/components/molecules/FormField.vue';
-import type { Facility } from '@/types/admin';
 import { useModalManager } from '@/composables/useModal';
+import type { Facility } from '@/types/admin';
 const props = defineProps<{
     facilities: Facility[];
 }>();
