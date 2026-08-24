@@ -44,7 +44,7 @@ class LoginController extends Controller
                 'user' => to_route('availability.index')
                     ->with('success', 'Login Berhasil'),
 
-                'display' => to_route('meeting.banner')
+                'display' => to_route('display.index')
                     ->with('success', 'Login Berhasil'),
 
                 default => abort(403),

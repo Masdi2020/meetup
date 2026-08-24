@@ -162,6 +162,15 @@ onUnmounted(() => {
 
             <p class="remaining">Berakhir dalam {{ remainingTime }}</p>
         </div>
+
+        <video
+            v-else
+            src="/storage/videos/Contoh.mp4"
+            autoplay
+            muted
+            loop
+            playsinline
+        />
     </div>
 </template>
 
