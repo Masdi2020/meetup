@@ -1,4 +1,5 @@
-export type UserRole = 'admin' | 'display' | 'user';
+import type { UserRole } from '@/types/auth';
+export type { UserRole } from '@/types/auth';
 
 export type NavigationItem = {
     name: string;

@@ -1,21 +1,15 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-interface FacilityOption {
-    id: number;
-    name: string;
-}
-
-interface Room {
-    id: number;
-    name: string;
-    location: string;
-    capacity: number;
-    is_available: boolean;
-    facilities: string[];
-    facility_ids: number[];
-}
-
+import StatCard from '@/components/molecules/StatCard.vue';
+import AppModal from '@/components/organisms/AppModal.vue';
+import DetailModal from '@/components/organisms/DetailModal.vue';
+import AppInput from '@/components/atoms/AppInput.vue';
+import FormField from '@/components/molecules/FormField.vue';
+import CheckboxField from '@/components/molecules/CheckboxField.vue';
+import CheckboxGroup from '@/components/molecules/CheckboxGroup.vue';
+import type { AdminRoom as Room, FacilityOption } from '@/types/admin';
+import { useModalManager } from '@/composables/useModal';
 const props = defineProps<{
     rooms: Room[];
     facilities?: FacilityOption[];
@@ -25,8 +19,11 @@ const props = defineProps<{
 }>();
 
 const search = ref(props.filters.search ?? '');
-const showDetailModal = ref(false);
-const showFormModal = ref(false);
+const showDetailModal = computed(() => isModalOpen('detail'));
+const { openModal, closeModal, isModalOpen } = useModalManager<
+    'detail' | 'form'
+>();
+const showFormModal = computed(() => isModalOpen('form'));
 const isEditing = ref(false);
 const selectedRoom = ref<Room | null>(null);
 
@@ -66,7 +63,7 @@ function openCreateModal() {
     roomForm.capacity = 1;
     roomForm.is_available = true;
     roomForm.facilities = [];
-    showFormModal.value = true;
+    openModal('form');
 }
 
 function openEditModal(room: Room) {
@@ -77,11 +74,11 @@ function openEditModal(room: Room) {
     roomForm.location = room.location;
     roomForm.is_available = room.is_available;
     roomForm.facilities = [...room.facility_ids];
-    showFormModal.value = true;
+    openModal('form');
 }
 
 function closeFormModal() {
-    showFormModal.value = false;
+    closeModal();
     selectedRoom.value = null;
     roomForm.reset();
     roomForm.capacity = 1;
@@ -91,11 +88,11 @@ function closeFormModal() {
 
 function openDetailModal(room: Room) {
     selectedRoom.value = room;
-    showDetailModal.value = true;
+    openModal('detail');
 }
 
 function closeDetailModal() {
-    showDetailModal.value = false;
+    closeModal();
     selectedRoom.value = null;
 }
 
@@ -154,35 +151,15 @@ function toggleAvailability(room: Room) {
         </div>
 
         <div class="grid gap-4 md:grid-cols-3">
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Total Ruangan</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ rooms.length }}
-                </h2>
-            </div>
-
-            <div class="rouded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Total Kapasitas</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ totalCapacity }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Total Fasilitas</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ totalFacilities }}
-                </h2>
-            </div>
+            <StatCard label="Total Ruangan" :value="rooms.length" />
+            <StatCard label="Total Kapasitas" :value="totalCapacity" />
+            <StatCard label="Total Fasilitas" :value="totalFacilities" />
         </div>
-
         <div class="rounded-xl bg-white p-5 shadow">
             <div class="grid gap-4 md:grid-cols-2">
-                <input
+                <AppInput
                     v-model="search"
+                    appearance="admin"
                     type="text"
                     placeholder="Cari ruangan..."
                     class="rounded-lg border px-4 py-2"
@@ -282,187 +259,122 @@ function toggleAvailability(room: Room) {
             </table>
         </div>
 
-        <div
+        <DetailModal
             v-if="showDetailModal && selectedRoom"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            title="Detail Ruangan"
+            max-width="xl"
+            @close="closeDetailModal"
         >
-            <div class="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
-                <div class="mb-4 flex items-center justify-between">
-                    <h2 class="text-2xl font-bold">Detail Ruangan</h2>
-
-                    <button
-                        @click="closeDetailModal"
-                        class="text-gray-500 hover:text-gray-700"
-                    >
-                        ✕
-                    </button>
+            <div class="space-y-3 text-sm text-gray-700">
+                <div>
+                    <p class="font-semibold text-gray-500">Nama</p>
+                    <p>{{ selectedRoom.name }}</p>
                 </div>
 
-                <div class="space-y-3 text-sm text-gray-700">
-                    <div>
-                        <p class="font-semibold text-gray-500">Nama</p>
-                        <p>{{ selectedRoom.name }}</p>
-                    </div>
-
-                    <div>
-                        <p class="font-semibold text-gray-500">Lokasi</p>
-                        <p>{{ selectedRoom.location }}</p>
-                    </div>
-
-                    <div>
-                        <p class="font-semibold text-gray-500">Kapasitas</p>
-                        <p>{{ selectedRoom.capacity }} orang</p>
-                    </div>
-
-                    <div>
-                        <p class="font-semibold text-gray-500">Status</p>
-                        <p>
-                            <span
-                                :class="
-                                    selectedRoom.is_available
-                                        ? 'bg-emerald-100 text-emerald-700'
-                                        : 'bg-gray-200 text-gray-700'
-                                "
-                                class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
-                            >
-                                {{
-                                    selectedRoom.is_available
-                                        ? 'Aktif'
-                                        : 'Nonaktif'
-                                }}
-                            </span>
-                        </p>
-                    </div>
-
-                    <div>
-                        <p class="font-semibold text-gray-500">Fasilitas</p>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            <span
-                                v-for="facility in selectedRoom.facilities"
-                                :key="facility"
-                                class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700"
-                            >
-                                {{ facility }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div
-            v-if="showFormModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-        >
-            <div class="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
-                <div class="mb-5 flex items-center justify-between">
-                    <h2 class="text-2xl font-bold">
-                        {{ isEditing ? 'Edit Ruangan' : 'Tambah Ruangan' }}
-                    </h2>
-
-                    <button
-                        @click="closeFormModal"
-                        class="text-gray-500 hover:text-gray-700"
-                    >
-                        ✕
-                    </button>
+                <div>
+                    <p class="font-semibold text-gray-500">Lokasi</p>
+                    <p>{{ selectedRoom.location }}</p>
                 </div>
 
-                <form @submit.prevent="submitRoomForm" class="space-y-4">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium"
-                            >Nama Ruangan</label
-                        >
-                        <input
-                            v-model="roomForm.name"
-                            type="text"
-                            class="w-full rounded-lg border px-4 py-2"
-                            required
-                        />
-                    </div>
+                <div>
+                    <p class="font-semibold text-gray-500">Kapasitas</p>
+                    <p>{{ selectedRoom.capacity }} orang</p>
+                </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <label class="mb-1 block text-sm font-medium"
-                                >Kapasitas</label
-                            >
-                            <input
-                                v-model.number="roomForm.capacity"
-                                type="number"
-                                min="1"
-                                class="w-full rounded-lg border px-4 py-2"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label class="mb-1 block text-sm font-medium"
-                                >Lokasi</label
-                            >
-                            <input
-                                v-model="roomForm.location"
-                                type="text"
-                                class="w-full rounded-lg border px-4 py-2"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block text-sm font-medium"
-                            >Fasilitas</label
-                        >
-                        <div class="grid gap-2 md:grid-cols-2">
-                            <label
-                                v-for="facility in props.facilities ?? []"
-                                :key="facility.id"
-                                class="flex items-center gap-2 rounded-lg border p-2"
-                            >
-                                <input
-                                    v-model="roomForm.facilities"
-                                    :value="facility.id"
-                                    type="checkbox"
-                                />
-                                <span>{{ facility.name }}</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label
-                            class="flex items-center gap-2 text-sm font-medium"
-                        >
-                            <input
-                                v-model="roomForm.is_available"
-                                type="checkbox"
-                            />
-                            Aktif tersedia untuk booking
-                        </label>
-                    </div>
-
-                    <div class="flex justify-end gap-3 pt-2">
-                        <button
-                            type="button"
-                            @click="closeFormModal"
-                            class="rounded-lg border px-4 py-2 hover:bg-gray-100"
-                        >
-                            Batal
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                            :disabled="roomForm.processing"
+                <div>
+                    <p class="font-semibold text-gray-500">Status</p>
+                    <p>
+                        <span
+                            :class="
+                                selectedRoom.is_available
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-gray-200 text-gray-700'
+                            "
+                            class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
                         >
                             {{
-                                isEditing
-                                    ? 'Simpan Perubahan'
-                                    : 'Tambah Ruangan'
+                                selectedRoom.is_available ? 'Aktif' : 'Nonaktif'
                             }}
-                        </button>
+                        </span>
+                    </p>
+                </div>
+
+                <div>
+                    <p class="font-semibold text-gray-500">Fasilitas</p>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <span
+                            v-for="facility in selectedRoom.facilities"
+                            :key="facility"
+                            class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700"
+                        >
+                            {{ facility }}
+                        </span>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+        </DetailModal>
+
+        <AppModal
+            v-if="showFormModal"
+            :title="isEditing ? 'Edit Ruangan' : 'Tambah Ruangan'"
+            max-width="xl"
+            @close="closeFormModal"
+        >
+            <form @submit.prevent="submitRoomForm" class="space-y-4">
+                <FormField label="Nama Ruangan" appearance="admin" required
+                    ><AppInput
+                        v-model="roomForm.name"
+                        appearance="admin"
+                        required
+                /></FormField>
+
+                <div class="grid gap-4 md:grid-cols-2">
+                    <FormField label="Kapasitas" appearance="admin" required
+                        ><AppInput
+                            v-model="roomForm.capacity"
+                            appearance="admin"
+                            type="number"
+                            min="1"
+                            required
+                    /></FormField>
+
+                    <FormField label="Lokasi" appearance="admin" required
+                        ><AppInput
+                            v-model="roomForm.location"
+                            appearance="admin"
+                            required
+                    /></FormField>
+                </div>
+
+                <CheckboxGroup
+                    v-model="roomForm.facilities"
+                    label="Fasilitas"
+                    :options="props.facilities ?? []"
+                />
+
+                <CheckboxField
+                    v-model="roomForm.is_available"
+                    label="Aktif tersedia untuk booking"
+                />
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <button
+                        type="button"
+                        @click="closeFormModal"
+                        class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                    >
+                        Batal
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                        :disabled="roomForm.processing"
+                    >
+                        {{ isEditing ? 'Simpan Perubahan' : 'Tambah Ruangan' }}
+                    </button>
+                </div>
+            </form>
+        </AppModal>
     </div>
 </template>

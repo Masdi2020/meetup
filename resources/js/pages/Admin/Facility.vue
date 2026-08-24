@@ -1,21 +1,25 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
-interface Facility {
-    id: number;
-    name: string;
-    rooms_count: number;
-}
-
+import StatCard from '@/components/molecules/StatCard.vue';
+import AppModal from '@/components/organisms/AppModal.vue';
+import DetailModal from '@/components/organisms/DetailModal.vue';
+import AppInput from '@/components/atoms/AppInput.vue';
+import FormField from '@/components/molecules/FormField.vue';
+import type { Facility } from '@/types/admin';
+import { useModalManager } from '@/composables/useModal';
 const props = defineProps<{
     facilities: Facility[];
 }>();
 
 const facilities = ref<Facility[]>([...props.facilities]);
 const search = ref('');
-const showAddModal = ref(false);
-const showDetailModal = ref(false);
-const showEditModal = ref(false);
+const showAddModal = computed(() => isModalOpen('add'));
+const { openModal, closeModal, isModalOpen } = useModalManager<
+    'add' | 'detail' | 'edit'
+>();
+const showDetailModal = computed(() => isModalOpen('detail'));
+const showEditModal = computed(() => isModalOpen('edit'));
 const selectedFacility = ref<Facility | null>(null);
 const addFacilityForm = useForm({ name: '' });
 const editFacilityForm = useForm({ name: '' });
@@ -43,11 +47,11 @@ const totalUsage = computed(() =>
 
 function openAddModal() {
     addFacilityForm.reset();
-    showAddModal.value = true;
+    openModal('add');
 }
 
 function closeAddModal() {
-    showAddModal.value = false;
+    closeModal();
     addFacilityForm.reset();
 }
 
@@ -66,22 +70,22 @@ function submitAddFacility() {
 
 function openDetailModal(facility: Facility) {
     selectedFacility.value = facility;
-    showDetailModal.value = true;
+    openModal('detail');
 }
 
 function closeDetailModal() {
-    showDetailModal.value = false;
+    closeModal();
     selectedFacility.value = null;
 }
 
 function openEditModal(facility: Facility) {
     selectedFacility.value = facility;
     editFacilityForm.name = facility.name;
-    showEditModal.value = true;
+    openModal('edit');
 }
 
 function closeEditModal() {
-    showEditModal.value = false;
+    closeModal();
     selectedFacility.value = null;
     editFacilityForm.reset();
 }
@@ -138,27 +142,15 @@ function deleteFacility(facility: Facility) {
 
         <!-- Statistik -->
         <div class="grid gap-4 md:grid-cols-2">
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Total Fasilitas</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ facilities.length }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Digunakan di Ruangan</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ totalUsage }}
-                </h2>
-            </div>
+            <StatCard label="Total Fasilitas" :value="facilities.length" />
+            <StatCard label="Digunakan di Ruangan" :value="totalUsage" />
         </div>
 
         <!-- Filter -->
         <div class="rounded-xl bg-white p-5 shadow">
-            <input
+            <AppInput
                 v-model="search"
+                appearance="admin"
                 type="text"
                 placeholder="Cari fasilitas..."
                 class="w-full rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
@@ -227,155 +219,88 @@ function deleteFacility(facility: Facility) {
             </table>
         </div>
 
-        <div
+        <AppModal
             v-if="showAddModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            @click.self="closeAddModal"
+            title="Tambah Fasilitas"
+            max-width="md"
+            @close="closeAddModal"
         >
-            <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-bold">Tambah Fasilitas</h2>
-
+            <div class="space-y-4">
+                <FormField label="Nama fasilitas" appearance="admin" required
+                    ><AppInput
+                        v-model="addFacilityForm.name"
+                        appearance="admin"
+                        placeholder="Masukkan nama fasilitas"
+                        required
+                        @keyup.enter="submitAddFacility"
+                /></FormField>
+                <div class="flex justify-end gap-3 pt-2">
                     <button
-                        class="text-xl text-gray-500 hover:text-gray-700"
+                        class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-100"
                         @click="closeAddModal"
                     >
-                        ×
+                        Batal
+                    </button>
+                    <button
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                        @click="submitAddFacility"
+                    >
+                        Simpan
                     </button>
                 </div>
-
-                <div class="mt-5 space-y-4">
-                    <div>
-                        <label
-                            class="mb-2 block text-sm font-medium text-gray-700"
-                        >
-                            Nama fasilitas
-                        </label>
-
-                        <input
-                            v-model="addFacilityForm.name"
-                            type="text"
-                            placeholder="Masukkan nama fasilitas"
-                            class="w-full rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
-                            @keyup.enter="submitAddFacility"
-                        />
-                    </div>
-
-                    <div class="flex justify-end gap-3 pt-2">
-                        <button
-                            class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-100"
-                            @click="closeAddModal"
-                        >
-                            Batal
-                        </button>
-
-                        <button
-                            class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                            @click="submitAddFacility"
-                        >
-                            Simpan
-                        </button>
-                    </div>
-                </div>
             </div>
-        </div>
+        </AppModal>
 
-        <div
+        <DetailModal
             v-if="showDetailModal && selectedFacility"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            @click.self="closeDetailModal"
+            title="Detail Fasilitas"
+            @close="closeDetailModal"
         >
-            <div class="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-bold">Detail Fasilitas</h2>
-
-                    <button
-                        class="text-xl text-gray-500 hover:text-gray-700"
-                        @click="closeDetailModal"
-                    >
-                        ×
-                    </button>
+            <div class="space-y-4">
+                <div class="rounded-lg bg-gray-50 p-4">
+                    <p class="text-sm text-gray-500">Nama fasilitas</p>
+                    <p class="mt-1 text-lg font-semibold">
+                        {{ selectedFacility.name }}
+                    </p>
                 </div>
-
-                <div class="mt-5 space-y-4">
-                    <div class="rounded-lg bg-gray-50 p-4">
-                        <p class="text-sm text-gray-500">Nama fasilitas</p>
-
-                        <p class="mt-1 text-lg font-semibold">
-                            {{ selectedFacility.name }}
-                        </p>
-                    </div>
-
-                    <div class="rounded-lg bg-gray-50 p-4">
-                        <p class="text-sm text-gray-500">Dipakai di ruangan</p>
-
-                        <p class="mt-1 text-lg font-semibold">
-                            {{ selectedFacility.rooms_count }} Ruangan
-                        </p>
-                    </div>
-                </div>
-
-                <div class="mt-6 flex justify-end">
-                    <button
-                        class="rounded-lg bg-gray-800 px-4 py-2 text-white hover:bg-gray-900"
-                        @click="closeDetailModal"
-                    >
-                        Tutup
-                    </button>
+                <div class="rounded-lg bg-gray-50 p-4">
+                    <p class="text-sm text-gray-500">Dipakai di ruangan</p>
+                    <p class="mt-1 text-lg font-semibold">
+                        {{ selectedFacility.rooms_count }} Ruangan
+                    </p>
                 </div>
             </div>
-        </div>
+        </DetailModal>
 
-        <div
+        <AppModal
             v-if="showEditModal && selectedFacility"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            @click.self="closeEditModal"
+            title="Edit Fasilitas"
+            max-width="md"
+            @close="closeEditModal"
         >
-            <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-bold">Edit Fasilitas</h2>
-
+            <div class="space-y-4">
+                <FormField label="Nama fasilitas" appearance="admin" required
+                    ><AppInput
+                        v-model="editFacilityForm.name"
+                        appearance="admin"
+                        required
+                        @keyup.enter="submitEditFacility"
+                /></FormField>
+                <div class="flex justify-end gap-3 pt-2">
                     <button
-                        class="text-xl text-gray-500 hover:text-gray-700"
+                        class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-100"
                         @click="closeEditModal"
                     >
-                        ×
+                        Batal
+                    </button>
+                    <button
+                        class="rounded-lg bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
+                        @click="submitEditFacility"
+                    >
+                        Simpan Perubahan
                     </button>
                 </div>
-
-                <div class="mt-5 space-y-4">
-                    <div>
-                        <label
-                            class="mb-2 block text-sm font-medium text-gray-700"
-                        >
-                            Nama fasilitas
-                        </label>
-
-                        <input
-                            v-model="editFacilityForm.name"
-                            type="text"
-                            class="w-full rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
-                            @keyup.enter="submitEditFacility"
-                        />
-                    </div>
-
-                    <div class="flex justify-end gap-3 pt-2">
-                        <button
-                            class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-100"
-                            @click="closeEditModal"
-                        >
-                            Batal
-                        </button>
-
-                        <button
-                            class="rounded-lg bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
-                            @click="submitEditFacility"
-                        >
-                            Simpan Perubahan
-                        </button>
-                    </div>
-                </div>
             </div>
-        </div>
+        </AppModal>
     </div>
 </template>

@@ -2,15 +2,15 @@
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-type Role = 'admin' | 'user' | 'display';
-
-interface User {
-    id: number;
-    name: string;
-    username: string;
-    role: Role;
-}
-
+import StatCard from '@/components/molecules/StatCard.vue';
+import AppModal from '@/components/organisms/AppModal.vue';
+import DetailModal from '@/components/organisms/DetailModal.vue';
+import AppInput from '@/components/atoms/AppInput.vue';
+import AppSelect from '@/components/atoms/AppSelect.vue';
+import FormField from '@/components/molecules/FormField.vue';
+import type { AdminUser as User } from '@/types/admin';
+import type { UserRole as Role } from '@/types/auth';
+import { useModalManager } from '@/composables/useModal';
 interface pageProps extends InertiaPageProps {
     flash: {
         success?: string;
@@ -34,8 +34,8 @@ const users = computed(() => props.users);
 const search = ref(props.filters.search ?? '');
 const roleFilter = ref(props.filters.role ?? '');
 const selectedUser = ref<User | null>(null);
-const showDetailModal = ref(false);
-const showEditModal = ref(false);
+const showDetailModal = computed(() => isModalOpen('detail'));
+const showEditModal = computed(() => isModalOpen('edit'));
 const editForm = ref({
     id: 0,
     name: '',
@@ -54,12 +54,12 @@ function initials(name: string) {
 
 function openDetail(user: User) {
     selectedUser.value = user;
-    showDetailModal.value = true;
+    openModal('detail');
 }
 
 function closeDetail() {
     selectedUser.value = null;
-    showDetailModal.value = false;
+    closeModal();
 }
 
 function openEdit(user: User) {
@@ -70,11 +70,11 @@ function openEdit(user: User) {
         role: user.role,
     };
 
-    showEditModal.value = true;
+    openModal('edit');
 }
 
 function closeEdit() {
-    showEditModal.value = false;
+    closeModal();
     editForm.value = {
         id: 0,
         name: '',
@@ -90,7 +90,7 @@ function submitEdit() {
     });
 }
 
-const showPasswordModal = ref(false);
+const showPasswordModal = computed(() => isModalOpen('password'));
 const generatedPassword = ref('');
 
 function resetPassword(user: User) {
@@ -112,7 +112,7 @@ function resetPassword(user: User) {
                 }
 
                 generatedPassword.value = password;
-                showPasswordModal.value = true;
+                openModal('password');
             },
         },
     );
@@ -124,12 +124,15 @@ async function copyPassword() {
     alert('Password berhasil disalin ke clipboard');
 }
 
-function closeModal() {
+function closePasswordModal() {
     generatedPassword.value = '';
-    showPasswordModal.value = false;
+    closeModal();
 }
 
-const showCreateModal = ref(false);
+const { openModal, closeModal, isModalOpen } = useModalManager<
+    'detail' | 'edit' | 'password' | 'create'
+>();
+const showCreateModal = computed(() => isModalOpen('create'));
 
 const createForm = ref({
     name: '',
@@ -144,11 +147,11 @@ function openCreate() {
         role: 'user',
     };
 
-    showCreateModal.value = true;
+    openModal('create');
 }
 
 function closeCreate() {
-    showCreateModal.value = false;
+    closeModal();
 
     createForm.value = {
         name: '',
@@ -171,7 +174,7 @@ function submitCreate() {
             }
 
             generatedPassword.value = password;
-            showPasswordModal.value = true;
+            openModal('password');
         },
     });
 }
@@ -205,41 +208,29 @@ function deleteUser(user: User) {
         </div>
 
         <div class="grid gap-4 md:grid-cols-4">
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Total</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ users.length }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Admin</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-indigo-600">
-                    {{ users.filter((u) => u.role === 'admin').length }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">User</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-green-600">
-                    {{ users.filter((u) => u.role === 'user').length }}
-                </h2>
-            </div>
+            <StatCard label="Total" :value="users.length" />
+            <StatCard
+                label="Admin"
+                :value="users.filter((user) => user.role === 'admin').length"
+                tone="indigo"
+            />
+            <StatCard
+                label="User"
+                :value="users.filter((user) => user.role === 'user').length"
+                tone="success"
+            />
         </div>
-
         <div class="rounded-xl bg-white p-5 shadow">
             <div class="grid gap-4 lg:grid-cols-3">
-                <input
+                <AppInput
                     v-model="search"
+                    appearance="admin"
                     type="text"
                     placeholder="Cari nama, username, email..."
                     class="rounded-lg border px-4 py-2"
                 />
 
-                <select
+                <AppSelect
                     v-model="roleFilter"
                     class="rounded-lg border px-4 py-2"
                 >
@@ -250,7 +241,7 @@ function deleteUser(user: User) {
                     <option value="user">User</option>
 
                     <option value="display">Display</option>
-                </select>
+                </AppSelect>
             </div>
         </div>
 
@@ -345,263 +336,184 @@ function deleteUser(user: User) {
             </table>
         </div>
 
-        <div
+        <DetailModal
             v-if="showDetailModal && selectedUser"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            title="Detail Pengguna"
+            @close="closeDetail"
         >
-            <div class="w-full max-w-lg rounded-xl bg-white p-6">
-                <div class="mb-4 flex items-center justify-between">
-                    <h2 class="text-xl font-bold">Detail Pengguna</h2>
-
-                    <button
-                        @click="closeDetail"
-                        class="text-gray-500 hover:text-gray-700"
-                    >
-                        ✕
-                    </button>
+            <div class="space-y-4 text-sm text-gray-700">
+                <div>
+                    <p class="font-semibold text-gray-500">Nama</p>
+                    <p>{{ selectedUser.name }}</p>
                 </div>
 
-                <div class="space-y-4 text-sm text-gray-700">
-                    <div>
-                        <p class="font-semibold text-gray-500">Nama</p>
-                        <p>{{ selectedUser.name }}</p>
-                    </div>
+                <div>
+                    <p class="font-semibold text-gray-500">Username</p>
+                    <p>{{ selectedUser.username }}</p>
+                </div>
 
-                    <div>
-                        <p class="font-semibold text-gray-500">Username</p>
-                        <p>{{ selectedUser.username }}</p>
-                    </div>
-
-                    <div>
-                        <p class="font-semibold text-gray-500">Role</p>
-                        <span
-                            :class="
-                                selectedUser.role === 'admin'
-                                    ? 'bg-indigo-100 text-indigo-700'
-                                    : 'bg-green-100 text-green-700'
-                            "
-                            class="mt-1 inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase"
-                        >
-                            {{ selectedUser.role }}
-                        </span>
-                    </div>
+                <div>
+                    <p class="font-semibold text-gray-500">Role</p>
+                    <span
+                        :class="
+                            selectedUser.role === 'admin'
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'bg-green-100 text-green-700'
+                        "
+                        class="mt-1 inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase"
+                    >
+                        {{ selectedUser.role }}
+                    </span>
                 </div>
             </div>
-        </div>
+        </DetailModal>
 
-        <div
+        <AppModal
             v-if="showEditModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            title="Edit Pengguna"
+            max-width="xl"
+            @close="closeEdit"
         >
-            <div class="w-full max-w-xl rounded-xl bg-white p-6">
-                <div class="mb-5 flex items-center justify-between">
-                    <h2 class="text-xl font-bold">Edit Pengguna</h2>
+            <form @submit.prevent="submitEdit" class="space-y-4">
+                <FormField label="Nama" appearance="admin" required
+                    ><AppInput
+                        v-model="editForm.name"
+                        appearance="admin"
+                        placeholder="Nama pengguna"
+                        required
+                /></FormField>
 
-                    <button
-                        @click="closeEdit"
-                        class="text-gray-500 hover:text-gray-700"
-                    >
-                        ✕
-                    </button>
-                </div>
+                <FormField label="Username" appearance="admin" required
+                    ><AppInput
+                        v-model="editForm.username"
+                        appearance="admin"
+                        required
+                /></FormField>
 
-                <form @submit.prevent="submitEdit" class="space-y-4">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium"
-                            >Nama</label
-                        >
-                        <input
-                            v-model="editForm.name"
-                            type="text"
-                            class="w-full rounded-lg border px-4 py-2"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label class="blo ck mb-1 text-sm font-medium"
-                            >Username</label
-                        >
-                        <input
-                            v-model="editForm.username"
-                            type="text"
-                            class="w-full rounded-lg border px-4 py-2"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium"
-                            >Role</label
-                        >
-                        <select
-                            v-model="editForm.role"
-                            class="w-full rounded-lg border px-4 py-2"
-                        >
-                            <option value="admin">Admin</option>
-                            <option value="user">User</option>
-
-                            <option value="display">Display</option>
-                        </select>
-                    </div>
-
-                    <div class="flex justify-end gap-3 pt-2">
-                        <button
-                            type="button"
-                            @click="closeEdit"
-                            class="rounded-lg border px-4 py-2 hover:bg-gray-100"
-                        >
-                            Batal
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                        >
-                            Simpan Perubahan
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div
-            v-if="showCreateModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-        >
-            <div class="w-full max-w-xl rounded-xl bg-white p-6">
-                <div class="mb-5 flex items-center justify-between">
-                    <div>
-                        <h2 class="text-xl font-bold">Tambah Pengguna</h2>
-
-                        <p class="mt-1 text-sm text-gray-500">
-                            Password akan dibuat secara otomatis oleh sistem.
-                        </p>
-                    </div>
-
-                    <button
-                        @click="closeCreate"
-                        class="text-gray-500 hover:text-gray-700"
-                    >
-                        ✕
-                    </button>
-                </div>
-
-                <form @submit.prevent="submitCreate" class="space-y-4">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">
-                            Nama
-                        </label>
-
-                        <input
-                            v-model="createForm.name"
-                            type="text"
-                            class="w-full rounded-lg border px-4 py-2"
-                            placeholder="Nama pengguna"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">
-                            Username
-                        </label>
-
-                        <input
-                            v-model="createForm.username"
-                            type="text"
-                            class="w-full rounded-lg border px-4 py-2"
-                            placeholder="Username"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">
-                            Role
-                        </label>
-
-                        <select
-                            v-model="createForm.role"
-                            class="w-full rounded-lg border px-4 py-2"
-                            required
-                        >
-                            <option value="user">User</option>
-
-                            <option value="admin">Admin</option>
-
-                            <option value="display">Display</option>
-                        </select>
-                    </div>
-
-                    <div
-                        class="rounded-lg bg-blue-50 p-4 text-sm text-blue-700"
-                    >
-                        <p class="font-semibold">Password otomatis</p>
-
-                        <p class="mt-1">
-                            Sistem akan membuat password secara otomatis.
-                            Pengguna akan diwajibkan mengganti password tersebut
-                            saat login pertama kali.
-                        </p>
-                    </div>
-
-                    <div class="flex justify-end gap-3 pt-2">
-                        <button
-                            type="button"
-                            @click="closeCreate"
-                            class="rounded-lg border px-4 py-2 hover:bg-gray-100"
-                        >
-                            Batal
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                        >
-                            Buat Pengguna
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div
-            v-if="showPasswordModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-        >
-            <div class="w-full max-w-md rounded-xl bg-white p-6">
-                <h2 class="text-xl font-bold">Password baru</h2>
-
-                <p class="mt-2 text-gray-500">
-                    Password ini hanya ditampilkan sekali. Salin dan berikan
-                    kepada pengguna.
-                </p>
-
-                <div
-                    class="mt-4 flex items-center justify-between rounded-lg bg-gray-100 p-3"
+                <FormField label="Role" appearance="admin" required
+                    ><AppSelect v-model="editForm.role" required
+                        ><option value="user">User</option>
+                        <option value="admin">Admin</option>
+                        <option value="display">Display</option></AppSelect
+                    ></FormField
                 >
-                    <code class="font-mono text-lg">
-                        {{ generatedPassword }}
-                    </code>
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <button
+                        type="button"
+                        @click="closeEdit"
+                        class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                    >
+                        Batal
+                    </button>
 
                     <button
-                        class="rounded bg-blue-600 px-3 py-2 text-white"
-                        @click="copyPassword"
+                        type="submit"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                     >
-                        Copy
+                        Simpan Perubahan
                     </button>
+                </div>
+            </form>
+        </AppModal>
+
+        <AppModal
+            v-if="showCreateModal"
+            title="Tambah Pengguna"
+            max-width="xl"
+            @close="closeCreate"
+        >
+            <p class="mb-5 text-sm text-gray-500">
+                Password akan dibuat secara otomatis oleh sistem.
+            </p>
+            <form @submit.prevent="submitCreate" class="space-y-4">
+                <FormField label="Nama" appearance="admin" required
+                    ><AppInput
+                        v-model="createForm.name"
+                        appearance="admin"
+                        placeholder="Nama pengguna"
+                        required
+                /></FormField>
+
+                <FormField label="Username" appearance="admin" required
+                    ><AppInput
+                        v-model="createForm.username"
+                        appearance="admin"
+                        placeholder="Username"
+                        required
+                /></FormField>
+
+                <FormField label="Role" appearance="admin" required
+                    ><AppSelect v-model="createForm.role" required
+                        ><option value="user">User</option>
+                        <option value="admin">Admin</option>
+                        <option value="display">Display</option></AppSelect
+                    ></FormField
+                >
+
+                <div class="rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
+                    <p class="font-semibold">Password otomatis</p>
+
+                    <p class="mt-1">
+                        Sistem akan membuat password secara otomatis. Pengguna
+                        akan diwajibkan mengganti password tersebut saat login
+                        pertama kali.
+                    </p>
                 </div>
 
-                <div class="mt-6 flex justify-end">
+                <div class="flex justify-end gap-3 pt-2">
                     <button
-                        class="rounded-lg bg-gray-800 px-5 py-2 text-white"
-                        @click="closeModal"
+                        type="button"
+                        @click="closeCreate"
+                        class="rounded-lg border px-4 py-2 hover:bg-gray-100"
                     >
-                        Tutup
+                        Batal
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                    >
+                        Buat Pengguna
                     </button>
                 </div>
+            </form>
+        </AppModal>
+
+        <AppModal
+            v-if="showPasswordModal"
+            title="Password baru"
+            max-width="md"
+            @close="closePasswordModal"
+        >
+            <p class="mt-2 text-gray-500">
+                Password ini hanya ditampilkan sekali. Salin dan berikan kepada
+                pengguna.
+            </p>
+
+            <div
+                class="mt-4 flex items-center justify-between rounded-lg bg-gray-100 p-3"
+            >
+                <code class="font-mono text-lg">
+                    {{ generatedPassword }}
+                </code>
+
+                <button
+                    class="rounded bg-blue-600 px-3 py-2 text-white"
+                    @click="copyPassword"
+                >
+                    Copy
+                </button>
             </div>
-        </div>
+
+            <div class="mt-6 flex justify-end">
+                <button
+                    class="rounded-lg bg-gray-800 px-5 py-2 text-white"
+                    @click="closePasswordModal"
+                >
+                    Tutup
+                </button>
+            </div>
+        </AppModal>
     </div>
 </template>

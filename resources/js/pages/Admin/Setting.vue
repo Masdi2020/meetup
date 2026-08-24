@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
+import AppInput from '@/components/atoms/AppInput.vue';
+import FormField from '@/components/molecules/FormField.vue';
 const props = defineProps<{
     settings: {
         appName: string;
@@ -34,22 +36,13 @@ function save() {
             </div>
 
             <div class="grid gap-5 p-6">
-                <div>
-                    <label class="mb-2 block font-medium">
-                        Nama Aplikasi
-                    </label>
+                <FormField label="Nama Aplikasi" appearance="admin"
+                    ><AppInput v-model="form.appName" appearance="admin"
+                /></FormField>
 
-                    <input
-                        v-model="form.appName"
-                        class="w-full rounded-lg border px-4 py-2"
-                    />
-                </div>
-
-                <div>
-                    <label class="mb-2 block font-medium"> Logo </label>
-
-                    <input type="file" class="w-full rounded-lg border p-2" />
-                </div>
+                <FormField label="Logo" appearance="admin"
+                    ><input type="file" class="w-full rounded-lg border p-2"
+                /></FormField>
             </div>
         </div>
 
@@ -61,15 +54,12 @@ function save() {
             </div>
 
             <div class="p-6">
-                <label class="mb-2 block font-medium">
-                    Session Timeout (Menit)
-                </label>
-
-                <input
-                    v-model="form.sessionTimeout"
-                    type="number"
-                    class="w-full rounded-lg border px-4 py-2"
-                />
+                <FormField label="Session Timeout (Menit)" appearance="admin"
+                    ><AppInput
+                        v-model="form.sessionTimeout"
+                        type="number"
+                        appearance="admin"
+                /></FormField>
             </div>
         </div>
 

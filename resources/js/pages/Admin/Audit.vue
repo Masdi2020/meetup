@@ -1,46 +1,16 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-interface AuditUser {
-    id: number;
-    name: string;
-    role: string;
-}
-
-interface Audit {
-    id: number;
-    entity_type: string | null;
-    entity_id: number | null;
-    action: string;
-    old_values: Record<string, unknown> | null;
-    new_values: Record<string, unknown> | null;
-    ip_address: string | null;
-    comment: string | null;
-    created_at: string;
-    user: AuditUser | null;
-}
-
-interface PaginationLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
-
-interface PaginatedAudits {
-    data: Audit[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    links: PaginationLink[];
-}
-
-interface Stats {
-    total: number;
-    today: number;
-    admin: number;
-    user: number;
-}
+import AppInput from '@/components/atoms/AppInput.vue';
+import AppSelect from '@/components/atoms/AppSelect.vue';
+import StatCard from '@/components/molecules/StatCard.vue';
+import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useModalManager } from '@/composables/useModal';
+import type {
+    AuditLog as Audit,
+    AuditStats as Stats,
+    PaginatedAudits,
+} from '@/types/admin';
 
 const props = defineProps<{
     audits: PaginatedAudits;
@@ -55,7 +25,8 @@ const search = ref(props.filters.search);
 const roleFilter = ref(props.filters.role);
 
 const selectedAudit = ref<Audit | null>(null);
-const showDetail = ref(false);
+const { openModal, closeModal, isModalOpen } = useModalManager<'detail'>();
+const showDetail = computed(() => isModalOpen('detail'));
 
 const filteredCount = computed(() => props.audits.total);
 
@@ -83,28 +54,12 @@ function clearFilter() {
 
 function showAuditDetail(audit: Audit) {
     selectedAudit.value = audit;
-    showDetail.value = true;
+    openModal('detail');
 }
 
 function closeDetail() {
-    showDetail.value = false;
+    closeModal();
     selectedAudit.value = null;
-}
-
-function exportCsv() {
-    const params = new URLSearchParams();
-
-    if (search.value) {
-        params.append('search', search.value);
-    }
-
-    if (roleFilter.value) {
-        params.append('role', roleFilter.value);
-    }
-
-    const query = params.toString();
-
-    window.location.href = '/audits/export' + (query ? `?${query}` : '');
 }
 
 function formatDate(date: string) {
@@ -162,63 +117,37 @@ function formatValue(value: unknown) {
                     Riwayat seluruh aktivitas pada sistem.
                 </p>
             </div>
-
-            <button
-                type="button"
-                class="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
-                @click="exportCsv"
-            >
-                Export CSV
-            </button>
         </div>
 
         <!-- Statistics -->
         <div class="grid gap-4 md:grid-cols-4">
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Total Aktivitas</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ props.stats.total }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Hari Ini</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-blue-600">
-                    {{ props.stats.today }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Aktivitas Admin</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-indigo-600">
-                    {{ props.stats.admin }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Aktivitas User</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-green-600">
-                    {{ props.stats.user }}
-                </h2>
-            </div>
+            <StatCard label="Total Aktivitas" :value="props.stats.total" />
+            <StatCard label="Hari Ini" :value="props.stats.today" tone="info" />
+            <StatCard
+                label="Aktivitas Admin"
+                :value="props.stats.admin"
+                tone="indigo"
+            />
+            <StatCard
+                label="Aktivitas User"
+                :value="props.stats.user"
+                tone="success"
+            />
         </div>
 
         <!-- Filter -->
         <div class="rounded-xl bg-white p-5 shadow">
             <div class="grid gap-4 md:grid-cols-[1fr_220px_auto_auto]">
-                <input
+                <AppInput
                     v-model="search"
+                    appearance="admin"
                     type="text"
                     placeholder="Cari aktivitas..."
                     class="rounded-lg border px-4 py-2"
                     @keyup.enter="applyFilter"
                 />
 
-                <select
+                <AppSelect
                     v-model="roleFilter"
                     class="rounded-lg border px-4 py-2"
                 >
@@ -227,7 +156,7 @@ function formatValue(value: unknown) {
                     <option value="admin">Admin</option>
 
                     <option value="user">User</option>
-                </select>
+                </AppSelect>
 
                 <button
                     type="button"
@@ -387,132 +316,96 @@ function formatValue(value: unknown) {
             </div>
         </div>
 
-        <!-- Detail Modal -->
-        <div
+        <DetailModal
             v-if="showDetail && selectedAudit"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            @click.self="closeDetail"
+            :title="`Detail Audit #${selectedAudit.id}`"
+            max-width="3xl"
+            @close="closeDetail"
         >
-            <div
-                class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white shadow-xl"
-            >
-                <!-- Modal Header -->
-                <div class="flex items-center justify-between border-b p-5">
+            <p class="mb-5 text-sm text-gray-500">
+                {{ formatDate(selectedAudit.created_at) }}
+            </p>
+            <div class="space-y-5">
+                <div class="grid gap-4 md:grid-cols-2">
                     <div>
-                        <h2 class="text-xl font-bold">
-                            Detail Audit #{{ selectedAudit.id }}
-                        </h2>
+                        <p class="text-sm text-gray-500">Pengguna</p>
 
-                        <p class="text-sm text-gray-500">
-                            {{ formatDate(selectedAudit.created_at) }}
+                        <p class="font-medium">
+                            {{ selectedAudit.user?.name ?? '-' }}
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        class="rounded-lg px-3 py-2 text-gray-500 hover:bg-gray-100"
-                        @click="closeDetail"
-                    >
-                        ✕
-                    </button>
-                </div>
-
-                <!-- Modal Body -->
-                <div class="space-y-5 p-5">
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <p class="text-sm text-gray-500">Pengguna</p>
-
-                            <p class="font-medium">
-                                {{ selectedAudit.user?.name ?? '-' }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p class="text-sm text-gray-500">Role</p>
-
-                            <p class="font-medium">
-                                {{
-                                    formatRole(selectedAudit.user?.role ?? null)
-                                }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p class="text-sm text-gray-500">Aktivitas</p>
-
-                            <p class="font-medium">
-                                {{ selectedAudit.action }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p class="text-sm text-gray-500">IP Address</p>
-
-                            <p class="font-medium">
-                                {{ selectedAudit.ip_address ?? '-' }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p class="text-sm text-gray-500">Entity</p>
-
-                            <p class="font-medium">
-                                {{ formatEntity(selectedAudit.entity_type) }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p class="text-sm text-gray-500">Entity ID</p>
-
-                            <p class="font-medium">
-                                {{ selectedAudit.entity_id ?? '-' }}
-                            </p>
-                        </div>
-                    </div>
-
                     <div>
-                        <p class="text-sm text-gray-500">Komentar</p>
+                        <p class="text-sm text-gray-500">Role</p>
 
-                        <p class="mt-1">
-                            {{ selectedAudit.comment ?? '-' }}
+                        <p class="font-medium">
+                            {{ formatRole(selectedAudit.user?.role ?? null) }}
                         </p>
                     </div>
 
-                    <!-- Old Values -->
                     <div>
-                        <p class="mb-2 text-sm font-medium text-gray-500">
-                            Data Sebelum
-                        </p>
+                        <p class="text-sm text-gray-500">Aktivitas</p>
 
-                        <pre
-                            class="overflow-x-auto rounded-lg bg-gray-100 p-4 text-sm"
-                            >{{ formatValue(selectedAudit.old_values) }}</pre>
+                        <p class="font-medium">
+                            {{ selectedAudit.action }}
+                        </p>
                     </div>
 
-                    <!-- New Values -->
                     <div>
-                        <p class="mb-2 text-sm font-medium text-gray-500">
-                            Data Sesudah
-                        </p>
+                        <p class="text-sm text-gray-500">IP Address</p>
 
-                        <pre
-                            class="overflow-x-auto rounded-lg bg-gray-100 p-4 text-sm"
-                            >{{ formatValue(selectedAudit.new_values) }}</pre>
+                        <p class="font-medium">
+                            {{ selectedAudit.ip_address ?? '-' }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-gray-500">Entity</p>
+
+                        <p class="font-medium">
+                            {{ formatEntity(selectedAudit.entity_type) }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-gray-500">Entity ID</p>
+
+                        <p class="font-medium">
+                            {{ selectedAudit.entity_id ?? '-' }}
+                        </p>
                     </div>
                 </div>
 
-                <!-- Modal Footer -->
-                <div class="flex justify-end border-t p-5">
-                    <button
-                        type="button"
-                        class="rounded-lg border px-5 py-2 hover:bg-gray-100"
-                        @click="closeDetail"
-                    >
-                        Tutup
-                    </button>
+                <div>
+                    <p class="text-sm text-gray-500">Komentar</p>
+
+                    <p class="mt-1">
+                        {{ selectedAudit.comment ?? '-' }}
+                    </p>
+                </div>
+
+                <!-- Old Values -->
+                <div>
+                    <p class="mb-2 text-sm font-medium text-gray-500">
+                        Data Sebelum
+                    </p>
+
+                    <pre
+                        class="overflow-x-auto rounded-lg bg-gray-100 p-4 text-sm"
+                        >{{ formatValue(selectedAudit.old_values) }}</pre>
+                </div>
+
+                <!-- New Values -->
+                <div>
+                    <p class="mb-2 text-sm font-medium text-gray-500">
+                        Data Sesudah
+                    </p>
+
+                    <pre
+                        class="overflow-x-auto rounded-lg bg-gray-100 p-4 text-sm"
+                        >{{ formatValue(selectedAudit.new_values) }}</pre>
                 </div>
             </div>
-        </div>
+        </DetailModal>
     </div>
 </template>

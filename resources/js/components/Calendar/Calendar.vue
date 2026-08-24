@@ -4,15 +4,7 @@ import { ref, computed, watch } from 'vue';
 
 import CalendarToolbar from './CalendarToolbar.vue';
 import MonthView from './MonthView.vue';
-
-interface CalendarEvent {
-    id: number;
-    title: string;
-    room: string;
-    date: string;
-    start_time: string;
-    end_time: string;
-}
+import type { CalendarEvent } from '@/types/calendar';
 
 const props = defineProps<{
     events: CalendarEvent[];

@@ -3,15 +3,7 @@ import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { computed } from 'vue';
 import { getRoomColor, getRoomTextColor } from './roomColors';
-
-interface CalendarEvent {
-    id: number;
-    title: string;
-    room: string;
-    date: string;
-    start_time: string;
-    end_time: string;
-}
+import type { CalendarEvent } from '@/types/calendar';
 
 const props = defineProps<{
     date: Dayjs;

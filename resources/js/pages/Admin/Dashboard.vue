@@ -1,39 +1,10 @@
 <script setup lang="ts">
-interface Stats {
-    rooms: number;
-    users: number;
-    bookings: number;
-    pending: number;
-}
-
-interface TodayBooking {
-    id: number;
-    title: string;
-    start_time: string;
-    room: {
-        name: string;
-    };
-}
-
-interface Activity {
-    id: number;
-    entity_type: string | null;
-    entity_id: number | null;
-    action: string;
-    old_values: Record<string, unknown> | null;
-    new_values: Record<string, unknown> | null;
-    changed_by: number | null;
-    ip_address: string | null;
-    comment: string | null;
-    created_at: string;
-
-    user: {
-        id: number;
-        name: string;
-        role: string;
-    } | null;
-}
-
+import StatCard from '@/components/molecules/StatCard.vue';
+import type {
+    AuditLog as Activity,
+    DashboardStats as Stats,
+    TodayBooking,
+} from '@/types/admin';
 function getEntityName(entityType: string | null) {
     if (!entityType) {
         return 'Data';
@@ -74,41 +45,25 @@ defineProps<{
         </div>
 
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-xl bg-white p-6 shadow">
-                <p class="text-gray-500">Total Ruangan</p>
-
-                <h2 class="mt-2 text-4xl font-bold">
-                    {{ stats.rooms }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-6 shadow">
-                <p class="text-gray-500">Total Pengguna</p>
-
-                <h2 class="mt-2 text-4xl font-bold">
-                    {{ stats.users }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-6 shadow">
-                <p class="text-gray-500">Total Booking</p>
-
-                <h2 class="mt-2 text-4xl font-bold">
-                    {{ stats.bookings }}
-                </h2>
-            </div>
-
-            <div
-                class="rounded-xl border-l-4 border-yellow-500 bg-white p-6 shadow"
-            >
-                <p class="text-gray-500">Pending Approval</p>
-
-                <h2 class="mt-2 text-4xl font-bold text-yellow-600">
-                    {{ stats.pending }}
-                </h2>
-            </div>
+            <StatCard label="Total Ruangan" :value="stats.rooms" size="large" />
+            <StatCard
+                label="Total Pengguna"
+                :value="stats.users"
+                size="large"
+            />
+            <StatCard
+                label="Total Booking"
+                :value="stats.bookings"
+                size="large"
+            />
+            <StatCard
+                label="Pending Approval"
+                :value="stats.pending"
+                tone="warning"
+                size="large"
+                accent
+            />
         </div>
-
         <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <div class="rounded-xl bg-white p-6 shadow">
                 <h2 class="mb-4 text-lg font-semibold">Booking Hari Ini</h2>

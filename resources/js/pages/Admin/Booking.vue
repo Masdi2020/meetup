@@ -2,40 +2,21 @@
 import { router, useForm } from '@inertiajs/vue3';
 import { watchDebounced } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
-type BookingStatus =
-    'pending' | 'approved' | 'rejected' | 'cancelled';
-
-interface Booking {
-    id: number;
-    code: string;
-    room: string;
-    borrower: string;
-    activity: string;
-    date: string;
-    start: string;
-    end: string;
-    status: BookingStatus;
-    request?: string;
-    processed_notes?: string;
-}
-
-interface Room {
-    id: number;
-    name: string;
-}
-
-interface Stats {
-    total: number;
-    pending: number;
-    approved: number;
-}
-
-interface Pagination<T> {
-    data: T[];
-    current_page: number;
-    last_page: number;
-}
-
+import StatCard from '@/components/molecules/StatCard.vue';
+import AppModal from '@/components/organisms/AppModal.vue';
+import DetailModal from '@/components/organisms/DetailModal.vue';
+import AppInput from '@/components/atoms/AppInput.vue';
+import AppSelect from '@/components/atoms/AppSelect.vue';
+import AppTextarea from '@/components/atoms/AppTextarea.vue';
+import FormField from '@/components/molecules/FormField.vue';
+import { useModalManager } from '@/composables/useModal';
+import type {
+    AdminBooking as Booking,
+    BookingStatus,
+    BookingStats as Stats,
+    Pagination,
+    RoomOption as Room,
+} from '@/types/admin';
 const props = defineProps<{
     bookings: Pagination<Booking>;
     rooms?: Room[];
@@ -52,11 +33,14 @@ const statusFilter = ref(props.filters?.status ?? '');
 const roomFilter = ref(props.filters?.room ?? '');
 const today = new Date().toISOString().split('T')[0];
 
-const showAddBookingModal = ref(false);
+const showAddBookingModal = computed(() => isModalOpen('add'));
 const showAddBookingSuccess = ref(false);
-const showApproveModal = ref(false);
-const showRejectModal = ref(false);
-const showDetailModal = ref(false);
+const { openModal, closeModal, isModalOpen } = useModalManager<
+    'add' | 'approve' | 'reject' | 'detail'
+>();
+const showApproveModal = computed(() => isModalOpen('approve'));
+const showRejectModal = computed(() => isModalOpen('reject'));
+const showDetailModal = computed(() => isModalOpen('detail'));
 const selectedBookingId = ref<number | null>(null);
 const selectedBookingCode = ref<string | null>(null);
 const detailBooking = ref<Booking | null>(null);
@@ -125,7 +109,7 @@ const addBookingMinEndTime = computed(() => {
 });
 
 function closeAddBookingModal() {
-    showAddBookingModal.value = false;
+    closeModal();
     showAddBookingSuccess.value = false;
     addBookingForm.reset();
     addBookingPreview.value = null;
@@ -135,11 +119,11 @@ function closeAddBookingModal() {
 function openApproveModal(id: number, code: string) {
     selectedBookingId.value = id;
     selectedBookingCode.value = code;
-    showApproveModal.value = true;
+    openModal('approve');
 }
 
 function closeApproveModal() {
-    showApproveModal.value = false;
+    closeModal();
     selectedBookingId.value = null;
     selectedBookingCode.value = null;
 }
@@ -149,11 +133,11 @@ function openRejectModal(id: number, code: string) {
     selectedBookingCode.value = code;
     rejectReason.value = '';
     rejectValidationErrors.value.reason = '';
-    showRejectModal.value = true;
+    openModal('reject');
 }
 
 function closeRejectModal() {
-    showRejectModal.value = false;
+    closeModal();
     selectedBookingId.value = null;
     selectedBookingCode.value = null;
     rejectReason.value = '';
@@ -162,11 +146,11 @@ function closeRejectModal() {
 
 function openDetailModal(booking: Booking) {
     detailBooking.value = booking;
-    showDetailModal.value = true;
+    openModal('detail');
 }
 
 function closeDetailModal() {
-    showDetailModal.value = false;
+    closeModal();
     detailBooking.value = null;
 }
 
@@ -302,570 +286,341 @@ function reject(id: number, code: string) {
 
             <button
                 class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                @click="showAddBookingModal = true"
+                @click="openModal('add')"
             >
                 Tambah Peminjaman
             </button>
         </div>
 
-        <Teleport to="body">
+        <AppModal
+            v-if="showAddBookingModal"
+            title="Tambah Peminjaman"
+            max-width="3xl"
+            @close="closeAddBookingModal"
+        >
             <div
-                v-if="showAddBookingModal"
-                class="add-booking-modal-overlay"
-                @click.self="closeAddBookingModal"
+                v-if="showAddBookingSuccess"
+                class="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700"
             >
-                <div class="add-booking-modal">
-                    <div class="modal-header">
-                        <div>
-                            <h2 class="text-xl font-semibold">
-                                Tambah Peminjaman
-                            </h2>
-                            <p class="text-sm text-gray-500">
-                                Ajukan peminjaman baru langsung dari panel
-                                admin.
-                            </p>
-                        </div>
+                Peminjaman berhasil ditambahkan.
+            </div>
 
-                        <button
-                            class="modal-close"
-                            type="button"
-                            @click="closeAddBookingModal"
-                            aria-label="Tutup"
+            <div class="grid gap-4 md:grid-cols-2">
+                <FormField label="Status" appearance="admin">
+                    <AppSelect v-model="addBookingForm.status">
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                    </AppSelect>
+                </FormField>
+                <FormField
+                    label="Ruangan"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.room_id ||
+                        (addBookingHasWarning('room_id')
+                            ? 'Ruangan wajib dipilih.'
+                            : '')
+                    "
+                >
+                    <AppSelect v-model="addBookingForm.room_id">
+                        <option :value="null" disabled hidden>
+                            Pilih Ruangan
+                        </option>
+                        <option
+                            v-for="room in rooms"
+                            :key="room.id"
+                            :value="room.id"
                         >
-                            ×
-                        </button>
+                            {{ room.name }}
+                        </option>
+                    </AppSelect>
+                </FormField>
+                <FormField
+                    label="Tanggal"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.date ||
+                        (addBookingHasWarning('date')
+                            ? 'Tanggal wajib diisi.'
+                            : '')
+                    "
+                >
+                    <AppInput
+                        v-model="addBookingForm.date"
+                        appearance="admin"
+                        type="date"
+                    />
+                </FormField>
+                <FormField
+                    label="Dari Jam"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.start_time ||
+                        (addBookingHasWarning('start_time')
+                            ? 'Waktu mulai wajib diisi.'
+                            : '')
+                    "
+                >
+                    <AppInput
+                        v-model="addBookingForm.start_time"
+                        appearance="admin"
+                        type="time"
+                        :min="addBookingMinStartTime"
+                        max="23:59"
+                    />
+                </FormField>
+                <FormField
+                    label="Sampai Jam"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.end_time ||
+                        (addBookingHasWarning('end_time')
+                            ? 'Waktu selesai wajib diisi.'
+                            : '')
+                    "
+                >
+                    <AppInput
+                        v-model="addBookingForm.end_time"
+                        appearance="admin"
+                        type="time"
+                        :min="addBookingMinEndTime"
+                        max="23:59"
+                        step="1800"
+                    />
+                </FormField>
+                <FormField
+                    label="Judul Kegiatan"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.title ||
+                        (addBookingHasWarning('title')
+                            ? 'Judul wajib diisi.'
+                            : '')
+                    "
+                >
+                    <AppInput
+                        v-model="addBookingForm.title"
+                        appearance="admin"
+                    />
+                </FormField>
+                <FormField
+                    label="Jumlah Orang"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.participants ||
+                        (addBookingHasWarning('participants')
+                            ? 'Jumlah orang wajib diisi dan minimal 1.'
+                            : '')
+                    "
+                >
+                    <AppInput
+                        v-model="addBookingForm.participants"
+                        appearance="admin"
+                        type="number"
+                        min="1"
+                    />
+                </FormField>
+                <FormField
+                    class="md:col-span-2"
+                    label="Permintaan Khusus"
+                    appearance="admin"
+                    :error="addBookingForm.errors.request"
+                >
+                    <AppTextarea v-model="addBookingForm.request" rows="3" />
+                </FormField>
+                <FormField
+                    v-if="addBookingForm.room_id === 1"
+                    class="md:col-span-2"
+                    label="Unggah Banner Rapat"
+                    appearance="admin"
+                    hint="Format yang didukung: JPG, JPEG, PNG"
+                    :error="addBookingForm.errors.banner"
+                >
+                    <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png"
+                        class="w-full"
+                        @change="handleAddBookingFile"
+                    />
+                    <div v-if="addBookingPreview" class="banner-preview mt-3">
+                        <img :src="addBookingPreview" alt="Preview Banner" />
                     </div>
-
-                    <div
-                        v-if="showAddBookingSuccess"
-                        class="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700"
+                </FormField>
+                <div class="flex justify-end gap-3 md:col-span-2">
+                    <button
+                        type="button"
+                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        @click="closeAddBookingModal"
                     >
-                        Peminjaman berhasil ditambahkan.
-                    </div>
-
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700"
-                                >Status</label
-                            >
-                            <select
-                                v-model="addBookingForm.status"
-                                class="mt-2 w-full rounded-lg border px-4 py-2"
-                            >
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700"
-                                >Ruangan</label
-                            >
-                            <select
-                                v-model.number="addBookingForm.room_id"
-                                class="mt-2 w-full rounded-lg border px-4 py-2"
-                            >
-                                <option :value="null" disabled hidden>
-                                    Pilih Ruangan
-                                </option>
-                                <option
-                                    v-for="room in rooms"
-                                    :key="room.id"
-                                    :value="room.id"
-                                >
-                                    {{ room.name }}
-                                </option>
-                            </select>
-                            <p
-                                v-if="addBookingHasWarning('room_id')"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                Ruangan wajib dipilih.
-                            </p>
-                            <p
-                                v-if="addBookingForm.errors.room_id"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                {{ addBookingForm.errors.room_id }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700"
-                                >Tanggal</label
-                            >
-                            <input
-                                type="date"
-                                v-model="addBookingForm.date"
-                                class="mt-2 w-full rounded-lg border px-4 py-2"
-                            />
-                            <p
-                                v-if="addBookingHasWarning('date')"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                Tanggal wajib diisi.
-                            </p>
-                            <p
-                                v-if="addBookingForm.errors.date"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                {{ addBookingForm.errors.date }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700"
-                                >Dari Jam</label
-                            >
-                            <input
-                                type="time"
-                                v-model="addBookingForm.start_time"
-                                :min="addBookingMinStartTime"
-                                max="23:59"
-                                class="mt-2 w-full rounded-lg border px-4 py-2"
-                            />
-                            <p
-                                v-if="addBookingHasWarning('start_time')"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                Waktu mulai wajib diisi.
-                            </p>
-                            <p
-                                v-if="addBookingForm.errors.start_time"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                {{ addBookingForm.errors.start_time }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700"
-                                >Sampai Jam</label
-                            >
-                            <input
-                                type="time"
-                                v-model="addBookingForm.end_time"
-                                :min="addBookingMinEndTime"
-                                max="23:59"
-                                step="1800"
-                                class="mt-2 w-full rounded-lg border px-4 py-2"
-                            />
-                            <p
-                                v-if="addBookingHasWarning('end_time')"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                Waktu selesai wajib diisi.
-                            </p>
-                            <p
-                                v-if="addBookingForm.errors.end_time"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                {{ addBookingForm.errors.end_time }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700"
-                                >Judul Kegiatan</label
-                            >
-                            <input
-                                type="text"
-                                v-model="addBookingForm.title"
-                                class="mt-2 w-full rounded-lg border px-4 py-2"
-                            />
-                            <p
-                                v-if="addBookingHasWarning('title')"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                Judul wajib diisi.
-                            </p>
-                            <p
-                                v-if="addBookingForm.errors.title"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                {{ addBookingForm.errors.title }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700"
-                                >Jumlah Orang</label
-                            >
-                            <input
-                                type="number"
-                                min="1"
-                                v-model.number="addBookingForm.participants"
-                                class="mt-2 w-full rounded-lg border px-4 py-2"
-                            />
-                            <p
-                                v-if="addBookingHasWarning('participants')"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                Jumlah orang wajib diisi dan minimal 1.
-                            </p>
-                            <p
-                                v-if="addBookingForm.errors.participants"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                {{ addBookingForm.errors.participants }}
-                            </p>
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label
-                                class="block text-sm font-medium text-gray-700"
-                                >Permintaan Khusus</label
-                            >
-                            <textarea
-                                rows="3"
-                                v-model="addBookingForm.request"
-                                class="mt-2 w-full rounded-lg border px-4 py-2"
-                            ></textarea>
-                            <p
-                                v-if="addBookingForm.errors.request"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                {{ addBookingForm.errors.request }}
-                            </p>
-                        </div>
-
-                        <div
-                            class="md:col-span-2"
-                            v-if="addBookingForm.room_id === 1"
-                        >
-                            <label
-                                class="block text-sm font-medium text-gray-700"
-                                >Unggah Banner Rapat</label
-                            >
-                            <input
-                                type="file"
-                                accept=".jpg,.jpeg,.png"
-                                @change="handleAddBookingFile"
-                                class="mt-2 w-full"
-                            />
-                            <small class="text-sm text-gray-500">
-                                Format yang didukung: JPG, JPEG, PNG
-                            </small>
-                            <div
-                                v-if="addBookingPreview"
-                                class="banner-preview mt-3"
-                            >
-                                <img
-                                    :src="addBookingPreview"
-                                    alt="Preview Banner"
-                                />
-                            </div>
-                            <p
-                                v-if="addBookingForm.errors.banner"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                {{ addBookingForm.errors.banner }}
-                            </p>
-                        </div>
-
-                        <div class="flex justify-end gap-3 md:col-span-2">
-                            <button
-                                type="button"
-                                class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
-                                @click="closeAddBookingModal"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                type="button"
-                                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                                :disabled="addBookingForm.processing"
-                                @click="submitAddBooking"
-                            >
-                                {{
-                                    addBookingForm.processing
-                                        ? 'Menyimpan...'
-                                        : 'Simpan'
-                                }}
-                            </button>
-                        </div>
-                    </div>
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        :disabled="addBookingForm.processing"
+                        @click="submitAddBooking"
+                    >
+                        {{
+                            addBookingForm.processing
+                                ? 'Menyimpan...'
+                                : 'Simpan'
+                        }}
+                    </button>
                 </div>
             </div>
-        </Teleport>
+        </AppModal>
 
-        <Teleport to="body">
-            <div
-                v-if="showDetailModal"
-                class="add-booking-modal-overlay"
-                @click.self="closeDetailModal"
-            >
-                <div class="add-booking-modal">
-                    <div class="modal-header">
-                        <div>
-                            <h2 class="text-xl font-semibold">
-                                Detail Booking
-                            </h2>
-                            <p class="text-sm text-gray-500">
-                                Informasi lengkap untuk booking
-                                <strong>{{ detailBooking?.code }}</strong
-                                >.
-                            </p>
-                        </div>
-
-                        <button
-                            class="modal-close"
-                            type="button"
-                            @click="closeDetailModal"
-                            aria-label="Tutup"
-                        >
-                            ×
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <p class="text-sm text-gray-500">
-                                    Kode Booking
-                                </p>
-                                <p class="mt-1 font-medium">
-                                    {{ detailBooking?.code }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Status</p>
-                                <p class="mt-1 font-medium capitalize">
-                                    {{ detailBooking?.status }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Peminjam</p>
-                                <p class="mt-1 font-medium">
-                                    {{ detailBooking?.borrower }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Ruangan</p>
-                                <p class="mt-1 font-medium">
-                                    {{ detailBooking?.room }}
-                                </p>
-                            </div>
-                            <div class="md:col-span-2">
-                                <p class="text-sm text-gray-500">Kegiatan</p>
-                                <p class="mt-1 font-medium">
-                                    {{ detailBooking?.activity }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Tanggal</p>
-                                <p class="mt-1 font-medium">
-                                    {{ detailBooking?.date }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Waktu</p>
-                                <p class="mt-1 font-medium">
-                                    {{ detailBooking?.start }} -
-                                    {{ detailBooking?.end }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">
-                                    Catatan/Request
-                                </p>
-                                <p class="mt-1 font-medium">
-                                    {{ detailBooking?.request || '-' }}
-                                </p>
-                            </div>
-                            <div v-if="detailBooking?.processed_notes">
-                                <p class="text-sm text-gray-500">
-                                    Processed Note
-                                </p>
-                                <p class="mt-1 font-medium">
-                                    {{ detailBooking?.processed_notes }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end">
-                            <button
-                                type="button"
-                                class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
-                                @click="closeDetailModal"
-                            >
-                                Tutup
-                            </button>
-                        </div>
-                    </div>
+        <DetailModal
+            v-if="showDetailModal"
+            title="Detail Booking"
+            max-width="3xl"
+            @close="closeDetailModal"
+        >
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <p class="text-sm text-gray-500">Kode Booking</p>
+                    <p class="mt-1 font-medium">{{ detailBooking?.code }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Status</p>
+                    <p class="mt-1 font-medium capitalize">
+                        {{ detailBooking?.status }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Peminjam</p>
+                    <p class="mt-1 font-medium">
+                        {{ detailBooking?.borrower }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Ruangan</p>
+                    <p class="mt-1 font-medium">{{ detailBooking?.room }}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-500">Kegiatan</p>
+                    <p class="mt-1 font-medium">
+                        {{ detailBooking?.activity }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Tanggal</p>
+                    <p class="mt-1 font-medium">{{ detailBooking?.date }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Waktu</p>
+                    <p class="mt-1 font-medium">
+                        {{ detailBooking?.start }} - {{ detailBooking?.end }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Catatan/Request</p>
+                    <p class="mt-1 font-medium">
+                        {{ detailBooking?.request || '-' }}
+                    </p>
+                </div>
+                <div v-if="detailBooking?.processed_notes">
+                    <p class="text-sm text-gray-500">Processed Note</p>
+                    <p class="mt-1 font-medium">
+                        {{ detailBooking.processed_notes }}
+                    </p>
                 </div>
             </div>
-        </Teleport>
+        </DetailModal>
 
-        <Teleport to="body">
-            <div
-                v-if="showApproveModal"
-                class="add-booking-modal-overlay"
-                @click.self="closeApproveModal"
-            >
-                <div class="add-booking-modal">
-                    <div class="modal-header">
-                        <div>
-                            <h2 class="text-xl font-semibold">
-                                Setujui Booking
-                            </h2>
-                            <p class="text-sm text-gray-500">
-                                Yakin ingin menyetujui booking
-                                <strong>{{ selectedBookingCode }}</strong
-                                >?
-                            </p>
-                        </div>
-
-                        <button
-                            class="modal-close"
-                            type="button"
-                            @click="closeApproveModal"
-                            aria-label="Tutup"
-                        >
-                            ×
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <p class="text-sm text-gray-700">
-                            Booking akan langsung ditandai sebagai
-                            <strong>Approved</strong> dan tercatat sebagai
-                            diproses.
-                        </p>
-
-                        <div class="flex justify-end gap-3">
-                            <button
-                                type="button"
-                                class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
-                                @click="closeApproveModal"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                type="button"
-                                class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
-                                @click="confirmApprove"
-                            >
-                                Setujui
-                            </button>
-                        </div>
-                    </div>
+        <AppModal
+            v-if="showApproveModal"
+            title="Setujui Booking"
+            max-width="lg"
+            @close="closeApproveModal"
+        >
+            <div class="space-y-4">
+                <p class="text-sm text-gray-700">
+                    Booking <strong>{{ selectedBookingCode }}</strong> akan
+                    langsung ditandai sebagai <strong>Approved</strong> dan
+                    tercatat sebagai diproses.
+                </p>
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        @click="closeApproveModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                        @click="confirmApprove"
+                    >
+                        Setujui
+                    </button>
                 </div>
             </div>
-        </Teleport>
+        </AppModal>
 
-        <Teleport to="body">
-            <div
-                v-if="showRejectModal"
-                class="add-booking-modal-overlay"
-                @click.self="closeRejectModal"
-            >
-                <div class="add-booking-modal">
-                    <div class="modal-header">
-                        <div>
-                            <h2 class="text-xl font-semibold">Tolak Booking</h2>
-                            <p class="text-sm text-gray-500">
-                                Masukkan alasan penolakan untuk booking
-                                <strong>{{ selectedBookingCode }}</strong
-                                >.
-                            </p>
-                        </div>
+        <AppModal
+            v-if="showRejectModal"
+            title="Tolak Booking"
+            max-width="lg"
+            @close="closeRejectModal"
+        >
+            <div class="space-y-4">
+                <FormField
+                    label="Alasan Penolakan"
+                    appearance="admin"
+                    required
+                    :error="rejectValidationErrors.reason"
+                    ><AppTextarea v-model="rejectReason" rows="4"
+                /></FormField>
 
-                        <button
-                            class="modal-close"
-                            type="button"
-                            @click="closeRejectModal"
-                            aria-label="Tutup"
-                        >
-                            ×
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700"
-                                >Alasan Penolakan</label
-                            >
-                            <textarea
-                                v-model="rejectReason"
-                                rows="4"
-                                class="mt-2 w-full rounded-lg border px-4 py-2"
-                            ></textarea>
-                            <p
-                                v-if="rejectValidationErrors.reason"
-                                class="mt-2 text-sm text-red-600"
-                            >
-                                {{ rejectValidationErrors.reason }}
-                            </p>
-                        </div>
-
-                        <div class="flex justify-end gap-3">
-                            <button
-                                type="button"
-                                class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
-                                @click="closeRejectModal"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                type="button"
-                                class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                                @click="confirmReject"
-                            >
-                                Tolak
-                            </button>
-                        </div>
-                    </div>
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        @click="closeRejectModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                        @click="confirmReject"
+                    >
+                        Tolak
+                    </button>
                 </div>
             </div>
-        </Teleport>
+        </AppModal>
 
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Total</p>
-
-                <h2 class="mt-2 text-3xl font-bold">
-                    {{ stats?.total }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Pending</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-yellow-600">
-                    {{ stats?.pending }}
-                </h2>
-            </div>
-
-            <div class="rounded-xl bg-white p-5 shadow">
-                <p class="text-sm text-gray-500">Approved</p>
-
-                <h2 class="mt-2 text-3xl font-bold text-green-600">
-                    {{ stats?.approved }}
-                </h2>
-            </div>
+            <StatCard label="Total" :value="stats?.total" />
+            <StatCard label="Pending" :value="stats?.pending" tone="warning" />
+            <StatCard
+                label="Approved"
+                :value="stats?.approved"
+                tone="success"
+            />
         </div>
-
         <!-- Filter -->
 
         <div class="rounded-xl bg-white p-5 shadow">
             <div class="grid gap-4 md:grid-cols-3">
-                <input
+                <AppInput
                     v-model="search"
+                    appearance="admin"
                     type="text"
                     placeholder="Cari booking..."
                     class="rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
                 />
 
-                <select
+                <AppSelect
                     v-model="statusFilter"
                     class="rounded-lg border px-4 py-2"
                 >
@@ -874,9 +629,9 @@ function reject(id: number, code: string) {
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                     <option value="cancelled">Cancelled</option>
-                </select>
+                </AppSelect>
 
-                <select
+                <AppSelect
                     v-model="roomFilter"
                     class="rounded-lg border px-4 py-2"
                 >
@@ -888,7 +643,7 @@ function reject(id: number, code: string) {
                     >
                         {{ room.name }}
                     </option>
-                </select>
+                </AppSelect>
             </div>
         </div>
 
@@ -1015,67 +770,11 @@ function reject(id: number, code: string) {
 </template>
 
 <style scoped>
-.add-booking-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.65);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
-    padding: 20px;
-}
-
-.add-booking-modal {
-    width: min(100%, 960px);
-    max-height: min(100%, 92vh);
-    overflow-y: auto;
-    background: #ffffff;
-    border-radius: 24px;
-    box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18);
-    padding: 28px;
-    animation: modalPop 0.18s ease-out;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    align-items: flex-start;
-    margin-bottom: 20px;
-}
-
-.modal-close {
-    background: transparent;
-    border: none;
-    color: #334155;
-    font-size: 28px;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0;
-}
-
-.modal-close:hover {
-    color: #0f172a;
-}
-
 .banner-preview img {
     width: 100%;
     max-width: 350px;
     border-radius: 10px;
     border: 1px solid #ddd;
     object-fit: cover;
-}
-
-@keyframes modalPop {
-    from {
-        opacity: 0;
-        transform: translateY(-10px) scale(0.98);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
 }
 </style>
