@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,7 +47,13 @@ class AdminUserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'regex:/^\S+$/u', 'unique:users,username,'.$user->id],
+            'username' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^\S+$/u',
+                Rule::unique('users', 'username')->withoutTrashed()->ignore($user->id),
+            ],
             'role' => ['required', 'in:admin,user,display'],
         ], ['username.regex' => 'Username tidak boleh mengandung spasi.']);
 
@@ -77,7 +84,13 @@ class AdminUserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'regex:/^\S+$/u', 'unique:users,username'],
+            'username' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^\S+$/u',
+                Rule::unique('users', 'username')->withoutTrashed(),
+            ],
             'role' => ['required', 'in:admin,user,display'],
         ], ['username.regex' => 'Username tidak boleh mengandung spasi.']);
 

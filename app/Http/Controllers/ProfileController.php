@@ -26,7 +26,7 @@ class ProfileController extends Controller
                 'string',
                 'max:50',
                 'regex:/^\S+$/u',
-                Rule::unique('users')->ignore($request->user()->id),
+                Rule::unique('users', 'username')->withoutTrashed()->ignore($request->user()->id),
             ],
         ], ['username.regex' => 'Username tidak boleh mengandung spasi.']);
 

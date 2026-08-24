@@ -71,7 +71,7 @@ class AdminBookingController extends Controller
 
                     'room' => $booking->room->name,
 
-                    'borrower' => $booking->user->name,
+                    'borrower' => $booking->user?->name ?? 'Pengguna dihapus',
 
                     'activity' => $booking->title,
 
