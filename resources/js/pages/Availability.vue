@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { ref, computed, watch } from 'vue';
 import Calendar from '@/components/Calendar/Calendar.vue';
 import { getRoomColor } from '@/components/Calendar/roomColors';
+import type { CalendarEvent } from '@/types/calendar';
 
 interface Facility {
     id: number;
@@ -18,15 +19,6 @@ interface Room {
     calendar_url: string;
     facilities: Facility[];
     image: null;
-}
-
-interface CalendarEvent {
-    id: number;
-    title: string;
-    room: string;
-    date: string;
-    start_time: string;
-    end_time: string;
 }
 
 const props = defineProps<{

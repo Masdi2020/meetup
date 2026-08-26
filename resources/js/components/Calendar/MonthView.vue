@@ -10,6 +10,10 @@ const props = defineProps<{
     events: CalendarEvent[];
 }>();
 
+const emit = defineEmits<{
+    select: [event: CalendarEvent];
+}>();
+
 const weekDays = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 const days = computed(() => {
@@ -62,10 +66,16 @@ function getEventsForDate(day: Dayjs) {
                     v-for="event in getEventsForDate(day).slice(0, 3)"
                     :key="`${event.id}-${event.date}`"
                     class="event-pill"
+                    role="button"
+                    tabindex="0"
+                    :aria-label="`Lihat rincian ${event.title}`"
                     :style="{
                         backgroundColor: getRoomColor(event.room),
                         color: getRoomTextColor(),
                     }"
+                    @click="emit('select', event)"
+                    @keydown.enter="emit('select', event)"
+                    @keydown.space.prevent="emit('select', event)"
                 >
                     <span class="event-title">{{ event.title }}</span>
                     <span class="event-time"
@@ -133,6 +143,7 @@ function getEventsForDate(day: Dayjs) {
 }
 
 .event-pill {
+    width: 100%;
     border-radius: 6px;
     padding: 4px 6px;
     font-size: 11px;
@@ -142,6 +153,18 @@ function getEventsForDate(day: Dayjs) {
     align-items: center;
     gap: 6px;
     min-height: 30px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.event-pill:hover,
+.event-pill:focus-visible {
+    filter: brightness(0.92);
+}
+
+.event-pill:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 1px;
 }
 
 .event-title {
@@ -174,6 +197,7 @@ function getEventsForDate(day: Dayjs) {
         padding: 6px;
     }
     .event-pill {
+        width: 100%;
         align-items: flex-start;
         flex-direction: column;
         gap: 1px;
