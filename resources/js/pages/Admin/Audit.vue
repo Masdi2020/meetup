@@ -182,9 +182,9 @@ function formatValue(value: unknown) {
         </div>
 
         <!-- Table -->
-        <div class="overflow-hidden rounded-xl bg-white shadow">
+        <div class="rounded-xl bg-white shadow">
             <div class="overflow-x-auto">
-                <table class="min-w-full">
+                <table class="w-full min-w-[900px]">
                     <thead class="bg-gray-100">
                         <tr class="text-left text-sm">
                             <th class="px-5 py-4">Waktu</th>

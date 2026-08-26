@@ -158,8 +158,8 @@ function deleteFacility(facility: Facility) {
         </div>
 
         <!-- Table -->
-        <div class="overflow-hidden rounded-xl bg-white shadow">
-            <table class="min-w-full">
+        <div class="overflow-x-auto rounded-xl bg-white shadow">
+            <table class="w-full min-w-[600px]">
                 <thead class="bg-gray-100">
                     <tr class="text-left text-sm font-semibold">
                         <th class="px-5 py-4">Nama</th>

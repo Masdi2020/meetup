@@ -256,8 +256,8 @@ function deleteUser(user: User) {
             </div>
         </div>
 
-        <div class="overflow-hidden rounded-xl bg-white shadow">
-            <table class="min-w-full">
+        <div class="overflow-x-auto rounded-xl bg-white shadow">
+            <table class="w-full min-w-[720px]">
                 <thead class="bg-gray-100">
                     <tr class="text-left text-sm">
                         <th class="px-5 py-4">Pengguna</th>
