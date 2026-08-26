@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import PasswordField from '@/components/molecules/PasswordField.vue';
 
 interface PageProps {
     user: {
@@ -30,9 +31,6 @@ const originalProfile = ref({
 });
 
 const activeTab = ref<'profile' | 'password'>('profile');
-const showCurrentPassword = ref(false);
-const showNewPassword = ref(false);
-const showConfirmPassword = ref(false);
 
 const profileChanged = computed(() => {
     return (
@@ -58,14 +56,6 @@ function saveProfile() {
 function removeUsernameWhitespace(event: Event) {
     const input = event.target as HTMLInputElement;
     form.username = input.value.replace(/\s/g, '');
-}
-
-function removePasswordWhitespace(
-    event: Event,
-    field: 'current_password' | 'password' | 'password_confirmation',
-) {
-    const input = event.target as HTMLInputElement;
-    form[field] = input.value.replace(/\s/g, '');
 }
 
 function changePassword() {
@@ -140,197 +130,32 @@ function changePassword() {
                 v-if="activeTab === 'password'"
                 @submit.prevent="changePassword"
             >
-                <div class="field password-field">
-                    <label>Password Lama</label>
-                    <div class="password-input-wrapper">
-                        <input
-                            v-model="form.current_password"
-                            :type="showCurrentPassword ? 'text' : 'password'"
-                            @keydown.space.prevent
-                            @input="
-                                removePasswordWhitespace(
-                                    $event,
-                                    'current_password',
-                                )
-                            "
-                            required
-                        />
-                        <button
-                            type="button"
-                            class="password-toggle"
-                            @click="showCurrentPassword = !showCurrentPassword"
-                            aria-label="Toggle current password visibility"
-                        >
-                            <svg
-                                v-if="showCurrentPassword"
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                width="20"
-                                height="20"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path d="M1 1l22 22" />
-                                <path
-                                    d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38"
-                                />
-                                <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94" />
-                                <path
-                                    d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88"
-                                />
-                            </svg>
-                            <svg
-                                v-else
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                width="20"
-                                height="20"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path
-                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                                />
-                                <circle cx="12" cy="12" r="3" />
-                            </svg>
-                        </button>
-                    </div>
-                    <p v-if="form.errors.current_password" class="error">
-                        {{ form.errors.current_password }}
-                    </p>
-                </div>
+                <PasswordField
+                    id="current-password"
+                    v-model="form.current_password"
+                    label="Password Lama"
+                    :error="form.errors.current_password"
+                    autocomplete="current-password"
+                    required
+                />
 
-                <div class="field password-field">
-                    <label>Password Baru</label>
-                    <div class="password-input-wrapper">
-                        <input
-                            v-model="form.password"
-                            :type="showNewPassword ? 'text' : 'password'"
-                            @keydown.space.prevent
-                            @input="
-                                removePasswordWhitespace($event, 'password')
-                            "
-                            required
-                        />
-                        <button
-                            type="button"
-                            class="password-toggle"
-                            @click="showNewPassword = !showNewPassword"
-                            aria-label="Toggle new password visibility"
-                        >
-                            <svg
-                                v-if="showNewPassword"
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                width="20"
-                                height="20"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path d="M1 1l22 22" />
-                                <path
-                                    d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38"
-                                />
-                                <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94" />
-                                <path
-                                    d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88"
-                                />
-                            </svg>
-                            <svg
-                                v-else
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                width="20"
-                                height="20"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path
-                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                                />
-                                <circle cx="12" cy="12" r="3" />
-                            </svg>
-                        </button>
-                    </div>
-                    <p v-if="form.errors.password" class="error">
-                        {{ form.errors.password }}
-                    </p>
-                </div>
+                <PasswordField
+                    id="new-password"
+                    v-model="form.password"
+                    label="Password Baru"
+                    :error="form.errors.password"
+                    autocomplete="new-password"
+                    required
+                />
 
-                <div class="field password-field">
-                    <label>Ulangi Password Baru</label>
-                    <div class="password-input-wrapper">
-                        <input
-                            v-model="form.password_confirmation"
-                            :type="showConfirmPassword ? 'text' : 'password'"
-                            @keydown.space.prevent
-                            @input="
-                                removePasswordWhitespace(
-                                    $event,
-                                    'password_confirmation',
-                                )
-                            "
-                            required
-                        />
-                        <button
-                            type="button"
-                            class="password-toggle"
-                            @click="showConfirmPassword = !showConfirmPassword"
-                            aria-label="Toggle confirm password visibility"
-                        >
-                            <svg
-                                v-if="showConfirmPassword"
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                width="20"
-                                height="20"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path d="M1 1l22 22" />
-                                <path
-                                    d="M17.94 17.94A10.12 10.12 0 0 1 12 19c-5 0-9.27-3.11-11-7.5a19.79 19.79 0 0 1 4.55-6.38"
-                                />
-                                <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94" />
-                                <path
-                                    d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88"
-                                />
-                            </svg>
-                            <svg
-                                v-else
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                width="20"
-                                height="20"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path
-                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                                />
-                                <circle cx="12" cy="12" r="3" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
+                <PasswordField
+                    id="confirm-password"
+                    v-model="form.password_confirmation"
+                    label="Ulangi Password Baru"
+                    :error="form.errors.password_confirmation"
+                    autocomplete="new-password"
+                    required
+                />
 
                 <button type="submit">Ubah Password</button>
             </form>
@@ -417,34 +242,5 @@ button[type='submit'] {
 button[type='submit']:disabled {
     opacity: 0.55;
     cursor: not-allowed;
-}
-
-.password-input-wrapper {
-    position: relative;
-}
-
-.password-toggle {
-    position: absolute;
-    top: 50%;
-    right: 12px;
-    transform: translateY(-50%);
-    border: none;
-    background: transparent;
-    color: #2563eb;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-}
-
-.password-field .password-input-wrapper input {
-    padding-right: 48px;
-}
-
-.password-toggle svg {
-    display: block;
 }
 </style>

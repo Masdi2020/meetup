@@ -3,12 +3,20 @@ import { Eye, EyeOff } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
-defineProps<{
-    label: string;
-    error?: string;
-    required?: boolean;
-    placeholder?: string;
-}>();
+
+withDefaults(
+    defineProps<{
+        label: string;
+        error?: string;
+        required?: boolean;
+        placeholder?: string;
+        id?: string;
+        autocomplete?: string;
+        appearance?: 'default' | 'admin';
+    }>(),
+    { appearance: 'default' },
+);
+
 const model = defineModel<string>({ default: '' });
 const visible = ref(false);
 const password = computed({
@@ -20,15 +28,25 @@ const password = computed({
 </script>
 
 <template>
-    <FormField :label="label" :error="error" :required="required"
-        ><div class="password-field">
+    <FormField
+        :label="label"
+        :error="error"
+        :required="required"
+        :appearance="appearance"
+        :for-id="id"
+    >
+        <div class="password-field">
             <AppInput
+                :id="id"
                 v-model="password"
                 :type="visible ? 'text' : 'password'"
                 :placeholder="placeholder"
                 :required="required"
+                :autocomplete="autocomplete"
+                :appearance="appearance"
                 @keydown.space.prevent
-            /><button
+            />
+            <button
                 type="button"
                 class="password-field__toggle"
                 :aria-label="
@@ -36,9 +54,11 @@ const password = computed({
                 "
                 @click="visible = !visible"
             >
-                <EyeOff v-if="visible" :size="20" /><Eye v-else :size="20" />
-            </button></div
-    ></FormField>
+                <EyeOff v-if="visible" :size="20" />
+                <Eye v-else :size="20" />
+            </button>
+        </div>
+    </FormField>
 </template>
 
 <style scoped>
