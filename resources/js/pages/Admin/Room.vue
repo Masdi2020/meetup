@@ -132,7 +132,7 @@ function toggleAvailability(room: Room) {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="w-full max-w-7xl space-y-6">
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold">Ruangan</h1>
@@ -150,7 +150,7 @@ function toggleAvailability(room: Room) {
             </button>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-3">
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Total Ruangan" :value="rooms.length" />
             <StatCard label="Total Kapasitas" :value="totalCapacity" />
             <StatCard label="Total Fasilitas" :value="totalFacilities" />

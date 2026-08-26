@@ -360,7 +360,8 @@ h2 {
 .calendar-card {
     border: 1px solid #ddd;
     border-radius: 12px;
-    overflow: visible;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 8px;
     background: white;
 }
@@ -369,5 +370,28 @@ h2 {
     width: 100%;
     height: 100%;
     border: none;
+}
+
+@media (max-width: 768px) {
+    .toolbar select {
+        width: 100%;
+        min-height: 44px;
+    }
+    .room-card {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .room-image {
+        width: 100%;
+        height: 160px;
+    }
+    .booking {
+        width: 100%;
+        min-height: 44px;
+    }
+    .room-legend {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
 </style>

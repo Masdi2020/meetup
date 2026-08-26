@@ -160,4 +160,23 @@ function getEventsForDate(day: Dayjs) {
     font-size: 11px;
     color: #64748b;
 }
+
+@media (max-width: 768px) {
+    .calendar-grid {
+        grid-template-columns: repeat(7, minmax(88px, 1fr));
+        grid-auto-rows: minmax(112px, auto);
+    }
+    .header {
+        padding: 8px 4px;
+    }
+    .cell {
+        min-height: 112px;
+        padding: 6px;
+    }
+    .event-pill {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 1px;
+    }
+}
 </style>

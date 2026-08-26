@@ -107,7 +107,7 @@ function formatValue(value: unknown) {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="w-full max-w-7xl space-y-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
             <div>
@@ -120,7 +120,7 @@ function formatValue(value: unknown) {
         </div>
 
         <!-- Statistics -->
-        <div class="grid gap-4 md:grid-cols-4">
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Total Aktivitas" :value="props.stats.total" />
             <StatCard label="Hari Ini" :value="props.stats.today" tone="info" />
             <StatCard

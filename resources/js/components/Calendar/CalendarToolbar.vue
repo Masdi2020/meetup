@@ -38,4 +38,26 @@ button {
 
     cursor: pointer;
 }
+
+.toolbar > div {
+    display: flex;
+}
+@media (max-width: 640px) {
+    .toolbar {
+        align-items: stretch;
+        flex-direction: column-reverse;
+        gap: 12px;
+    }
+    .toolbar h2 {
+        margin: 0;
+        font-size: 18px;
+    }
+    .toolbar > div {
+        justify-content: space-between;
+    }
+    button {
+        min-height: 42px;
+        margin-right: 0;
+    }
+}
 </style>

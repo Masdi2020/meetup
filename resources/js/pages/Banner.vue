@@ -165,7 +165,7 @@ onUnmounted(() => {
 
         <video
             v-else
-            src="/storage/videos/Contoh.mp4"
+            src="/storage/videos/Video tampilan kosong.mp4"
             autoplay
             muted
             loop

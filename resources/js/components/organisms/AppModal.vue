@@ -15,12 +15,12 @@ const emit = defineEmits<{ close: [] }>();
 <template>
     <Teleport to="body">
         <div
-            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"
+            class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 sm:items-center sm:p-4"
             role="presentation"
             @click.self="emit('close')"
         >
             <section
-                class="w-full rounded-2xl bg-white p-6 shadow-xl"
+                class="max-h-[95dvh] w-full rounded-t-2xl bg-white p-4 shadow-xl sm:rounded-2xl sm:p-6"
                 :class="{
                     'max-w-md': maxWidth === 'md',
                     'max-w-lg': maxWidth === 'lg',
@@ -51,7 +51,7 @@ const emit = defineEmits<{ close: [] }>();
                 </div>
                 <footer
                     v-if="$slots.actions"
-                    class="mt-6 flex justify-end gap-3"
+                    class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"
                 >
                     <slot name="actions" />
                 </footer>

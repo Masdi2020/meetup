@@ -202,7 +202,7 @@ function deleteUser(user: User) {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="w-full max-w-7xl space-y-6">
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold">Pengguna</h1>
@@ -218,7 +218,7 @@ function deleteUser(user: User) {
             </button>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-4">
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Total" :value="users.length" />
             <StatCard
                 label="Admin"

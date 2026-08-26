@@ -134,4 +134,19 @@ nav {
     font-size: 14px;
     font-weight: 500;
 }
+@media (max-width: 768px) {
+    .sidebar,
+    .sidebar.collapsed {
+        width: min(82vw, 280px);
+        transform: translateX(0);
+        transition: transform 0.25s ease;
+    }
+    .sidebar.collapsed {
+        transform: translateX(-100%);
+        pointer-events: none;
+    }
+    .menu-item {
+        min-height: 44px;
+    }
+}
 </style>

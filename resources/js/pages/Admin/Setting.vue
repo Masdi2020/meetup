@@ -19,7 +19,7 @@ function save() {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="w-full max-w-7xl space-y-6">
         <div>
             <h1 class="text-3xl font-bold">Pengaturan</h1>
 

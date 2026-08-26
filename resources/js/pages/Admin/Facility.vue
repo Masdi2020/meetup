@@ -121,7 +121,7 @@ function deleteFacility(facility: Facility) {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="w-full max-w-7xl space-y-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
             <div>
@@ -141,7 +141,7 @@ function deleteFacility(facility: Facility) {
         </div>
 
         <!-- Statistik -->
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Total Fasilitas" :value="facilities.length" />
             <StatCard label="Digunakan di Ruangan" :value="totalUsage" />
         </div>
