@@ -38,6 +38,25 @@ const navigation = computed(() => {
 
     return navigationByRole[role ?? 'user'];
 });
+
+const currentPath = computed(() => {
+    const url = page.url.split(/[?#]/)[0] || '/';
+
+    return url.length > 1 ? url.replace(/\/$/, '') : url;
+});
+
+const activeMenuTo = computed(() => {
+    return navigation.value.items
+        .filter((item) => {
+            const target = item.to.length > 1 ? item.to.replace(/\/$/, '') : item.to;
+
+            return (
+                currentPath.value === target ||
+                (target !== '/' && currentPath.value.startsWith(`${target}/`))
+            );
+        })
+        .sort((a, b) => b.to.length - a.to.length)[0]?.to;
+});
 </script>
 
 <template>
@@ -62,6 +81,7 @@ const navigation = computed(() => {
             :is-open="isOpen"
             :menus="navigation.items"
             :brand="navigation.brand"
+            :active-to="activeMenuTo"
             @toggle="isOpen = !isOpen"
         >
             <template #sidebar-footer>
