@@ -22,9 +22,15 @@ class StoreBookingRequest extends FormRequest
      */
     public function rules(): array
     {
+        $dateRules = ['required', 'date'];
+
+        if ($this->user()?->role !== 'admin') {
+            $dateRules[] = 'after_or_equal:today';
+        }
+
         return [
             'room_id' => ['required', 'exists:rooms,id'],
-            'date' => ['required', 'date', 'after_or_equal:today'],
+            'date' => $dateRules,
             'start_time' => ['required'],
             'end_time' => ['required', 'after:start_time'],
             'title' => ['required', 'string', 'max:255'],
