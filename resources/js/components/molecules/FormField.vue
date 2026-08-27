@@ -6,6 +6,7 @@ withDefaults(
         hint?: string;
         required?: boolean;
         appearance?: 'default' | 'admin';
+        forId?: string;
     }>(),
     { appearance: 'default' },
 );
@@ -13,7 +14,7 @@ withDefaults(
 
 <template>
     <div class="form-field" :class="`form-field--${appearance}`">
-        <label class="form-field__label">
+        <label class="form-field__label" :for="forId">
             {{ label }}<span v-if="required" aria-hidden="true"> *</span>
         </label>
         <slot />

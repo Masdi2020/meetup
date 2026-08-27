@@ -37,14 +37,14 @@ defineProps<{
 </script>
 
 <template>
-    <div class="space-y-8">
+    <div class="w-full max-w-7xl space-y-8">
         <div>
             <h1 class="text-3xl font-bold">Dashboard Admin</h1>
 
             <p class="text-gray-500">Selamat datang kembali.</p>
         </div>
 
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Total Ruangan" :value="stats.rooms" size="large" />
             <StatCard
                 label="Total Pengguna"

@@ -107,7 +107,7 @@ function formatValue(value: unknown) {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="w-full max-w-7xl space-y-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
             <div>
@@ -120,7 +120,7 @@ function formatValue(value: unknown) {
         </div>
 
         <!-- Statistics -->
-        <div class="grid gap-4 md:grid-cols-4">
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Total Aktivitas" :value="props.stats.total" />
             <StatCard label="Hari Ini" :value="props.stats.today" tone="info" />
             <StatCard
@@ -182,9 +182,9 @@ function formatValue(value: unknown) {
         </div>
 
         <!-- Table -->
-        <div class="overflow-hidden rounded-xl bg-white shadow">
+        <div class="rounded-xl bg-white shadow">
             <div class="overflow-x-auto">
-                <table class="min-w-full">
+                <table class="w-full min-w-[900px]">
                     <thead class="bg-gray-100">
                         <tr class="text-left text-sm">
                             <th class="px-5 py-4">Waktu</th>

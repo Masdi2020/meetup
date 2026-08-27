@@ -14,7 +14,7 @@ class AdminSettingController extends Controller
     {
         return Inertia::render('Admin/Setting', [
             'settings' => [
-                'appName' => Setting::get('app_name', 'Metting Room'),
+                'appName' => Setting::get('app_name', config('app.name')),
                 'sessionTimeout' => Setting::get('session_timeout', 60),
             ],
         ]);
@@ -26,6 +26,11 @@ class AdminSettingController extends Controller
 
         Setting::set('app_name', $validated['appName'], 'string');
         Setting::set('session_timeout', $validated['sessionTimeout'], 'integer');
+
+        config([
+            'app.name' => $validated['appName'],
+            'session.lifetime' => $validated['sessionTimeout'],
+        ]);
 
         return back()->with('success', 'Pengaturan berhasil diperbarui');
     }

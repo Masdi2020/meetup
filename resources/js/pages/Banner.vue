@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { useEchoPublic } from '@laravel/echo-vue';
+import { ArrowLeft } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -56,6 +57,10 @@ function reloadBanner() {
         only: ['booking', 'next_change', 'now'],
         onFinish: scheduleReload,
     });
+}
+
+function backToDisplay() {
+    router.visit('/display');
 }
 
 function scheduleReload() {
@@ -135,6 +140,15 @@ onUnmounted(() => {
 </script>
 
 <template>
+    <button
+        type="button"
+        class="back-btn"
+        aria-label="Kembali ke halaman display"
+        title="Kembali ke halaman display"
+        @click="backToDisplay"
+    >
+        <ArrowLeft :size="24" />
+    </button>
     <button class="fullscreen-btn" @click="toggleFullscreen">
         {{ isFullscreen ? '⤢' : '⛶' }}
     </button>
@@ -165,7 +179,7 @@ onUnmounted(() => {
 
         <video
             v-else
-            src="/storage/videos/Contoh.mp4"
+            src="/storage/videos/Video tampilan kosong.mp4"
             autoplay
             muted
             loop
@@ -175,6 +189,33 @@ onUnmounted(() => {
 </template>
 
 <style>
+.back-btn {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: 0.2s;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.back-btn:active {
+    transform: scale(0.95);
+}
 .screen {
     width: 100vw;
     height: 100vh;

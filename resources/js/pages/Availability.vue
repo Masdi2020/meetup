@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import dayjs from 'dayjs';
 import { ref, computed, watch } from 'vue';
 import Calendar from '@/components/Calendar/Calendar.vue';
 import { getRoomColor } from '@/components/Calendar/roomColors';
+import type { CalendarEvent } from '@/types/calendar';
 
 interface Facility {
     id: number;
@@ -20,20 +20,13 @@ interface Room {
     image: null;
 }
 
-interface CalendarEvent {
-    id: number;
-    title: string;
-    room: string;
-    date: string;
-    start_time: string;
-    end_time: string;
-}
-
 const props = defineProps<{
     rooms: Room[];
     events: CalendarEvent[];
     month: number;
     year: number;
+    date: string;
+    view: 'month' | 'week' | 'day';
     selectedRoomId: number;
 }>();
 
@@ -55,79 +48,28 @@ function booking(roomId: number) {
     router.get('/booking');
 }
 
-function previousMonth() {
-    let month = props.month - 1;
-    let year = props.year;
-
-    if (month === 0) {
-        month = 12;
-        year--;
-    }
-
-    router.get(
-        `/availability`,
-        {
-            room: selectedRoomId.value,
-            month,
-            year,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: ['events', 'month', 'year'],
-        },
-    );
-}
-
-function nextMonth() {
-    let month = props.month + 1;
-    let year = props.year;
-
-    if (month === 13) {
-        month = 1;
-        year++;
-    }
-
-    router.get(
-        `/availability`,
-        {
-            room: selectedRoomId.value,
-            month,
-            year,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: ['events', 'month', 'year'],
-        },
-    );
-}
-
-function goToToday() {
-    const today = dayjs();
-
+function loadCalendar(date: string, view = props.view) {
     router.get(
         '/availability',
-        {
-            room: selectedRoomId.value,
-            month: today.month() + 1,
-            year: today.year(),
-        },
+        { room: selectedRoomId.value, date, view },
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['events', 'month', 'year'],
+            only: ['events', 'month', 'year', 'date', 'view'],
         },
     );
 }
 
+function changeView(view: 'month' | 'week' | 'day') {
+    loadCalendar(props.date, view);
+}
 watch(selectedRoomId, (room) => {
     router.get(
         '/availability',
         {
             room,
-            month: props.month,
-            year: props.year,
+            date: props.date,
+            view: props.view,
         },
         {
             preserveScroll: true,
@@ -225,9 +167,10 @@ watch(selectedRoomId, (room) => {
                     :events="events"
                     :month="month"
                     :year="year"
-                    @previous="previousMonth"
-                    @next="nextMonth"
-                    @today="goToToday"
+                    :date="date"
+                    :view="view"
+                    @navigate="loadCalendar"
+                    @change-view="changeView"
                 />
             </div>
         </div>
@@ -360,7 +303,8 @@ h2 {
 .calendar-card {
     border: 1px solid #ddd;
     border-radius: 12px;
-    overflow: visible;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 8px;
     background: white;
 }
@@ -369,5 +313,28 @@ h2 {
     width: 100%;
     height: 100%;
     border: none;
+}
+
+@media (max-width: 768px) {
+    .toolbar select {
+        width: 100%;
+        min-height: 44px;
+    }
+    .room-card {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .room-image {
+        width: 100%;
+        height: 160px;
+    }
+    .booking {
+        width: 100%;
+        min-height: 44px;
+    }
+    .room-legend {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
 </style>

@@ -274,7 +274,7 @@ function reject(id: number, code: string) {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="w-full max-w-7xl space-y-6">
         <div
             class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
@@ -649,8 +649,8 @@ function reject(id: number, code: string) {
 
         <!-- Table -->
 
-        <div class="overflow-hidden rounded-xl bg-white shadow">
-            <table class="min-w-full">
+        <div class="overflow-x-auto rounded-xl bg-white shadow">
+            <table class="w-full min-w-[1050px]">
                 <thead class="bg-gray-100">
                     <tr class="text-left text-sm">
                         <th class="px-5 py-4">Kode</th>

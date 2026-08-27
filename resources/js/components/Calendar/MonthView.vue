@@ -10,6 +10,10 @@ const props = defineProps<{
     events: CalendarEvent[];
 }>();
 
+const emit = defineEmits<{
+    select: [event: CalendarEvent];
+}>();
+
 const weekDays = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 const days = computed(() => {
@@ -62,10 +66,16 @@ function getEventsForDate(day: Dayjs) {
                     v-for="event in getEventsForDate(day).slice(0, 3)"
                     :key="`${event.id}-${event.date}`"
                     class="event-pill"
+                    role="button"
+                    tabindex="0"
+                    :aria-label="`Lihat rincian ${event.title}`"
                     :style="{
                         backgroundColor: getRoomColor(event.room),
                         color: getRoomTextColor(),
                     }"
+                    @click="emit('select', event)"
+                    @keydown.enter="emit('select', event)"
+                    @keydown.space.prevent="emit('select', event)"
                 >
                     <span class="event-title">{{ event.title }}</span>
                     <span class="event-time"
@@ -87,8 +97,12 @@ function getEventsForDate(day: Dayjs) {
     grid-template-columns: repeat(7, minmax(120px, 1fr));
     grid-auto-rows: minmax(140px, auto);
     gap: 1px;
-    background: #ddd;
-    width: 100%;
+    padding: 1px;
+    border: 1px solid #94a3b8;
+    background: #94a3b8;
+    width: max-content;
+    min-width: 100%;
+    box-sizing: border-box;
 }
 
 .header {
@@ -133,6 +147,7 @@ function getEventsForDate(day: Dayjs) {
 }
 
 .event-pill {
+    width: 100%;
     border-radius: 6px;
     padding: 4px 6px;
     font-size: 11px;
@@ -142,6 +157,13 @@ function getEventsForDate(day: Dayjs) {
     align-items: center;
     gap: 6px;
     min-height: 30px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.event-pill:hover,
+.event-pill:focus-visible {
+    filter: brightness(0.92);
 }
 
 .event-title {
@@ -159,5 +181,25 @@ function getEventsForDate(day: Dayjs) {
 .event-more {
     font-size: 11px;
     color: #64748b;
+}
+
+@media (max-width: 768px) {
+    .calendar-grid {
+        grid-template-columns: repeat(7, minmax(88px, 1fr));
+        grid-auto-rows: minmax(112px, auto);
+    }
+    .header {
+        padding: 8px 4px;
+    }
+    .cell {
+        min-height: 112px;
+        padding: 6px;
+    }
+    .event-pill {
+        width: 100%;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 1px;
+    }
 }
 </style>

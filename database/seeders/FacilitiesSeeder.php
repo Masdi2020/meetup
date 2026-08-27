@@ -12,23 +12,15 @@ class FacilitiesSeeder extends Seeder
      */
     public function run(): void
     {
-        Facility::insert([
-            [
-                'id' => 1,
-                'name' => 'Proyektor',
-            ],
-            [
-                'id' => 2,
-                'name' => 'Whiteboard',
-            ],
-            [
-                'id' => 3,
-                'name' => 'Speaker',
-            ],
-            [
-                'id' => 4,
-                'name' => 'Microphone',
-            ],
-        ]);
+        collect([
+            'Pengeras Suara',
+            'Proyektor',
+            'Smart TV',
+            'AC',
+            'Meja',
+            'Kursi',
+            'Sofa',
+            'Wi-Fi',
+        ])->each(fn ($facility) => Facility::create(['name' => $facility]));
     }
 }

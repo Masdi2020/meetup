@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Facility;
 use App\Models\Room;
 use Illuminate\Database\Seeder;
 
@@ -12,28 +13,47 @@ class RoomSeeder extends Seeder
      */
     public function run(): void
     {
-        Room::insert([
+        $rooms = [
             [
-                'id' => 1,
                 'name' => 'Ruang Rapat Besar',
-                'capacity' => 50,
-                'location' => 'Lantai 2',
+                'capacity' => 45,
                 'has_display' => true,
+                'facilities' => [
+                    'Pengeras Suara', 'Proyektor', 'AC',
+                    'Meja', 'Kursi', 'Wi-Fi',
+                ],
             ],
             [
-                'id' => 2,
                 'name' => 'Ruang Rapat Kecil',
                 'capacity' => 10,
-                'location' => 'Lantai 2',
-                'has_display' => false,
+                'facilities' => [
+                    'Proyektor', 'AC',
+                    'Meja', 'Kursi', 'Wi-Fi',
+                ],
             ],
             [
-                'id' => 3,
                 'name' => 'Ruang Kepala',
-                'capacity' => 20,
-                'location' => 'Lantai 2',
-                'has_display' => false,
+                'capacity' => 5,
+                'facilities' => [
+                    'Smart TV', 'AC', 'Meja', 'Sofa', 'Wi-Fi',
+                ],
             ],
-        ]);
+        ];
+
+        foreach ($rooms as $data) {
+            $facilityNames = $data['facilities'];
+            unset($data['facilities']);
+
+            $room = Room::create([
+                ...$data,
+                'location' => 'Lantai 2',
+                'has_display' => $data['has_display'] ?? false,
+            ]);
+
+            $facilityIds = Facility::whereIn('name', $facilityNames)
+                ->pluck('id');
+
+            $room->facilities()->sync($facilityIds);
+        }
     }
 }

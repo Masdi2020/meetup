@@ -5,6 +5,7 @@ defineProps<{
     isOpen: boolean;
     menus: Array<{ name: string; icon: string; to: string }>;
     brand?: string;
+    activeTo?: string;
 }>();
 
 const emit = defineEmits<{
@@ -25,7 +26,11 @@ const emit = defineEmits<{
                 :key="menu.name"
                 :href="menu.to"
                 class="menu-item"
-                :class="{ collapsed: !isOpen }"
+                :class="{ collapsed: !isOpen, active: menu.to === activeTo }"
+                :aria-current="menu.to === activeTo ? 'page' : undefined"
+                :aria-disabled="menu.to === activeTo ? 'true' : undefined"
+                :tabindex="menu.to === activeTo ? -1 : undefined"
+                @click="menu.to === activeTo && $event.preventDefault()"
             >
                 <span class="icon">{{ menu.icon }}</span>
                 <span v-show="isOpen" class="menu-text">
@@ -117,6 +122,19 @@ nav {
     color: white;
 }
 
+.menu-item.active {
+    position: relative;
+    cursor: default;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.18);
+    color: white;
+    box-shadow: inset 3px 0 0 #60a5fa;
+}
+
+.menu-item.active .menu-text {
+    font-weight: 700;
+}
+
 .menu-item.collapsed {
     justify-content: center;
     padding: 12px 0;
@@ -133,5 +151,20 @@ nav {
     white-space: nowrap;
     font-size: 14px;
     font-weight: 500;
+}
+@media (max-width: 768px) {
+    .sidebar,
+    .sidebar.collapsed {
+        width: min(82vw, 280px);
+        transform: translateX(0);
+        transition: transform 0.25s ease;
+    }
+    .sidebar.collapsed {
+        transform: translateX(-100%);
+        pointer-events: none;
+    }
+    .menu-item {
+        min-height: 44px;
+    }
 }
 </style>
