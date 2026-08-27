@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 
 type Status = 'Approved' | 'Pending' | 'Rejected' | 'Cancelled';
 
@@ -14,6 +15,9 @@ interface BookingHistory {
 }
 
 const showEditModal = ref(false);
+const showDateAlertModal = ref(false);
+const bookingToCancel = ref<number | null>(null);
+const isCancelling = ref(false);
 const today = new Date().toISOString().split('T')[0];
 
 const editForm = ref({
@@ -62,7 +66,7 @@ const closeEditModal = () => {
 
 const submitEdit = () => {
     if (editForm.value.date && editForm.value.date < today) {
-        alert('Tanggal tidak boleh kurang dari hari ini.');
+        showDateAlertModal.value = true;
 
         return;
     }
@@ -88,16 +92,31 @@ const filteredHistory = computed(() => {
     return histories.filter((history) => history.status === filterStatus.value);
 });
 
-const cancelBooking = (id: number) => {
-    if (!confirm('Batalkan peminjaman ini?')) {
+const openCancelModal = (id: number) => {
+    bookingToCancel.value = id;
+};
+
+const closeCancelModal = () => {
+    if (!isCancelling.value) {
+        bookingToCancel.value = null;
+    }
+};
+
+const cancelBooking = () => {
+    if (bookingToCancel.value === null) {
         return;
     }
 
+    isCancelling.value = true;
     router.put(
-        `/booking/${id}/cancel`,
+        `/booking/${bookingToCancel.value}/cancel`,
         {},
         {
             preserveScroll: true,
+            onFinish: () => {
+                isCancelling.value = false;
+                bookingToCancel.value = null;
+            },
         },
     );
 };
@@ -166,7 +185,7 @@ const cancelBooking = (id: number) => {
 
                                     <button
                                         class="cancel-btn"
-                                        @click="cancelBooking(item.id)"
+                                        @click="openCancelModal(item.id)"
                                     >
                                         Cancel
                                     </button>
@@ -183,6 +202,32 @@ const cancelBooking = (id: number) => {
         </div>
     </div>
 
+    <div v-if="showDateAlertModal" class="modal-overlay">
+        <div
+            class="modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-label="Tanggal tidak valid"
+        >
+            <h3>Tanggal Tidak Valid</h3>
+            <p>Tanggal tidak boleh kurang dari hari ini.</p>
+            <div class="modal-actions">
+                <button class="edit-btn" @click="showDateAlertModal = false">
+                    Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <ConfirmModal
+        v-if="bookingToCancel !== null"
+        title="Batalkan Peminjaman"
+        message="Apakah Anda yakin ingin membatalkan peminjaman ini?"
+        confirm-label="Batalkan Peminjaman"
+        :processing="isCancelling"
+        @close="closeCancelModal"
+        @confirm="cancelBooking"
+    />
     <div v-if="showEditModal" class="modal-overlay">
         <div class="modal">
             <h3>Edit Booking</h3>

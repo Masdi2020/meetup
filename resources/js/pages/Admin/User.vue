@@ -7,6 +7,7 @@ import AppSelect from '@/components/atoms/AppSelect.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
+import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useModalManager } from '@/composables/useModal';
 import type { AdminUser as User } from '@/types/admin';
@@ -34,6 +35,8 @@ const users = computed(() => props.users);
 const search = ref(props.filters.search ?? '');
 const roleFilter = ref(props.filters.role ?? '');
 const selectedUser = ref<User | null>(null);
+const userToConfirm = ref<User | null>(null);
+const confirmAction = ref<'reset' | 'delete' | null>(null);
 const showDetailModal = computed(() => isModalOpen('detail'));
 const showEditModal = computed(() => isModalOpen('edit'));
 const editForm = ref({
@@ -103,14 +106,20 @@ function removeUsernameWhitespace(event: Event, target: 'edit' | 'create') {
 
 const showPasswordModal = computed(() => isModalOpen('password'));
 const generatedPassword = ref('');
+const showCopySuccessModal = ref(false);
 
-function resetPassword(user: User) {
-    if (!confirm(`Reset password untuk ${user.name}?`)) {
+function openResetModal(user: User) {
+    userToConfirm.value = user;
+    confirmAction.value = 'reset';
+}
+
+function resetPassword() {
+    if (!userToConfirm.value) {
         return;
     }
 
     router.post(
-        `/admin/users/${user.id}/reset-password`,
+        `/admin/users/${userToConfirm.value.id}/reset-password`,
         {},
         {
             preserveScroll: true,
@@ -122,6 +131,8 @@ function resetPassword(user: User) {
                     return;
                 }
 
+                userToConfirm.value = null;
+                confirmAction.value = null;
                 generatedPassword.value = password;
                 openModal('password');
             },
@@ -132,10 +143,11 @@ function resetPassword(user: User) {
 async function copyPassword() {
     await navigator.clipboard.writeText(generatedPassword.value);
 
-    alert('Password berhasil disalin ke clipboard');
+    showCopySuccessModal.value = true;
 }
 
 function closePasswordModal() {
+    showCopySuccessModal.value = false;
     generatedPassword.value = '';
     closeModal();
 }
@@ -190,13 +202,24 @@ function submitCreate() {
     });
 }
 
-function deleteUser(user: User) {
-    if (!confirm(`Hapus pengguna ${user.name}?`)) {
+function openDeleteModal(user: User) {
+    userToConfirm.value = user;
+    confirmAction.value = 'delete';
+}
+
+function closeConfirmModal() {
+    userToConfirm.value = null;
+    confirmAction.value = null;
+}
+
+function deleteUser() {
+    if (!userToConfirm.value) {
         return;
     }
 
-    router.delete(`/admin/users/${user.id}`, {
+    router.delete(`/admin/users/${userToConfirm.value.id}`, {
         preserveScroll: true,
+        onSuccess: () => closeConfirmModal(),
     });
 }
 </script>
@@ -329,14 +352,14 @@ function deleteUser(user: User) {
 
                                 <button
                                     class="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700"
-                                    @click="resetPassword(user)"
+                                    @click="openResetModal(user)"
                                 >
                                     Reset Password
                                 </button>
 
                                 <button
                                     class="rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700"
-                                    @click="deleteUser(user)"
+                                    @click="openDeleteModal(user)"
                                 >
                                     Hapus
                                 </button>
@@ -538,5 +561,43 @@ function deleteUser(user: User) {
                 </button>
             </div>
         </AppModal>
+        <AppModal
+            v-if="showCopySuccessModal"
+            title="Password Disalin"
+            max-width="md"
+            @close="showCopySuccessModal = false"
+        >
+            <p class="text-sm text-gray-600">
+                Password berhasil disalin ke clipboard.
+            </p>
+
+            <template #actions>
+                <button
+                    type="button"
+                    class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                    @click="showCopySuccessModal = false"
+                >
+                    Mengerti
+                </button>
+            </template>
+        </AppModal>
+        <ConfirmModal
+            v-if="userToConfirm && confirmAction"
+            :title="
+                confirmAction === 'reset' ? 'Reset Password' : 'Hapus Pengguna'
+            "
+            :message="
+                confirmAction === 'reset'
+                    ? `Reset password untuk ${userToConfirm.name}?`
+                    : `Pengguna ${userToConfirm.name} akan dihapus. Tindakan ini tidak dapat dibatalkan.`
+            "
+            :confirm-label="
+                confirmAction === 'reset' ? 'Reset Password' : 'Hapus'
+            "
+            @close="closeConfirmModal"
+            @confirm="
+                confirmAction === 'reset' ? resetPassword() : deleteUser()
+            "
+        />
     </div>
 </template>

@@ -5,6 +5,7 @@ import AppInput from '@/components/atoms/AppInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
+import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useModalManager } from '@/composables/useModal';
 import type { Facility } from '@/types/admin';
@@ -21,6 +22,7 @@ const { openModal, closeModal, isModalOpen } = useModalManager<
 const showDetailModal = computed(() => isModalOpen('detail'));
 const showEditModal = computed(() => isModalOpen('edit'));
 const selectedFacility = ref<Facility | null>(null);
+const facilityToDelete = ref<Facility | null>(null);
 const addFacilityForm = useForm({ name: '' });
 const editFacilityForm = useForm({ name: '' });
 
@@ -109,13 +111,22 @@ function submitEditFacility() {
     });
 }
 
-function deleteFacility(facility: Facility) {
-    if (!confirm(`Hapus fasilitas ${facility.name}?`)) {
+function openDeleteModal(facility: Facility) {
+    facilityToDelete.value = facility;
+}
+
+function closeDeleteModal() {
+    facilityToDelete.value = null;
+}
+
+function deleteFacility() {
+    if (!facilityToDelete.value) {
         return;
     }
 
-    router.delete(`/admin/facilities/${facility.id}`, {
+    router.delete(`/admin/facilities/${facilityToDelete.value.id}`, {
         preserveScroll: true,
+        onSuccess: () => closeDeleteModal(),
     });
 }
 </script>
@@ -202,7 +213,7 @@ function deleteFacility(facility: Facility) {
 
                                 <button
                                     class="transitiom rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700"
-                                    @click="deleteFacility(facility)"
+                                    @click="openDeleteModal(facility)"
                                 >
                                     Hapus
                                 </button>
@@ -302,5 +313,13 @@ function deleteFacility(facility: Facility) {
                 </div>
             </div>
         </AppModal>
+        <ConfirmModal
+            v-if="facilityToDelete"
+            title="Hapus Fasilitas"
+            :message="`Fasilitas ${facilityToDelete.name} akan dihapus. Tindakan ini tidak dapat dibatalkan.`"
+            confirm-label="Hapus"
+            @close="closeDeleteModal"
+            @confirm="deleteFacility"
+        />
     </div>
 </template>

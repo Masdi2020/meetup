@@ -7,6 +7,7 @@ import CheckboxGroup from '@/components/molecules/CheckboxGroup.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
+import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useModalManager } from '@/composables/useModal';
 import type { AdminRoom as Room, FacilityOption } from '@/types/admin';
@@ -26,6 +27,7 @@ const { openModal, closeModal, isModalOpen } = useModalManager<
 const showFormModal = computed(() => isModalOpen('form'));
 const isEditing = ref(false);
 const selectedRoom = ref<Room | null>(null);
+const roomToToggle = ref<Room | null>(null);
 
 const roomForm = useForm({
     name: '',
@@ -112,20 +114,25 @@ function submitRoomForm() {
     });
 }
 
-function toggleAvailability(room: Room) {
-    if (
-        !confirm(
-            `${room.is_available ? 'Nonaktifkan' : 'Aktifkan'} ruangan ${room.name}?`,
-        )
-    ) {
+function openAvailabilityModal(room: Room) {
+    roomToToggle.value = room;
+}
+
+function closeAvailabilityModal() {
+    roomToToggle.value = null;
+}
+
+function toggleAvailability() {
+    if (!roomToToggle.value) {
         return;
     }
 
     router.patch(
-        `/admin/rooms/${room.id}/toggle-availability`,
+        `/admin/rooms/${roomToToggle.value.id}/toggle-availability`,
         {},
         {
             preserveScroll: true,
+            onSuccess: () => closeAvailabilityModal(),
         },
     );
 }
@@ -238,7 +245,7 @@ function toggleAvailability(room: Room) {
                                 </button>
 
                                 <button
-                                    @click="toggleAvailability(room)"
+                                    @click="openAvailabilityModal(room)"
                                     :class="
                                         room.is_available
                                             ? 'bg-gray-600 hover:bg-gray-700'
@@ -376,5 +383,20 @@ function toggleAvailability(room: Room) {
                 </div>
             </form>
         </AppModal>
+        <ConfirmModal
+            v-if="roomToToggle"
+            :title="
+                roomToToggle.is_available
+                    ? 'Nonaktifkan Ruangan'
+                    : 'Aktifkan Ruangan'
+            "
+            :message="`${roomToToggle.is_available ? 'Nonaktifkan' : 'Aktifkan'} ruangan ${roomToToggle.name}?`"
+            :confirm-label="
+                roomToToggle.is_available ? 'Nonaktifkan' : 'Aktifkan'
+            "
+            :tone="roomToToggle.is_available ? 'danger' : 'primary'"
+            @close="closeAvailabilityModal"
+            @confirm="toggleAvailability"
+        />
     </div>
 </template>

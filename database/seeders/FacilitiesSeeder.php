@@ -20,7 +20,7 @@ class FacilitiesSeeder extends Seeder
             'Meja',
             'Kursi',
             'Sofa',
-            'Wi-Fi'
+            'Wi-Fi',
         ])->each(fn ($facility) => Facility::create(['name' => $facility]));
     }
 }

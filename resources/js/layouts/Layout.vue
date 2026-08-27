@@ -14,7 +14,11 @@ let removeNavigateListener: (() => void) | undefined;
 
 const syncViewport = () => {
     const mobile = window.matchMedia('(max-width: 768px)').matches;
-    if (mobile !== isMobile.value) isOpen.value = !mobile;
+
+    if (mobile !== isMobile.value) {
+        isOpen.value = !mobile;
+    }
+
     isMobile.value = mobile;
 };
 
@@ -22,7 +26,9 @@ onMounted(() => {
     syncViewport();
     window.addEventListener('resize', syncViewport);
     removeNavigateListener = router.on('navigate', () => {
-        if (isMobile.value) isOpen.value = false;
+        if (isMobile.value) {
+            isOpen.value = false;
+        }
     });
 });
 
@@ -56,7 +62,8 @@ const currentPath = computed(() => {
 const activeMenuTo = computed(() => {
     return navigation.value.items
         .filter((item) => {
-            const target = item.to.length > 1 ? item.to.replace(/\/$/, '') : item.to;
+            const target =
+                item.to.length > 1 ? item.to.replace(/\/$/, '') : item.to;
 
             return (
                 currentPath.value === target ||

@@ -20,23 +20,23 @@ class RoomSeeder extends Seeder
                 'has_display' => true,
                 'facilities' => [
                     'Pengeras Suara', 'Proyektor', 'AC',
-                    'Meja', 'Kursi', 'Wi-Fi'
-                ]
+                    'Meja', 'Kursi', 'Wi-Fi',
+                ],
             ],
             [
                 'name' => 'Ruang Rapat Kecil',
                 'capacity' => 10,
                 'facilities' => [
                     'Proyektor', 'AC',
-                    'Meja', 'Kursi', 'Wi-Fi'
-                ]
+                    'Meja', 'Kursi', 'Wi-Fi',
+                ],
             ],
             [
                 'name' => 'Ruang Kepala',
                 'capacity' => 5,
                 'facilities' => [
-                    'Smart TV', 'AC', 'Meja', 'Kursi', 'Wi-Fi'
-                ]
+                    'Smart TV', 'AC', 'Meja', 'Kursi', 'Wi-Fi',
+                ],
             ],
         ];
 
