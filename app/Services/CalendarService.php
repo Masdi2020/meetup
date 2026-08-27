@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Booking;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 class CalendarService
 {
@@ -21,8 +21,8 @@ class CalendarService
      * }>
      */
     public function events(
-        Carbon $start,
-        Carbon $end,
+        CarbonInterface $start,
+        CarbonInterface $end,
         ?int $roomId = null
     ): array {
         return Booking::query()
