@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import AppInput from '@/components/atoms/AppInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
 const props = defineProps<{
@@ -13,8 +13,15 @@ const form = useForm({
     ...props.settings,
 });
 
+const page = usePage<{ name: string }>();
+
 function save() {
-    form.put('/admin/settings');
+    form.put('/admin/settings', {
+        onSuccess: () => {
+            page.props.name = form.appName;
+            document.title = form.appName;
+        },
+    });
 }
 </script>
 

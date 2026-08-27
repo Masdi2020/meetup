@@ -22,13 +22,18 @@ class SettingServiceProvider extends ServiceProvider
     public function boot(): void
     {
         try {
+            $appName = Setting::get('app_name', config('app.name'));
             $sessionLifetime = Setting::get('session_timeout', 60);
         } catch (QueryException) {
             // The database may not exist yet while Composer discovers packages
             // or before the application's initial migrations have run.
+            $appName = config('app.name');
             $sessionLifetime = 60;
         }
 
-        config(['session.lifetime' => $sessionLifetime]);
+        config([
+            'app.name' => $appName,
+            'session.lifetime' => $sessionLifetime,
+        ]);
     }
 }

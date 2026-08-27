@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router, usePage } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import ForceChangePasswordModal from '@/components/ForceChangePasswordModal.vue';
 import LogoutButton from '@/components/LogoutButton.vue';
 import Sidebar from '@/components/Sidebar.vue';
@@ -31,7 +31,15 @@ onBeforeUnmount(() => {
     removeNavigateListener?.();
 });
 
-const page = usePage<{ auth: Auth }>();
+const page = usePage<{ auth: Auth; name: string }>();
+
+watch(
+    () => page.props.name,
+    (name) => {
+        document.title = name;
+    },
+    { immediate: true },
+);
 
 const navigation = computed(() => {
     const role = page.props.auth.user?.role as UserRole | undefined;
@@ -80,7 +88,7 @@ const activeMenuTo = computed(() => {
         <Sidebar
             :is-open="isOpen"
             :menus="navigation.items"
-            :brand="navigation.brand"
+            :brand="page.props.name"
             :active-to="activeMenuTo"
             @toggle="isOpen = !isOpen"
         >
