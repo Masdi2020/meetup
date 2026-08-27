@@ -35,7 +35,7 @@ class RoomSeeder extends Seeder
                 'name' => 'Ruang Kepala',
                 'capacity' => 5,
                 'facilities' => [
-                    'Smart TV', 'AC', 'Meja', 'Kursi', 'Wi-Fi',
+                    'Smart TV', 'AC', 'Meja', 'Sofa', 'Wi-Fi',
                 ],
             ],
         ];
