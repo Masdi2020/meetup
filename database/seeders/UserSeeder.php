@@ -76,7 +76,7 @@ class UserSeeder extends Seeder
                 ...$user,
                 'role' => $user['role'] ?? 'user',
                 'force_change_password' => $user['force_change_password'] ?? true,
-                'password' => $user['password'] ?? bcrypt(env('DEFAULT_PASSWORD')),
+                'password' => $user['password'] ?? bcrypt(config('auth.default_password')),
             ]);
         }
     }
