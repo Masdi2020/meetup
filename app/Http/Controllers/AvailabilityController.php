@@ -17,6 +17,21 @@ class AvailabilityController extends Controller
     ): Response {
         $month = $request->integer('month', now()->month);
         $year = $request->integer('year', now()->year);
+        $requestedView = $request->string('view')->toString();
+        $view = in_array($requestedView, ['month', 'week', 'day'], true)
+            ? $requestedView
+            : 'month';
+
+        try {
+            $date = $request->filled('date')
+                ? Carbon::createFromFormat('Y-m-d', $request->string('date')->toString())->startOfDay()
+                : Carbon::create($year, $month, 1)->startOfDay();
+        } catch (\Throwable) {
+            $date = now()->startOfDay();
+        }
+
+        $month = $date->month;
+        $year = $date->year;
 
         $rooms = Room::with('facilities')->get();
 
@@ -29,8 +44,9 @@ class AvailabilityController extends Controller
             $selectedRoomId = $roomId;
         }
 
-        $start = Carbon::create($year, $month, 1)->startOfMonth();
-        $end = Carbon::create($year, $month, 1)->endOfMonth();
+        // Include complete edge weeks so cross-month week views stay complete.
+        $start = $date->copy()->startOfMonth()->startOfWeek(Carbon::MONDAY);
+        $end = $date->copy()->endOfMonth()->endOfWeek(Carbon::SUNDAY);
 
         return Inertia::render('Availability', [
             'rooms' => $rooms,
@@ -42,6 +58,8 @@ class AvailabilityController extends Controller
             'selectedRoomId' => $selectedRoomId,
             'month' => $month,
             'year' => $year,
+            'date' => $date->toDateString(),
+            'view' => $view,
         ]);
     }
 }
