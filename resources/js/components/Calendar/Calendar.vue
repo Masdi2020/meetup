@@ -1,39 +1,104 @@
 <script setup lang="ts">
 import dayjs from 'dayjs';
-import { ref, computed, watch } from 'vue';
+import {
+    computed,
+    nextTick,
+    onBeforeUnmount,
+    onMounted,
+    ref,
+    watch,
+} from 'vue';
 
 import CalendarToolbar from './CalendarToolbar.vue';
+import DayView from './DayView.vue';
 import MonthView from './MonthView.vue';
+import WeekView from './WeekView.vue';
 import type { CalendarEvent } from '@/types/calendar';
 
 const props = defineProps<{
     events: CalendarEvent[];
     month: number;
     year: number;
+    date: string;
+    view: 'month' | 'week' | 'day';
 }>();
 
-const emit = defineEmits(['previous', 'next', 'today']);
+const emit = defineEmits<{
+    navigate: [date: string];
+    'change-view': [view: 'month' | 'week' | 'day'];
+}>();
 
 const currentDate = ref(dayjs());
 const selectedEvent = ref<CalendarEvent | null>(null);
 
-const title = computed(() => currentDate.value.format('MMMM YYYY'));
+const startOfWeek = computed(() => {
+    const weekday = currentDate.value.day();
+
+    return currentDate.value.subtract(weekday === 0 ? 6 : weekday - 1, 'day');
+});
+const endOfWeek = computed(() => startOfWeek.value.add(6, 'day'));
+const title = computed(() => {
+    if (props.view === 'month') {
+        return currentDate.value.format('MMMM YYYY');
+    }
+
+    if (props.view === 'day') {
+        return currentDate.value.format('dddd, D MMMM YYYY');
+    }
+
+    if (startOfWeek.value.month() === endOfWeek.value.month()) {
+        return `${startOfWeek.value.date()}-${endOfWeek.value.date()} ${endOfWeek.value.format('MMMM YYYY')}`;
+    }
+
+    return `${startOfWeek.value.format('D MMM')}-${endOfWeek.value.format('D MMM YYYY')}`;
+});
 
 watch(
-    () => [props.month, props.year],
-    ([month, year]) => {
-        currentDate.value = dayjs(`${year}-${month}-01`);
+    () => props.date,
+    (date) => {
+        currentDate.value = dayjs(date);
     },
     { immediate: true },
 );
 
 function today() {
     currentDate.value = dayjs();
-    emit('today');
+    emit('navigate', currentDate.value.format('YYYY-MM-DD'));
 }
 
+function navigate(direction: -1 | 1) {
+    const unit =
+        props.view === 'day' ? 'day' : props.view === 'week' ? 'week' : 'month';
+    emit(
+        'navigate',
+        currentDate.value.add(direction, unit).format('YYYY-MM-DD'),
+    );
+}
+
+async function closeDetails() {
+    selectedEvent.value = null;
+    await nextTick();
+
+    if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+    }
+}
+
+function closeDetailsOnEscape(event: KeyboardEvent) {
+    if (event.key === 'Escape' && selectedEvent.value) {
+        closeDetails();
+    }
+}
+
+onMounted(() => window.addEventListener('keydown', closeDetailsOnEscape));
+onBeforeUnmount(() =>
+    window.removeEventListener('keydown', closeDetailsOnEscape),
+);
+
 const formattedSelectedDate = computed(() => {
-    if (!selectedEvent.value) return '';
+    if (!selectedEvent.value) {
+        return '';
+    }
 
     return new Intl.DateTimeFormat('id-ID', {
         weekday: 'long',
@@ -49,13 +114,28 @@ const formattedSelectedDate = computed(() => {
     <div class="calendar">
         <CalendarToolbar
             :title="title"
-            @previous="emit('previous')"
-            @next="emit('next')"
+            :view="props.view"
+            @previous="navigate(-1)"
+            @next="navigate(1)"
             @today="today"
+            @update:view="emit('change-view', $event)"
         />
 
         <div class="calendar-scroll">
             <MonthView
+                v-if="props.view === 'month'"
+                :date="currentDate"
+                :events="props.events"
+                @select="selectedEvent = $event"
+            />
+            <WeekView
+                v-else-if="props.view === 'week'"
+                :date="currentDate"
+                :events="props.events"
+                @select="selectedEvent = $event"
+            />
+            <DayView
+                v-else
                 :date="currentDate"
                 :events="props.events"
                 @select="selectedEvent = $event"
@@ -67,7 +147,7 @@ const formattedSelectedDate = computed(() => {
         <div
             v-if="selectedEvent"
             class="detail-overlay"
-            @click.self="selectedEvent = null"
+            @click.self="closeDetails"
         >
             <section
                 class="detail-modal"
@@ -86,7 +166,7 @@ const formattedSelectedDate = computed(() => {
                         type="button"
                         class="detail-close"
                         aria-label="Tutup rincian"
-                        @click="selectedEvent = null"
+                        @click="closeDetails"
                     >
                         &times;
                     </button>
@@ -107,9 +187,8 @@ const formattedSelectedDate = computed(() => {
                     <div>
                         <dt>Waktu</dt>
                         <dd>
-                            {{ selectedEvent.start_time }} - {{
-                                selectedEvent.end_time
-                            }}
+                            {{ selectedEvent.start_time }} -
+                            {{ selectedEvent.end_time }}
                         </dd>
                     </div>
                     <div>

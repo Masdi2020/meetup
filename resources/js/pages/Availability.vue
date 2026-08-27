@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import dayjs from 'dayjs';
 import { ref, computed, watch } from 'vue';
 import Calendar from '@/components/Calendar/Calendar.vue';
 import { getRoomColor } from '@/components/Calendar/roomColors';
@@ -26,6 +25,8 @@ const props = defineProps<{
     events: CalendarEvent[];
     month: number;
     year: number;
+    date: string;
+    view: 'month' | 'week' | 'day';
     selectedRoomId: number;
 }>();
 
@@ -47,79 +48,28 @@ function booking(roomId: number) {
     router.get('/booking');
 }
 
-function previousMonth() {
-    let month = props.month - 1;
-    let year = props.year;
-
-    if (month === 0) {
-        month = 12;
-        year--;
-    }
-
-    router.get(
-        `/availability`,
-        {
-            room: selectedRoomId.value,
-            month,
-            year,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: ['events', 'month', 'year'],
-        },
-    );
-}
-
-function nextMonth() {
-    let month = props.month + 1;
-    let year = props.year;
-
-    if (month === 13) {
-        month = 1;
-        year++;
-    }
-
-    router.get(
-        `/availability`,
-        {
-            room: selectedRoomId.value,
-            month,
-            year,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: ['events', 'month', 'year'],
-        },
-    );
-}
-
-function goToToday() {
-    const today = dayjs();
-
+function loadCalendar(date: string, view = props.view) {
     router.get(
         '/availability',
-        {
-            room: selectedRoomId.value,
-            month: today.month() + 1,
-            year: today.year(),
-        },
+        { room: selectedRoomId.value, date, view },
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['events', 'month', 'year'],
+            only: ['events', 'month', 'year', 'date', 'view'],
         },
     );
 }
 
+function changeView(view: 'month' | 'week' | 'day') {
+    loadCalendar(props.date, view);
+}
 watch(selectedRoomId, (room) => {
     router.get(
         '/availability',
         {
             room,
-            month: props.month,
-            year: props.year,
+            date: props.date,
+            view: props.view,
         },
         {
             preserveScroll: true,
@@ -217,9 +167,10 @@ watch(selectedRoomId, (room) => {
                     :events="events"
                     :month="month"
                     :year="year"
-                    @previous="previousMonth"
-                    @next="nextMonth"
-                    @today="goToToday"
+                    :date="date"
+                    :view="view"
+                    @navigate="loadCalendar"
+                    @change-view="changeView"
                 />
             </div>
         </div>

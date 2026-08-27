@@ -97,8 +97,12 @@ function getEventsForDate(day: Dayjs) {
     grid-template-columns: repeat(7, minmax(120px, 1fr));
     grid-auto-rows: minmax(140px, auto);
     gap: 1px;
-    background: #ddd;
-    width: 100%;
+    padding: 1px;
+    border: 1px solid #94a3b8;
+    background: #94a3b8;
+    width: max-content;
+    min-width: 100%;
+    box-sizing: border-box;
 }
 
 .header {
@@ -160,11 +164,6 @@ function getEventsForDate(day: Dayjs) {
 .event-pill:hover,
 .event-pill:focus-visible {
     filter: brightness(0.92);
-}
-
-.event-pill:focus-visible {
-    outline: 2px solid #1d4ed8;
-    outline-offset: 1px;
 }
 
 .event-title {
