@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { X } from '@lucide/vue';
+import { inject, ref } from 'vue';
+import type { Ref } from 'vue';
 
 withDefaults(
     defineProps<{
@@ -10,12 +12,14 @@ withDefaults(
 );
 
 const emit = defineEmits<{ close: [] }>();
+const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
 </script>
 
 <template>
     <Teleport to="body">
         <div
-            class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 sm:items-center sm:p-4"
+            class="fixed inset-y-0 right-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 transition-[left] duration-200 sm:items-center sm:p-4"
+            :style="{ left: sidebarOffset }"
             role="presentation"
             @click.self="emit('close')"
         >

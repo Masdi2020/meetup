@@ -52,9 +52,11 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', AdminDashboardController::class)->name('dashboard');
 
             Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+            Route::get('/bookings/export-data', [AdminBookingController::class, 'exportData'])->name('bookings.export-data');
             Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
             Route::patch('/bookings/{booking}/approve', [AdminBookingController::class, 'approve'])->name('bookings.approve');
             Route::patch('/bookings/{booking}/reject', [AdminBookingController::class, 'reject'])->name('bookings.reject');
+            Route::patch('/bookings/{booking}/finish', [AdminBookingController::class, 'finish'])->name('bookings.finish');
             Route::delete('/bookings/{booking}', [AdminBookingController::class, 'destroy'])->name('bookings.destroy');
 
             Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');
@@ -89,5 +91,6 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
             Route::put('/booking/{booking}', [BookingController::class, 'update'])->name('booking.update');
             Route::put('/booking/{booking}/cancel', [BookingController::class, 'cancel'])->name('booking.cancel');
+            Route::patch('/booking/{booking}/finish', [BookingController::class, 'finish'])->name('booking.finish');
         });
 });

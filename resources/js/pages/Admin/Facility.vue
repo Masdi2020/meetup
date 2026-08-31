@@ -276,8 +276,20 @@ function deleteFacility() {
                 </div>
                 <div class="rounded-lg bg-gray-50 p-4">
                     <p class="text-sm text-gray-500">Dipakai di ruangan</p>
-                    <p class="mt-1 text-lg font-semibold">
-                        {{ selectedFacility.rooms_count }} Ruangan
+                    <ul
+                        v-if="selectedFacility.rooms.length"
+                        class="mt-2 space-y-1"
+                    >
+                        <li
+                            v-for="room in selectedFacility.rooms"
+                            :key="room.id"
+                            class="font-semibold"
+                        >
+                            {{ room.name }}
+                        </li>
+                    </ul>
+                    <p v-else class="mt-1 text-gray-500">
+                        Belum digunakan di ruangan mana pun.
                     </p>
                 </div>
             </div>

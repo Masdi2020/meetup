@@ -13,6 +13,7 @@ class AdminFacilityController extends Controller
     public function index(): Response
     {
         $facilities = Facility::query()
+            ->with('rooms:id,name')
             ->withCount('rooms')
             ->orderBy('name')
             ->get();

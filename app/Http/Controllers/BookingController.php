@@ -50,4 +50,13 @@ class BookingController extends Controller
 
         return back()->with('success', 'Booking berhasil dibatalkan');
     }
+
+    public function finish(Booking $booking): RedirectResponse
+    {
+        $this->bookingWorkflow->changeStatus(
+            $booking, 'FINISHED', request()->user()->id, 'Diakhiri oleh peminjam'
+        );
+
+        return back()->with('success', 'Peminjaman berhasil diakhiri.');
+    }
 }

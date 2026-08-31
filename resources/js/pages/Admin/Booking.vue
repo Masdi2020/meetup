@@ -11,6 +11,12 @@ import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useModalManager } from '@/composables/useModal';
+import { downloadBookingExport } from '@/lib/bookingExport';
+import type {
+    BookingExportColumnKey,
+    BookingExportFormat,
+    BookingExportPayload,
+} from '@/lib/bookingExport';
 import type {
     AdminBooking as Booking,
     BookingStatus,
@@ -37,11 +43,13 @@ const today = new Date().toISOString().split('T')[0];
 const showAddBookingModal = computed(() => isModalOpen('add'));
 const showAddBookingSuccess = ref(false);
 const { openModal, closeModal, isModalOpen } = useModalManager<
-    'add' | 'approve' | 'reject' | 'detail'
+    'add' | 'approve' | 'reject' | 'finish' | 'detail' | 'export'
 >();
 const showApproveModal = computed(() => isModalOpen('approve'));
 const showRejectModal = computed(() => isModalOpen('reject'));
+const showFinishModal = computed(() => isModalOpen('finish'));
 const showDetailModal = computed(() => isModalOpen('detail'));
+const showExportModal = computed(() => isModalOpen('export'));
 const selectedBookingId = ref<number | null>(null);
 const selectedBookingCode = ref<string | null>(null);
 const detailBooking = ref<Booking | null>(null);
@@ -50,6 +58,128 @@ const rejectReason = ref('');
 const rejectValidationErrors = ref({ reason: '' });
 const addBookingPreview = ref<string | null>(null);
 const addBookingSubmitted = ref(false);
+const exportFormat = ref<BookingExportFormat>('pdf');
+const exportPreview = ref<BookingExportPayload | null>(null);
+const previewLoading = ref(false);
+const downloadLoading = ref(false);
+const exportError = ref('');
+type ExportPeriod = 'all' | 'date' | 'range' | 'month' | 'year';
+const exportPeriod = ref<ExportPeriod>('all');
+const exportDate = ref('');
+const exportStartDate = ref('');
+const exportEndDate = ref('');
+const exportMonth = ref('');
+const exportYear = ref(String(new Date().getFullYear()));
+const exportPeriodOptions: Array<{
+    value: ExportPeriod;
+    label: string;
+    description: string;
+}> = [
+    { value: 'all', label: 'Semua', description: 'Tanpa batas waktu' },
+    { value: 'date', label: 'Tanggal', description: 'Satu tanggal' },
+    { value: 'range', label: 'Rentang', description: 'Tanggal mulai–selesai' },
+    { value: 'month', label: 'Bulan', description: 'Satu bulan' },
+    { value: 'year', label: 'Tahun', description: 'Satu tahun' },
+];
+const exportStatusOptions: Array<{ value: BookingStatus; label: string }> = [
+    { value: 'pending', label: 'Pending' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'cancelled', label: 'Cancelled' },
+    { value: 'finished', label: 'Finished' },
+];
+const selectedExportStatuses = ref<BookingStatus[]>(
+    exportStatusOptions.map((status) => status.value),
+);
+const exportColumnOptions: Array<{
+    key: BookingExportColumnKey;
+    label: string;
+}> = [
+    { key: 'code', label: 'Kode' },
+    { key: 'borrower', label: 'Peminjam' },
+    { key: 'room', label: 'Ruangan' },
+    { key: 'activity', label: 'Kegiatan' },
+    { key: 'date', label: 'Tanggal' },
+    { key: 'start', label: 'Waktu Mulai' },
+    { key: 'end', label: 'Waktu Selesai' },
+    { key: 'participants', label: 'Jumlah Peserta' },
+    { key: 'status', label: 'Status' },
+    { key: 'request', label: 'Catatan/Request' },
+    { key: 'processed_notes', label: 'Catatan Proses' },
+    { key: 'submitted_at', label: 'Dibuat Pada' },
+    { key: 'processed_at', label: 'Diproses Pada' },
+];
+const selectedExportColumns = ref<BookingExportColumnKey[]>([
+    'borrower',
+    'room',
+    'activity',
+    'date',
+    'start',
+    'end',
+]);
+const allExportColumnsSelected = computed(
+    () => selectedExportColumns.value.length === exportColumnOptions.length,
+);
+const allExportStatusesSelected = computed(
+    () => selectedExportStatuses.value.length === exportStatusOptions.length,
+);
+const exportBusy = computed(
+    () => previewLoading.value || downloadLoading.value,
+);
+const exportPeriodValid = computed(() => {
+    if (exportPeriod.value === 'date') {
+        return Boolean(exportDate.value);
+    }
+
+    if (exportPeriod.value === 'month') {
+        return Boolean(exportMonth.value);
+    }
+
+    if (exportPeriod.value === 'range') {
+        return (
+            Boolean(exportStartDate.value) &&
+            Boolean(exportEndDate.value) &&
+            exportStartDate.value <= exportEndDate.value
+        );
+    }
+
+    if (exportPeriod.value === 'year') {
+        const year = Number(exportYear.value);
+
+        return Number.isInteger(year) && year >= 2000 && year <= 2100;
+    }
+
+    return true;
+});
+const previewRows = computed(
+    () => exportPreview.value?.rows.slice(0, 20) ?? [],
+);
+const formatDisplayDate = (value: string) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+    return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+};
+const exportPeriodDescription = computed(() => {
+    if (exportPeriod.value === 'date') {
+        return `Tanggal ${formatDisplayDate(exportDate.value)}`;
+    }
+
+    if (exportPeriod.value === 'month') {
+        const [year, month] = exportMonth.value.split('-');
+
+        return `Bulan ${month}/${year}`;
+    }
+
+    if (exportPeriod.value === 'range') {
+        return `${formatDisplayDate(exportStartDate.value)} sampai ${formatDisplayDate(exportEndDate.value)}`;
+    }
+
+    if (exportPeriod.value === 'year') {
+        return `Tahun ${exportYear.value}`;
+    }
+
+    return 'Semua waktu';
+});
 
 const addBookingForm = useForm({
     room_id: null as number | null,
@@ -118,6 +248,152 @@ function closeAddBookingModal() {
     addBookingSubmitted.value = false;
 }
 
+function openExportModal() {
+    const activeStatus = exportStatusOptions.find(
+        (status) => status.value === statusFilter.value,
+    )?.value;
+
+    exportError.value = '';
+    exportPreview.value = null;
+    selectedExportStatuses.value = activeStatus
+        ? [activeStatus]
+        : exportStatusOptions.map((status) => status.value);
+    openModal('export');
+}
+
+function closeExportModal() {
+    if (exportBusy.value) {
+        return;
+    }
+
+    exportError.value = '';
+    exportPreview.value = null;
+    closeModal();
+}
+
+function toggleAllExportColumns() {
+    selectedExportColumns.value = allExportColumnsSelected.value
+        ? []
+        : exportColumnOptions.map((column) => column.key);
+}
+
+function toggleAllExportStatuses() {
+    selectedExportStatuses.value = allExportStatusesSelected.value
+        ? []
+        : exportStatusOptions.map((status) => status.value);
+}
+
+watch(
+    [
+        selectedExportColumns,
+        selectedExportStatuses,
+        exportPeriod,
+        exportDate,
+        exportStartDate,
+        exportEndDate,
+        exportMonth,
+        exportYear,
+    ],
+    () => {
+        exportPreview.value = null;
+        exportError.value = '';
+    },
+    { deep: true },
+);
+
+async function loadExportPreview() {
+    if (selectedExportColumns.value.length === 0) {
+        exportError.value = 'Pilih minimal satu kolom untuk diekspor.';
+
+        return;
+    }
+
+    if (selectedExportStatuses.value.length === 0) {
+        exportError.value = 'Pilih minimal satu status untuk diekspor.';
+
+        return;
+    }
+
+    if (!exportPeriodValid.value) {
+        exportError.value =
+            exportPeriod.value === 'range'
+                ? 'Isi tanggal mulai dan tanggal selesai yang valid.'
+                : `Pilih ${exportPeriod.value} yang ingin diekspor.`;
+
+        return;
+    }
+
+    previewLoading.value = true;
+    exportError.value = '';
+    exportPreview.value = null;
+
+    try {
+        const params = new URLSearchParams();
+        params.set('search', search.value);
+        params.set('room', roomFilter.value);
+        selectedExportColumns.value.forEach((column) =>
+            params.append('columns[]', column),
+        );
+        selectedExportStatuses.value.forEach((status) =>
+            params.append('statuses[]', status.toUpperCase()),
+        );
+        params.set('period', exportPeriod.value);
+
+        if (exportPeriod.value === 'date') {
+            params.set('date', exportDate.value);
+        } else if (exportPeriod.value === 'range') {
+            params.set('start_date', exportStartDate.value);
+            params.set('end_date', exportEndDate.value);
+        } else if (exportPeriod.value === 'month') {
+            params.set('month', exportMonth.value);
+        } else if (exportPeriod.value === 'year') {
+            params.set('year', exportYear.value);
+        }
+
+        const response = await fetch(
+            `/admin/bookings/export-data?${params.toString()}`,
+            { headers: { Accept: 'application/json' } },
+        );
+
+        if (!response.ok) {
+            throw new Error('Data export tidak dapat dimuat.');
+        }
+
+        const payload = (await response.json()) as BookingExportPayload;
+        exportPreview.value = payload;
+    } catch (error) {
+        exportError.value =
+            error instanceof Error
+                ? error.message
+                : 'Terjadi kesalahan saat memuat preview.';
+    } finally {
+        previewLoading.value = false;
+    }
+}
+
+async function downloadPreview() {
+    if (!exportPreview.value) {
+        exportError.value = 'Tampilkan preview sebelum mengunduh file.';
+
+        return;
+    }
+
+    downloadLoading.value = true;
+    exportError.value = '';
+
+    try {
+        await downloadBookingExport(exportFormat.value, exportPreview.value);
+        closeModal();
+    } catch (error) {
+        exportError.value =
+            error instanceof Error
+                ? error.message
+                : 'Terjadi kesalahan saat membuat file export.';
+    } finally {
+        downloadLoading.value = false;
+    }
+}
+
 function openApproveModal(id: number, code: string) {
     selectedBookingId.value = id;
     selectedBookingCode.value = code;
@@ -144,6 +420,18 @@ function closeRejectModal() {
     selectedBookingCode.value = null;
     rejectReason.value = '';
     rejectValidationErrors.value.reason = '';
+}
+
+function openFinishModal(id: number, code: string) {
+    selectedBookingId.value = id;
+    selectedBookingCode.value = code;
+    openModal('finish');
+}
+
+function closeFinishModal() {
+    closeModal();
+    selectedBookingId.value = null;
+    selectedBookingCode.value = null;
 }
 
 function openDetailModal(booking: Booking) {
@@ -237,6 +525,7 @@ function badgeClass(status: BookingStatus) {
         approved: 'bg-green-100 text-green-700',
         rejected: 'bg-red-100 text-red-700',
         cancelled: 'bg-gray-200 text-gray-700',
+        finished: 'bg-blue-100 text-blue-700',
     }[status];
 }
 
@@ -282,6 +571,21 @@ function confirmReject() {
     );
 }
 
+function confirmFinish() {
+    if (!selectedBookingId.value) {
+        return;
+    }
+
+    router.patch(
+        '/admin/bookings/' + selectedBookingId.value + '/finish',
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => closeFinishModal(),
+        },
+    );
+}
+
 function approve(id: number, code: string) {
     openApproveModal(id, code);
 }
@@ -302,13 +606,395 @@ function reject(id: number, code: string) {
                 <p class="text-gray-500">Kelola seluruh peminjaman ruangan.</p>
             </div>
 
-            <button
-                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                @click="openModal('add')"
-            >
-                Tambah Peminjaman
-            </button>
+            <div class="flex flex-wrap gap-3">
+                <button
+                    type="button"
+                    class="rounded-lg border border-blue-600 bg-white px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+                    @click="openExportModal"
+                >
+                    Export Data
+                </button>
+                <button
+                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    @click="openModal('add')"
+                >
+                    Tambah Peminjaman
+                </button>
+            </div>
         </div>
+
+        <AppModal
+            v-if="showExportModal"
+            title="Export Data Peminjaman"
+            max-width="3xl"
+            @close="closeExportModal"
+        >
+            <div class="space-y-6">
+                <div>
+                    <p class="mb-3 text-sm font-semibold text-gray-800">
+                        Pilih format file
+                    </p>
+                    <div class="grid gap-3 sm:grid-cols-3">
+                        <label
+                            v-for="format in [
+                                {
+                                    value: 'pdf',
+                                    label: 'PDF',
+                                    description: 'Siap cetak',
+                                },
+                                {
+                                    value: 'xlsx',
+                                    label: 'Excel',
+                                    description: 'File .xlsx',
+                                },
+                                {
+                                    value: 'csv',
+                                    label: 'CSV',
+                                    description: 'Data universal',
+                                },
+                            ] as const"
+                            :key="format.value"
+                            class="cursor-pointer rounded-xl border p-4 transition"
+                            :class="
+                                exportFormat === format.value
+                                    ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+                                    : 'border-gray-200 hover:border-blue-300'
+                            "
+                        >
+                            <input
+                                v-model="exportFormat"
+                                type="radio"
+                                :value="format.value"
+                                :disabled="exportBusy"
+                                class="sr-only"
+                            />
+                            <span class="block font-semibold text-gray-900">{{
+                                format.label
+                            }}</span>
+                            <span class="text-xs text-gray-500">{{
+                                format.description
+                            }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-800">
+                                Status yang diekspor
+                            </p>
+                            <p class="mt-0.5 text-xs text-gray-500">
+                                Pilih satu atau beberapa status peminjaman.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="exportBusy"
+                            @click="toggleAllExportStatuses"
+                        >
+                            {{
+                                allExportStatusesSelected
+                                    ? 'Batalkan semua'
+                                    : 'Pilih semua'
+                            }}
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <label
+                            v-for="status in exportStatusOptions"
+                            :key="status.value"
+                            class="flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm transition"
+                            :class="
+                                selectedExportStatuses.includes(status.value)
+                                    ? 'border-blue-600 bg-blue-50 font-medium text-blue-700'
+                                    : 'border-gray-200 bg-white text-gray-600 hover:border-blue-300'
+                            "
+                        >
+                            <input
+                                v-model="selectedExportStatuses"
+                                type="checkbox"
+                                :value="status.value"
+                                :disabled="exportBusy"
+                                class="h-4 w-4 rounded border-gray-300 text-blue-600"
+                            />
+                            <span>{{ status.label }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="mb-3">
+                        <p class="text-sm font-semibold text-gray-800">
+                            Periode peminjaman
+                        </p>
+                        <p class="mt-0.5 text-xs text-gray-500">
+                            Batasi export berdasarkan tanggal, rentang tanggal,
+                            bulan, atau tahun tertentu.
+                        </p>
+                    </div>
+                    <div
+                        class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5"
+                    >
+                        <label
+                            v-for="period in exportPeriodOptions"
+                            :key="period.value"
+                            class="cursor-pointer rounded-lg border px-3 py-2.5 transition"
+                            :class="
+                                exportPeriod === period.value
+                                    ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+                                    : 'border-gray-200 hover:border-blue-300'
+                            "
+                        >
+                            <input
+                                v-model="exportPeriod"
+                                type="radio"
+                                :value="period.value"
+                                :disabled="exportBusy"
+                                class="sr-only"
+                            />
+                            <span class="block text-sm font-semibold">{{
+                                period.label
+                            }}</span>
+                            <span class="text-xs text-gray-500">{{
+                                period.description
+                            }}</span>
+                        </label>
+                    </div>
+
+                    <div
+                        v-if="exportPeriod !== 'all'"
+                        class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3"
+                    >
+                        <label class="block text-sm font-medium text-gray-700">
+                            {{
+                                exportPeriod === 'date'
+                                    ? 'Pilih tanggal'
+                                    : exportPeriod === 'range'
+                                      ? 'Pilih rentang tanggal'
+                                      : exportPeriod === 'month'
+                                        ? 'Pilih bulan'
+                                        : 'Masukkan tahun'
+                            }}
+                        </label>
+                        <AppInput
+                            v-if="exportPeriod === 'date'"
+                            v-model="exportDate"
+                            type="date"
+                            appearance="admin"
+                            :disabled="exportBusy"
+                            class="mt-2 sm:max-w-xs"
+                        />
+                        <AppInput
+                            v-else-if="exportPeriod === 'month'"
+                            v-model="exportMonth"
+                            type="month"
+                            appearance="admin"
+                            :disabled="exportBusy"
+                            class="mt-2 sm:max-w-xs"
+                        />
+                        <div
+                            v-else-if="exportPeriod === 'range'"
+                            class="mt-2 grid gap-3 sm:grid-cols-2"
+                        >
+                            <label class="text-xs text-gray-600">
+                                Tanggal mulai
+                                <AppInput
+                                    v-model="exportStartDate"
+                                    type="date"
+                                    appearance="admin"
+                                    :max="exportEndDate || undefined"
+                                    :disabled="exportBusy"
+                                    class="mt-1"
+                                />
+                            </label>
+                            <label class="text-xs text-gray-600">
+                                Tanggal selesai
+                                <AppInput
+                                    v-model="exportEndDate"
+                                    type="date"
+                                    appearance="admin"
+                                    :min="exportStartDate || undefined"
+                                    :disabled="exportBusy"
+                                    class="mt-1"
+                                />
+                            </label>
+                        </div>
+                        <input
+                            v-else
+                            v-model="exportYear"
+                            type="number"
+                            min="2000"
+                            max="2100"
+                            step="1"
+                            :disabled="exportBusy"
+                            class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 sm:max-w-xs"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                        <p class="text-sm font-semibold text-gray-800">
+                            Pilih kolom
+                        </p>
+                        <button
+                            type="button"
+                            class="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="exportBusy"
+                            @click="toggleAllExportColumns"
+                        >
+                            {{
+                                allExportColumnsSelected
+                                    ? 'Batalkan semua'
+                                    : 'Pilih semua'
+                            }}
+                        </button>
+                    </div>
+                    <div class="grid gap-2 sm:grid-cols-2">
+                        <label
+                            v-for="column in exportColumnOptions"
+                            :key="column.key"
+                            class="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 px-3 py-2.5 text-sm hover:bg-gray-50"
+                        >
+                            <input
+                                v-model="selectedExportColumns"
+                                type="checkbox"
+                                :value="column.key"
+                                :disabled="exportBusy"
+                                class="h-4 w-4 rounded border-gray-300 text-blue-600"
+                            />
+                            <span>{{ column.label }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
+                    Export akan memuat seluruh data yang sesuai dengan filter
+                    aktif, bukan hanya halaman yang sedang terlihat.
+                </div>
+
+                <div
+                    v-if="exportPreview"
+                    class="overflow-hidden rounded-xl border border-gray-200"
+                >
+                    <div
+                        class="flex flex-col gap-1 border-b bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <p class="text-sm font-semibold text-gray-900">
+                            Preview Data
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            {{ exportPeriodDescription }} · Menampilkan
+                            {{ previewRows.length }} dari
+                            {{ exportPreview.meta.total }} data
+                        </p>
+                    </div>
+
+                    <div
+                        v-if="exportPreview.meta.total > 0"
+                        class="max-h-72 overflow-auto"
+                    >
+                        <table class="w-full min-w-max text-left text-sm">
+                            <thead
+                                class="sticky top-0 z-10 bg-blue-600 text-white"
+                            >
+                                <tr>
+                                    <th
+                                        v-for="column in exportPreview.columns"
+                                        :key="column.key"
+                                        class="px-3 py-2.5 font-semibold whitespace-nowrap"
+                                    >
+                                        {{ column.label }}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="(row, rowIndex) in previewRows"
+                                    :key="rowIndex"
+                                    class="border-t even:bg-slate-50"
+                                >
+                                    <td
+                                        v-for="column in exportPreview.columns"
+                                        :key="column.key"
+                                        class="max-w-64 px-3 py-2 align-top whitespace-normal text-gray-700"
+                                    >
+                                        {{ row[column.key] ?? '-' }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div v-else class="p-8 text-center text-sm text-gray-500">
+                        Tidak ada data yang sesuai dengan filter aktif.
+                    </div>
+
+                    <p
+                        v-if="exportPreview.meta.total > previewRows.length"
+                        class="border-t bg-amber-50 px-4 py-2 text-xs text-amber-700"
+                    >
+                        Preview dibatasi 20 baris. File hasil export tetap
+                        mencakup seluruh {{ exportPreview.meta.total }} data.
+                    </p>
+                </div>
+
+                <p
+                    v-if="exportError"
+                    class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                    {{ exportError }}
+                </p>
+
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
+                        :disabled="exportBusy"
+                        @click="closeExportModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        v-if="exportPreview"
+                        type="button"
+                        class="rounded-lg border border-blue-600 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+                        :disabled="exportBusy"
+                        @click="loadExportPreview"
+                    >
+                        {{
+                            previewLoading ? 'Memuat...' : 'Muat Ulang Preview'
+                        }}
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="
+                            exportBusy ||
+                            selectedExportColumns.length === 0 ||
+                            selectedExportStatuses.length === 0 ||
+                            !exportPeriodValid
+                        "
+                        @click="
+                            exportPreview
+                                ? downloadPreview()
+                                : loadExportPreview()
+                        "
+                    >
+                        {{
+                            previewLoading
+                                ? 'Memuat preview...'
+                                : downloadLoading
+                                  ? 'Menyiapkan file...'
+                                  : exportPreview
+                                    ? `Download ${exportFormat.toUpperCase()}`
+                                    : 'Tampilkan Preview'
+                        }}
+                    </button>
+                </div>
+            </div>
+        </AppModal>
 
         <AppModal
             v-if="showAddBookingModal"
@@ -617,6 +1303,36 @@ function reject(id: number, code: string) {
             </div>
         </AppModal>
 
+        <AppModal
+            v-if="showFinishModal"
+            title="Akhiri Peminjaman"
+            max-width="lg"
+            @close="closeFinishModal"
+        >
+            <div class="space-y-4">
+                <p class="text-sm text-gray-700">
+                    Peminjaman <strong>{{ selectedBookingCode }}</strong> akan
+                    langsung ditandai sebagai <strong>Finished</strong>.
+                </p>
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        @click="closeFinishModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        @click="confirmFinish"
+                    >
+                        Akhiri Sekarang
+                    </button>
+                </div>
+            </div>
+        </AppModal>
+
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Total" :value="stats?.total" />
             <StatCard label="Pending" :value="stats?.pending" tone="warning" />
@@ -625,6 +1341,7 @@ function reject(id: number, code: string) {
                 :value="stats?.approved"
                 tone="success"
             />
+            <StatCard label="Finished" :value="stats?.finished" />
         </div>
         <!-- Filter -->
 
@@ -647,6 +1364,7 @@ function reject(id: number, code: string) {
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                     <option value="cancelled">Cancelled</option>
+                    <option value="finished">Finished</option>
                 </AppSelect>
 
                 <AppSelect
@@ -735,6 +1453,19 @@ function reject(id: number, code: string) {
                                     @click="approve(booking.id, booking.code)"
                                 >
                                     Approve
+                                </button>
+
+                                <button
+                                    v-if="booking.status === 'approved'"
+                                    class="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                                    @click="
+                                        openFinishModal(
+                                            booking.id,
+                                            booking.code,
+                                        )
+                                    "
+                                >
+                                    Akhiri Sekarang
                                 </button>
 
                                 <button

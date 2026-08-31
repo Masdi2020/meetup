@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router, usePage } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { Menu } from '@lucide/vue';
+import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
 import ForceChangePasswordModal from '@/components/ForceChangePasswordModal.vue';
 import LogoutButton from '@/components/LogoutButton.vue';
 import Sidebar from '@/components/Sidebar.vue';
@@ -11,6 +12,16 @@ import type { Auth } from '@/types/auth';
 const isOpen = ref(true);
 const isMobile = ref(false);
 let removeNavigateListener: (() => void) | undefined;
+
+const sidebarOffset = computed(() => {
+    if (isMobile.value) {
+        return '0px';
+    }
+
+    return isOpen.value ? '244px' : '76px';
+});
+
+provide('sidebarOffset', sidebarOffset);
 
 const syncViewport = () => {
     const mobile = window.matchMedia('(max-width: 768px)').matches;
@@ -83,7 +94,7 @@ const activeMenuTo = computed(() => {
             aria-label="Buka menu navigasi"
             @click="isOpen = true"
         >
-            <span aria-hidden="true">&#9776;</span>
+            <Menu :size="22" aria-hidden="true" />
         </button>
         <button
             v-if="isMobile && isOpen"
@@ -96,11 +107,14 @@ const activeMenuTo = computed(() => {
             :is-open="isOpen"
             :menus="navigation.items"
             :brand="page.props.name"
+            :subtitle="navigation.brand"
             :active-to="activeMenuTo"
+            :user-name="page.props.auth.user?.name"
+            :user-role="page.props.auth.user?.role"
             @toggle="isOpen = !isOpen"
         >
             <template #sidebar-footer>
-                <LogoutButton />
+                <LogoutButton :compact="!isOpen" />
             </template>
         </Sidebar>
 
@@ -117,15 +131,15 @@ const activeMenuTo = computed(() => {
 }
 
 .content {
-    margin-left: 230px;
+    margin-left: 244px;
     min-height: 100vh;
     background: #f5f5f5;
     padding: clamp(16px, 2.5vw, 30px);
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .content.collapsed {
-    margin-left: 72px;
+    margin-left: 76px;
 }
 
 .mobile-menu-button {
@@ -149,7 +163,7 @@ const activeMenuTo = computed(() => {
         place-items: center;
         border: 0;
         border-radius: 10px;
-        background: #18326d;
+        background: linear-gradient(145deg, #2563eb, #173b7a);
         color: white;
         font-size: 22px;
         box-shadow: 0 4px 14px rgb(15 23 42 / 20%);
@@ -160,6 +174,12 @@ const activeMenuTo = computed(() => {
         z-index: 999;
         border: 0;
         background: rgb(15 23 42 / 48%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .content {
+        transition: none;
     }
 }
 </style>

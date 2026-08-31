@@ -109,6 +109,10 @@ function changePassword() {
                     <input
                         v-model="form.username"
                         type="text"
+                        autocapitalize="none"
+                        autocorrect="off"
+                        autocomplete="username"
+                        :spellcheck="false"
                         @keydown.space.prevent
                         @input="removeUsernameWhitespace"
                         required

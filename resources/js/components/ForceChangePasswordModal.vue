@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, inject, ref } from 'vue';
+import type { Ref } from 'vue';
 import PasswordField from '@/components/molecules/PasswordField.vue';
 import type { Auth } from '@/types';
 
@@ -9,6 +10,7 @@ const isRequired = computed(
     () => page.props.auth.user?.force_change_password === true,
 );
 const form = useForm({ password: '', password_confirmation: '' });
+const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
 
 function submit() {
     form.put('/profile/forced-password', {
@@ -21,7 +23,8 @@ function submit() {
 <template>
     <div
         v-if="isRequired"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="fixed inset-y-0 right-0 z-50 flex items-center justify-center bg-black/50 p-4 transition-[left] duration-200"
+        :style="{ left: sidebarOffset }"
         role="dialog"
         aria-modal="true"
     >

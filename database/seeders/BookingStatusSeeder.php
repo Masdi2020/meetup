@@ -17,6 +17,7 @@ class BookingStatusSeeder extends Seeder
             ['code' => 'APPROVED', 'label' => 'Approved'],
             ['code' => 'REJECTED', 'label' => 'Rejected'],
             ['code' => 'CANCELLED', 'label' => 'Cancelled'],
+            ['code' => 'FINISHED', 'label' => 'finished'],
         ])->each(fn ($status) => BookingStatus::create($status));
     }
 }
