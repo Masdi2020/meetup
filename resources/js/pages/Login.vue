@@ -45,6 +45,10 @@ function removeUsernameWhitespace(event: Event) {
                         v-model="form.username"
                         type="text"
                         placeholder="Masukkan username"
+                        autocapitalize="none"
+                        autocorrect="off"
+                        autocomplete="username"
+                        :spellcheck="false"
                         @keydown.space.prevent
                         @input="removeUsernameWhitespace"
                         required

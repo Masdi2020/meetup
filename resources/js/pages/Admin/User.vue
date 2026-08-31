@@ -425,6 +425,10 @@ function deleteUser() {
                     ><AppInput
                         v-model="editForm.username"
                         appearance="admin"
+                        autocapitalize="none"
+                        autocorrect="off"
+                        autocomplete="off"
+                        :spellcheck="false"
                         @keydown.space.prevent
                         @input="removeUsernameWhitespace($event, 'edit')"
                         required
@@ -484,6 +488,10 @@ function deleteUser() {
                         v-model="createForm.username"
                         appearance="admin"
                         placeholder="Username"
+                        autocapitalize="none"
+                        autocorrect="off"
+                        autocomplete="off"
+                        :spellcheck="false"
                         @keydown.space.prevent
                         @input="removeUsernameWhitespace($event, 'create')"
                         required
