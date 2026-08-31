@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', AdminDashboardController::class)->name('dashboard');
 
             Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+            Route::get('/bookings/export-data', [AdminBookingController::class, 'exportData'])->name('bookings.export-data');
             Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
             Route::patch('/bookings/{booking}/approve', [AdminBookingController::class, 'approve'])->name('bookings.approve');
             Route::patch('/bookings/{booking}/reject', [AdminBookingController::class, 'reject'])->name('bookings.reject');
