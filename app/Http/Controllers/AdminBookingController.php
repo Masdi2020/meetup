@@ -51,7 +51,7 @@ class AdminBookingController extends Controller
             ->through(fn ($booking) => [
                 'id' => $booking->id, 'code' => $booking->id, 'room' => $booking->room->name,
                 'borrower' => $booking->user->name ?? 'Pengguna dihapus', 'activity' => $booking->title,
-                'date' => $booking->date->format('d-m-Y'), 'start' => $booking->start_time->format('H:i'),
+                'date' => $booking->date->format('d/m/Y'), 'start' => $booking->start_time->format('H:i'),
                 'end' => $booking->end_time->format('H:i'), 'status' => strtolower($booking->status->code),
                 'request' => $booking->notes, 'processed_notes' => $booking->processed_notes,
             ]);
@@ -72,13 +72,36 @@ class AdminBookingController extends Controller
             'columns.*' => ['required', 'string', 'distinct', Rule::in(array_keys(self::EXPORT_COLUMNS))],
             'statuses' => ['sometimes', 'array', 'min:1'],
             'statuses.*' => ['required', 'string', 'distinct', Rule::in(self::EXPORT_STATUSES)],
+            'period' => ['sometimes', 'string', Rule::in(['all', 'date', 'range', 'month', 'year'])],
+            'date' => ['required_if:period,date', 'date_format:Y-m-d'],
+            'start_date' => ['required_if:period,range', 'date_format:Y-m-d'],
+            'end_date' => ['required_if:period,range', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+            'month' => ['required_if:period,month', 'date_format:Y-m'],
+            'year' => ['required_if:period,year', 'integer', 'min:2000', 'max:2100'],
         ]);
 
         /** @var array<int, string> $selectedColumns */
         $selectedColumns = $validated['columns'];
         /** @var array<int, string>|null $selectedStatuses */
         $selectedStatuses = $validated['statuses'] ?? null;
-        $bookings = $this->filteredBookings($request, $selectedStatuses)
+        $bookingsQuery = $this->filteredBookings($request, $selectedStatuses);
+        $period = $validated['period'] ?? 'all';
+
+        if ($period === 'date') {
+            $bookingsQuery->whereDate('date', (string) $validated['date']);
+        } elseif ($period === 'range') {
+            $bookingsQuery->whereBetween('date', [
+                (string) $validated['start_date'],
+                (string) $validated['end_date'],
+            ]);
+        } elseif ($period === 'month') {
+            [$year, $month] = explode('-', (string) $validated['month']);
+            $bookingsQuery->whereYear('date', $year)->whereMonth('date', $month);
+        } elseif ($period === 'year') {
+            $bookingsQuery->whereYear('date', (int) $validated['year']);
+        }
+
+        $bookings = $bookingsQuery
             ->orderByDesc('date')
             ->orderByDesc('start_time')
             ->get();
@@ -92,7 +115,7 @@ class AdminBookingController extends Controller
                 ->mapWithKeys(fn (string $column) => [$column => $this->exportValue($booking, $column)])),
             'meta' => [
                 'total' => $bookings->count(),
-                'exported_at' => now()->format('d-m-Y H:i'),
+                'exported_at' => now()->format('d/m/Y H:i'),
             ],
         ]);
     }
@@ -159,15 +182,15 @@ class AdminBookingController extends Controller
             'borrower' => $booking->user->name ?? 'Pengguna dihapus',
             'room' => $booking->room->name,
             'activity' => $booking->title,
-            'date' => $booking->date->format('d-m-Y'),
+            'date' => $booking->date->format('d/m/Y'),
             'start' => $booking->start_time->format('H:i'),
             'end' => $booking->end_time->format('H:i'),
             'participants' => $booking->participants_count,
             'status' => $booking->status->label,
             'request' => $booking->notes ?? '',
             'processed_notes' => $booking->processed_notes ?? '',
-            'submitted_at' => $booking->created_at?->format('d-m-Y H:i') ?? '',
-            'processed_at' => $booking->processed_at?->format('d-m-Y H:i') ?? '',
+            'submitted_at' => $booking->created_at?->format('d/m/Y H:i') ?? '',
+            'processed_at' => $booking->processed_at?->format('d/m/Y H:i') ?? '',
             default => 'Data tidak tersedia',
         };
     }

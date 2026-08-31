@@ -35,7 +35,7 @@ class BookingService
                 return [
                     'id' => (int) $booking->id,
                     'room' => (string) $booking->room->name,
-                    'date' => (string) $booking->date->format('d F Y'),
+                    'date' => (string) $booking->date->format('d/m/Y'),
                     'time' => (string) $booking->start_time->format('H:i').' - '.$booking->end_time->format('H:i'),
                     'title' => (string) $booking->title,
                     'status' => ucfirst(strtolower((string) $booking->status->code)),

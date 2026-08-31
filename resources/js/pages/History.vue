@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import AppInput from '@/components/atoms/AppInput.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 
 type Status = 'Approved' | 'Pending' | 'Rejected' | 'Cancelled' | 'Finished';
@@ -33,6 +34,12 @@ const editForm = ref({
 const formatBookingDate = (value: string) => {
     if (!value) {
         return '';
+    }
+
+    const formattedDate = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+
+    if (formattedDate) {
+        return `${formattedDate[3]}-${formattedDate[2]}-${formattedDate[1]}`;
     }
 
     const date = new Date(value);
@@ -283,17 +290,17 @@ const finishBooking = () => {
 
             <div class="form-group">
                 <label>Tanggal</label>
-                <input type="date" v-model="editForm.date" :min="today" />
+                <AppInput v-model="editForm.date" type="date" :min="today" />
             </div>
 
             <div class="form-group">
                 <label>Jam Mulai</label>
-                <input type="time" v-model="editForm.start_time" />
+                <AppInput v-model="editForm.start_time" type="time" />
             </div>
 
             <div class="form-group">
                 <label>Jam Selesai</label>
-                <input type="time" v-model="editForm.end_time" />
+                <AppInput v-model="editForm.end_time" type="time" />
             </div>
 
             <div class="modal-actions">

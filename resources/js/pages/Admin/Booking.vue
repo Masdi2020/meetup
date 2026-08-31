@@ -63,6 +63,24 @@ const exportPreview = ref<BookingExportPayload | null>(null);
 const previewLoading = ref(false);
 const downloadLoading = ref(false);
 const exportError = ref('');
+type ExportPeriod = 'all' | 'date' | 'range' | 'month' | 'year';
+const exportPeriod = ref<ExportPeriod>('all');
+const exportDate = ref('');
+const exportStartDate = ref('');
+const exportEndDate = ref('');
+const exportMonth = ref('');
+const exportYear = ref(String(new Date().getFullYear()));
+const exportPeriodOptions: Array<{
+    value: ExportPeriod;
+    label: string;
+    description: string;
+}> = [
+    { value: 'all', label: 'Semua', description: 'Tanpa batas waktu' },
+    { value: 'date', label: 'Tanggal', description: 'Satu tanggal' },
+    { value: 'range', label: 'Rentang', description: 'Tanggal mulai–selesai' },
+    { value: 'month', label: 'Bulan', description: 'Satu bulan' },
+    { value: 'year', label: 'Tahun', description: 'Satu tahun' },
+];
 const exportStatusOptions: Array<{ value: BookingStatus; label: string }> = [
     { value: 'pending', label: 'Pending' },
     { value: 'approved', label: 'Approved' },
@@ -108,9 +126,60 @@ const allExportStatusesSelected = computed(
 const exportBusy = computed(
     () => previewLoading.value || downloadLoading.value,
 );
+const exportPeriodValid = computed(() => {
+    if (exportPeriod.value === 'date') {
+        return Boolean(exportDate.value);
+    }
+
+    if (exportPeriod.value === 'month') {
+        return Boolean(exportMonth.value);
+    }
+
+    if (exportPeriod.value === 'range') {
+        return (
+            Boolean(exportStartDate.value) &&
+            Boolean(exportEndDate.value) &&
+            exportStartDate.value <= exportEndDate.value
+        );
+    }
+
+    if (exportPeriod.value === 'year') {
+        const year = Number(exportYear.value);
+
+        return Number.isInteger(year) && year >= 2000 && year <= 2100;
+    }
+
+    return true;
+});
 const previewRows = computed(
     () => exportPreview.value?.rows.slice(0, 20) ?? [],
 );
+const formatDisplayDate = (value: string) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+    return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+};
+const exportPeriodDescription = computed(() => {
+    if (exportPeriod.value === 'date') {
+        return `Tanggal ${formatDisplayDate(exportDate.value)}`;
+    }
+
+    if (exportPeriod.value === 'month') {
+        const [year, month] = exportMonth.value.split('-');
+
+        return `Bulan ${month}/${year}`;
+    }
+
+    if (exportPeriod.value === 'range') {
+        return `${formatDisplayDate(exportStartDate.value)} sampai ${formatDisplayDate(exportEndDate.value)}`;
+    }
+
+    if (exportPeriod.value === 'year') {
+        return `Tahun ${exportYear.value}`;
+    }
+
+    return 'Semua waktu';
+});
 
 const addBookingForm = useForm({
     room_id: null as number | null,
@@ -215,7 +284,16 @@ function toggleAllExportStatuses() {
 }
 
 watch(
-    [selectedExportColumns, selectedExportStatuses],
+    [
+        selectedExportColumns,
+        selectedExportStatuses,
+        exportPeriod,
+        exportDate,
+        exportStartDate,
+        exportEndDate,
+        exportMonth,
+        exportYear,
+    ],
     () => {
         exportPreview.value = null;
         exportError.value = '';
@@ -236,6 +314,15 @@ async function loadExportPreview() {
         return;
     }
 
+    if (!exportPeriodValid.value) {
+        exportError.value =
+            exportPeriod.value === 'range'
+                ? 'Isi tanggal mulai dan tanggal selesai yang valid.'
+                : `Pilih ${exportPeriod.value} yang ingin diekspor.`;
+
+        return;
+    }
+
     previewLoading.value = true;
     exportError.value = '';
     exportPreview.value = null;
@@ -250,6 +337,18 @@ async function loadExportPreview() {
         selectedExportStatuses.value.forEach((status) =>
             params.append('statuses[]', status.toUpperCase()),
         );
+        params.set('period', exportPeriod.value);
+
+        if (exportPeriod.value === 'date') {
+            params.set('date', exportDate.value);
+        } else if (exportPeriod.value === 'range') {
+            params.set('start_date', exportStartDate.value);
+            params.set('end_date', exportEndDate.value);
+        } else if (exportPeriod.value === 'month') {
+            params.set('month', exportMonth.value);
+        } else if (exportPeriod.value === 'year') {
+            params.set('year', exportYear.value);
+        }
 
         const response = await fetch(
             `/admin/bookings/export-data?${params.toString()}`,
@@ -626,6 +725,116 @@ function reject(id: number, code: string) {
                 </div>
 
                 <div>
+                    <div class="mb-3">
+                        <p class="text-sm font-semibold text-gray-800">
+                            Periode peminjaman
+                        </p>
+                        <p class="mt-0.5 text-xs text-gray-500">
+                            Batasi export berdasarkan tanggal, rentang tanggal,
+                            bulan, atau tahun tertentu.
+                        </p>
+                    </div>
+                    <div
+                        class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5"
+                    >
+                        <label
+                            v-for="period in exportPeriodOptions"
+                            :key="period.value"
+                            class="cursor-pointer rounded-lg border px-3 py-2.5 transition"
+                            :class="
+                                exportPeriod === period.value
+                                    ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+                                    : 'border-gray-200 hover:border-blue-300'
+                            "
+                        >
+                            <input
+                                v-model="exportPeriod"
+                                type="radio"
+                                :value="period.value"
+                                :disabled="exportBusy"
+                                class="sr-only"
+                            />
+                            <span class="block text-sm font-semibold">{{
+                                period.label
+                            }}</span>
+                            <span class="text-xs text-gray-500">{{
+                                period.description
+                            }}</span>
+                        </label>
+                    </div>
+
+                    <div
+                        v-if="exportPeriod !== 'all'"
+                        class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3"
+                    >
+                        <label class="block text-sm font-medium text-gray-700">
+                            {{
+                                exportPeriod === 'date'
+                                    ? 'Pilih tanggal'
+                                    : exportPeriod === 'range'
+                                      ? 'Pilih rentang tanggal'
+                                      : exportPeriod === 'month'
+                                        ? 'Pilih bulan'
+                                        : 'Masukkan tahun'
+                            }}
+                        </label>
+                        <AppInput
+                            v-if="exportPeriod === 'date'"
+                            v-model="exportDate"
+                            type="date"
+                            appearance="admin"
+                            :disabled="exportBusy"
+                            class="mt-2 sm:max-w-xs"
+                        />
+                        <AppInput
+                            v-else-if="exportPeriod === 'month'"
+                            v-model="exportMonth"
+                            type="month"
+                            appearance="admin"
+                            :disabled="exportBusy"
+                            class="mt-2 sm:max-w-xs"
+                        />
+                        <div
+                            v-else-if="exportPeriod === 'range'"
+                            class="mt-2 grid gap-3 sm:grid-cols-2"
+                        >
+                            <label class="text-xs text-gray-600">
+                                Tanggal mulai
+                                <AppInput
+                                    v-model="exportStartDate"
+                                    type="date"
+                                    appearance="admin"
+                                    :max="exportEndDate || undefined"
+                                    :disabled="exportBusy"
+                                    class="mt-1"
+                                />
+                            </label>
+                            <label class="text-xs text-gray-600">
+                                Tanggal selesai
+                                <AppInput
+                                    v-model="exportEndDate"
+                                    type="date"
+                                    appearance="admin"
+                                    :min="exportStartDate || undefined"
+                                    :disabled="exportBusy"
+                                    class="mt-1"
+                                />
+                            </label>
+                        </div>
+                        <input
+                            v-else
+                            v-model="exportYear"
+                            type="number"
+                            min="2000"
+                            max="2100"
+                            step="1"
+                            :disabled="exportBusy"
+                            class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 sm:max-w-xs"
+                        />
+                    </div>
+                </div>
+
+                <div>
                     <div class="mb-3 flex items-center justify-between gap-3">
                         <p class="text-sm font-semibold text-gray-800">
                             Pilih kolom
@@ -677,7 +886,8 @@ function reject(id: number, code: string) {
                             Preview Data
                         </p>
                         <p class="text-xs text-gray-500">
-                            Menampilkan {{ previewRows.length }} dari
+                            {{ exportPeriodDescription }} · Menampilkan
+                            {{ previewRows.length }} dari
                             {{ exportPreview.meta.total }} data
                         </p>
                     </div>
@@ -763,7 +973,8 @@ function reject(id: number, code: string) {
                         :disabled="
                             exportBusy ||
                             selectedExportColumns.length === 0 ||
-                            selectedExportStatuses.length === 0
+                            selectedExportStatuses.length === 0 ||
+                            !exportPeriodValid
                         "
                         @click="
                             exportPreview

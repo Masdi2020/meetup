@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { ref, computed, onMounted, watch } from 'vue';
+import AppInput from '@/components/atoms/AppInput.vue';
 
 interface Room {
     id: number;
@@ -207,7 +208,12 @@ watch(
                     :class="{ warning: hasWarning('date') }"
                 >
                     <label> Tanggal <span class="required">*</span> </label>
-                    <input type="date" v-model="form.date" :min="today" />
+                    <AppInput
+                        v-model="form.date"
+                        type="date"
+                        :min="today"
+                        :invalid="hasWarning('date')"
+                    />
                     <p
                         v-if="form.date && form.date < today"
                         class="warning-text"
@@ -224,11 +230,12 @@ watch(
                     :class="{ warning: hasWarning('start_time') }"
                 >
                     <label> Dari Jam <span class="required">*</span> </label>
-                    <input
-                        type="time"
+                    <AppInput
                         v-model="form.start_time"
+                        type="time"
                         :min="minStartTime"
                         max="23:59"
+                        :invalid="hasWarning('start_time')"
                     />
                     <p v-if="hasWarning('start_time')" class="warning-text">
                         Waktu mulai wajib diisi.
@@ -240,11 +247,12 @@ watch(
                     :class="{ warning: hasWarning('end_time') }"
                 >
                     <label> Sampai Jam <span class="required">*</span> </label>
-                    <input
-                        type="time"
+                    <AppInput
                         v-model="form.end_time"
+                        type="time"
                         :min="minEndTime"
                         max="23:59"
+                        :invalid="hasWarning('end_time')"
                     />
 
                     <p v-if="isInvalidTimeRange" class="warning-text">
