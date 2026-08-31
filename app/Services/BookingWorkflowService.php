@@ -88,7 +88,7 @@ class BookingWorkflowService
                 'processed_at' => now(), 'processed_notes' => $notes,
             ])->save();
             $comments = ['APPROVED' => 'booking disetujui', 'REJECTED' => 'booking ditolak', 'CANCELLED' => 'Dibatalkan oleh peminjam', 'FINISHED' => 'booking diakhiri'];
-            $this->audits->record('Booking', $booking->id, 'status_changed', ['status_id' => $oldStatusId], ['status_id' => $status->id], $userId, $comments[$statusCode] ?? 'status booking diubah');
+            $this->audits->record('Booking', $booking->id, 'status_changed', ['status_id' => $oldStatusId], ['status_id' => $status->id], $userId, $comments[$statusCode]);
         });
 
         if (in_array($statusCode, ['APPROVED', 'FINISHED'], true)) {

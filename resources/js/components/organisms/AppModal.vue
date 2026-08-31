@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { X } from '@lucide/vue';
-import { inject, ref, type Ref } from 'vue';
+import { inject, ref } from 'vue';
+import type { Ref } from 'vue';
 
 withDefaults(
     defineProps<{
