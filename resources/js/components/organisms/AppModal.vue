@@ -18,7 +18,7 @@ const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
 <template>
     <Teleport to="body">
         <div
-            class="fixed inset-y-0 right-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 transition-[left] duration-300 sm:items-center sm:p-4"
+            class="fixed inset-y-0 right-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 transition-[left] duration-200 sm:items-center sm:p-4"
             :style="{ left: sidebarOffset }"
             role="presentation"
             @click.self="emit('close')"
