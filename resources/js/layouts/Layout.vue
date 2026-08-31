@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router, usePage } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
 import ForceChangePasswordModal from '@/components/ForceChangePasswordModal.vue';
 import LogoutButton from '@/components/LogoutButton.vue';
 import Sidebar from '@/components/Sidebar.vue';
@@ -11,6 +11,16 @@ import type { Auth } from '@/types/auth';
 const isOpen = ref(true);
 const isMobile = ref(false);
 let removeNavigateListener: (() => void) | undefined;
+
+const sidebarOffset = computed(() => {
+    if (isMobile.value) {
+        return '0px';
+    }
+
+    return isOpen.value ? '230px' : '72px';
+});
+
+provide('sidebarOffset', sidebarOffset);
 
 const syncViewport = () => {
     const mobile = window.matchMedia('(max-width: 768px)').matches;
