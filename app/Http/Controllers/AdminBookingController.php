@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BannerUpdated;
 use App\Http\Requests\RejectBookingRequest;
 use App\Models\Booking;
 use App\Models\Room;
@@ -56,5 +57,14 @@ class AdminBookingController extends Controller
         $this->bookingWorkflow->changeStatus($booking, 'REJECTED', $request->user()->id, $request->validated('reason'));
 
         return back()->with('success', 'Booking rejected successfully.');
+    }
+
+    public function destroy(Booking $booking): RedirectResponse
+    {
+        $booking->delete();
+
+        broadcast(new BannerUpdated);
+
+        return back()->with('success', 'Booking berhasil dihapus.');
     }
 }

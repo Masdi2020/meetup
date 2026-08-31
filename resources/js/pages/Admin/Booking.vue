@@ -8,6 +8,7 @@ import AppTextarea from '@/components/atoms/AppTextarea.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
+import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useModalManager } from '@/composables/useModal';
 import type {
@@ -44,6 +45,7 @@ const showDetailModal = computed(() => isModalOpen('detail'));
 const selectedBookingId = ref<number | null>(null);
 const selectedBookingCode = ref<string | null>(null);
 const detailBooking = ref<Booking | null>(null);
+const bookingToDelete = ref<Booking | null>(null);
 const rejectReason = ref('');
 const rejectValidationErrors = ref({ reason: '' });
 const addBookingPreview = ref<string | null>(null);
@@ -154,6 +156,22 @@ function closeDetailModal() {
     detailBooking.value = null;
 }
 
+function openDeleteModal(booking: Booking) {
+    bookingToDelete.value = booking;
+}
+function closeDeleteModal() {
+    bookingToDelete.value = null;
+}
+function deleteBooking() {
+    if (!bookingToDelete.value) {
+        return;
+    }
+
+    router.delete(`/admin/bookings/${bookingToDelete.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => closeDeleteModal(),
+    });
+}
 function handleAddBookingFile(event: Event) {
     const target = event.target as HTMLInputElement;
 
@@ -726,6 +744,12 @@ function reject(id: number, code: string) {
                                 >
                                     Reject
                                 </button>
+                                <button
+                                    class="rounded-lg bg-red-700 px-3 py-2 text-sm text-white hover:bg-red-800"
+                                    @click="openDeleteModal(booking)"
+                                >
+                                    Hapus
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -766,6 +790,14 @@ function reject(id: number, code: string) {
                 Next
             </button>
         </div>
+        <ConfirmModal
+            v-if="bookingToDelete"
+            title="Hapus Booking"
+            :message="`Booking ${bookingToDelete.code} untuk ${bookingToDelete.room} akan dihapus. Jadwalnya akan tersedia kembali untuk dipinjam.`"
+            confirm-label="Hapus"
+            @close="closeDeleteModal"
+            @confirm="deleteBooking"
+        />
     </div>
 </template>
 
