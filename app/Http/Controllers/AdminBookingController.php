@@ -59,6 +59,13 @@ class AdminBookingController extends Controller
         return back()->with('success', 'Booking rejected successfully.');
     }
 
+    public function finish(Request $request, Booking $booking): RedirectResponse
+    {
+        $this->bookingWorkflow->changeStatus($booking, 'FINISHED', $request->user()->id, 'Diakhiri oleh admin');
+
+        return back()->with('success', 'Booking berhasil diakhiri.');
+    }
+
     public function destroy(Booking $booking): RedirectResponse
     {
         $booking->delete();

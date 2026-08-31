@@ -27,7 +27,7 @@ class BookingService
     {
         return Booking::with([
             'room:id,name',
-            'status:id,label',
+            'status:id,code,label',
         ])->where('user_id', $userId)
             ->orderBy('created_at', 'asc')
             ->get()
@@ -38,7 +38,7 @@ class BookingService
                     'date' => (string) $booking->date->format('d F Y'),
                     'time' => (string) $booking->start_time->format('H:i').' - '.$booking->end_time->format('H:i'),
                     'title' => (string) $booking->title,
-                    'status' => (string) $booking->status->label,
+                    'status' => ucfirst(strtolower((string) $booking->status->code)),
                 ];
             });
     }

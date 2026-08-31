@@ -3,7 +3,7 @@ import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 
-type Status = 'Approved' | 'Pending' | 'Rejected' | 'Cancelled';
+type Status = 'Approved' | 'Pending' | 'Rejected' | 'Cancelled' | 'Finished';
 
 interface BookingHistory {
     id: number;
@@ -18,6 +18,8 @@ const showEditModal = ref(false);
 const showDateAlertModal = ref(false);
 const bookingToCancel = ref<number | null>(null);
 const isCancelling = ref(false);
+const bookingToFinish = ref<number | null>(null);
+const isFinishing = ref(false);
 const today = new Date().toISOString().split('T')[0];
 
 const editForm = ref({
@@ -120,6 +122,31 @@ const cancelBooking = () => {
         },
     );
 };
+
+const closeFinishModal = () => {
+    if (!isFinishing.value) {
+        bookingToFinish.value = null;
+    }
+};
+
+const finishBooking = () => {
+    if (bookingToFinish.value === null) {
+        return;
+    }
+
+    isFinishing.value = true;
+    router.patch(
+        '/booking/' + bookingToFinish.value + '/finish',
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isFinishing.value = false;
+                bookingToFinish.value = null;
+            },
+        },
+    );
+};
 </script>
 
 <template>
@@ -134,6 +161,7 @@ const cancelBooking = () => {
                     <option>Pending</option>
                     <option>Rejected</option>
                     <option>Cancelled</option>
+                    <option>Finished</option>
                 </select>
             </div>
 
@@ -190,6 +218,13 @@ const cancelBooking = () => {
                                         Cancel
                                     </button>
                                 </div>
+                                <button
+                                    v-else-if="item.status === 'Approved'"
+                                    class="finish-btn"
+                                    @click="bookingToFinish = item.id"
+                                >
+                                    Akhiri Sekarang
+                                </button>
                             </td>
                         </tr>
 
@@ -227,6 +262,15 @@ const cancelBooking = () => {
         :processing="isCancelling"
         @close="closeCancelModal"
         @confirm="cancelBooking"
+    />
+    <ConfirmModal
+        v-if="bookingToFinish !== null"
+        title="Akhiri Peminjaman"
+        message="Apakah Anda yakin ingin mengakhiri peminjaman ini sekarang?"
+        confirm-label="Akhiri Sekarang"
+        :processing="isFinishing"
+        @close="closeFinishModal"
+        @confirm="finishBooking"
     />
     <div v-if="showEditModal" class="modal-overlay">
         <div class="modal">
@@ -402,6 +446,25 @@ tbody tr:hover {
 
 .cancel-btn:hover {
     background: #b52b38;
+}
+
+.finished {
+    background: #2563eb;
+}
+
+.finish-btn {
+    border: none;
+    border-radius: 6px;
+    padding: 5px 12px;
+    cursor: pointer;
+    background: #2563eb;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.finish-btn:hover {
+    background: #1d4ed8;
 }
 
 .modal-overlay {

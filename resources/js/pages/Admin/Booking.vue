@@ -37,10 +37,11 @@ const today = new Date().toISOString().split('T')[0];
 const showAddBookingModal = computed(() => isModalOpen('add'));
 const showAddBookingSuccess = ref(false);
 const { openModal, closeModal, isModalOpen } = useModalManager<
-    'add' | 'approve' | 'reject' | 'detail'
+    'add' | 'approve' | 'reject' | 'finish' | 'detail'
 >();
 const showApproveModal = computed(() => isModalOpen('approve'));
 const showRejectModal = computed(() => isModalOpen('reject'));
+const showFinishModal = computed(() => isModalOpen('finish'));
 const showDetailModal = computed(() => isModalOpen('detail'));
 const selectedBookingId = ref<number | null>(null);
 const selectedBookingCode = ref<string | null>(null);
@@ -146,6 +147,18 @@ function closeRejectModal() {
     rejectValidationErrors.value.reason = '';
 }
 
+function openFinishModal(id: number, code: string) {
+    selectedBookingId.value = id;
+    selectedBookingCode.value = code;
+    openModal('finish');
+}
+
+function closeFinishModal() {
+    closeModal();
+    selectedBookingId.value = null;
+    selectedBookingCode.value = null;
+}
+
 function openDetailModal(booking: Booking) {
     detailBooking.value = booking;
     openModal('detail');
@@ -237,6 +250,7 @@ function badgeClass(status: BookingStatus) {
         approved: 'bg-green-100 text-green-700',
         rejected: 'bg-red-100 text-red-700',
         cancelled: 'bg-gray-200 text-gray-700',
+        finished: 'bg-blue-100 text-blue-700',
     }[status];
 }
 
@@ -278,6 +292,21 @@ function confirmReject() {
             onSuccess: () => {
                 closeRejectModal();
             },
+        },
+    );
+}
+
+function confirmFinish() {
+    if (!selectedBookingId.value) {
+        return;
+    }
+
+    router.patch(
+        '/admin/bookings/' + selectedBookingId.value + '/finish',
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => closeFinishModal(),
         },
     );
 }
@@ -617,6 +646,36 @@ function reject(id: number, code: string) {
             </div>
         </AppModal>
 
+        <AppModal
+            v-if="showFinishModal"
+            title="Akhiri Peminjaman"
+            max-width="lg"
+            @close="closeFinishModal"
+        >
+            <div class="space-y-4">
+                <p class="text-sm text-gray-700">
+                    Peminjaman <strong>{{ selectedBookingCode }}</strong> akan
+                    langsung ditandai sebagai <strong>Finished</strong>.
+                </p>
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        @click="closeFinishModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        @click="confirmFinish"
+                    >
+                        Akhiri Sekarang
+                    </button>
+                </div>
+            </div>
+        </AppModal>
+
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Total" :value="stats?.total" />
             <StatCard label="Pending" :value="stats?.pending" tone="warning" />
@@ -625,6 +684,7 @@ function reject(id: number, code: string) {
                 :value="stats?.approved"
                 tone="success"
             />
+            <StatCard label="Finished" :value="stats?.finished" />
         </div>
         <!-- Filter -->
 
@@ -647,6 +707,7 @@ function reject(id: number, code: string) {
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                     <option value="cancelled">Cancelled</option>
+                    <option value="finished">Finished</option>
                 </AppSelect>
 
                 <AppSelect
@@ -735,6 +796,19 @@ function reject(id: number, code: string) {
                                     @click="approve(booking.id, booking.code)"
                                 >
                                     Approve
+                                </button>
+
+                                <button
+                                    v-if="booking.status === 'approved'"
+                                    class="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                                    @click="
+                                        openFinishModal(
+                                            booking.id,
+                                            booking.code,
+                                        )
+                                    "
+                                >
+                                    Akhiri Sekarang
                                 </button>
 
                                 <button

@@ -1,6 +1,7 @@
 import type { UserRole } from './auth';
 
-export type BookingStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type BookingStatus =
+    'pending' | 'approved' | 'rejected' | 'cancelled' | 'finished';
 
 export interface AdminUser {
     id: number;
@@ -28,6 +29,7 @@ export interface AdminRoom extends RoomOption {
 
 export interface Facility extends FacilityOption {
     rooms_count: number;
+    rooms: RoomOption[];
 }
 
 export interface AdminBooking {
@@ -85,6 +87,7 @@ export interface BookingStats {
     total: number;
     pending: number;
     approved: number;
+    finished: number;
 }
 export interface AuditStats {
     total: number;

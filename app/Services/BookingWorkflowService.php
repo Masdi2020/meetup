@@ -71,8 +71,13 @@ class BookingWorkflowService
     public function changeStatus(Booking $booking, string $statusCode, int $userId, string $notes): void
     {
         $booking->loadMissing('status');
-        if ($booking->status->code !== 'PENDING') {
-            throw ValidationException::withMessages(['booking' => 'Booking is not pending.']);
+        $allowedTransitions = [
+            'PENDING' => ['APPROVED', 'REJECTED', 'CANCELLED'],
+            'APPROVED' => ['FINISHED'],
+        ];
+
+        if (! in_array($statusCode, $allowedTransitions[$booking->status->code] ?? [], true)) {
+            throw ValidationException::withMessages(['booking' => 'Perubahan status booking tidak valid.']);
         }
 
         DB::transaction(function () use ($booking, $statusCode, $userId, $notes) {
@@ -82,11 +87,11 @@ class BookingWorkflowService
                 'status_id' => $status->id, 'processed_by' => $userId,
                 'processed_at' => now(), 'processed_notes' => $notes,
             ])->save();
-            $comments = ['APPROVED' => 'booking disetujui', 'REJECTED' => 'booking ditolak', 'CANCELLED' => 'Dibatalkan oleh peminjam'];
+            $comments = ['APPROVED' => 'booking disetujui', 'REJECTED' => 'booking ditolak', 'CANCELLED' => 'Dibatalkan oleh peminjam', 'FINISHED' => 'booking diakhiri'];
             $this->audits->record('Booking', $booking->id, 'status_changed', ['status_id' => $oldStatusId], ['status_id' => $status->id], $userId, $comments[$statusCode] ?? 'status booking diubah');
         });
 
-        if ($statusCode === 'APPROVED') {
+        if (in_array($statusCode, ['APPROVED', 'FINISHED'], true)) {
             broadcast(new BannerUpdated);
         }
     }
