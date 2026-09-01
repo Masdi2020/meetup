@@ -5,9 +5,9 @@
          colors="true"
 >
     <testsuites>
-        <testsuite name="Unit">
-        </testsuite>
+        <testsuite name="Unit"/>
         <testsuite name="Feature">
+            <directory>tests/Feature</directory>
         </testsuite>
     </testsuites>
     <source>
