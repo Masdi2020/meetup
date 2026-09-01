@@ -208,7 +208,10 @@ const finishBooking = () => {
 
                             <td>
                                 <div
-                                    v-if="item.status === 'Pending'"
+                                    v-if="
+                                        item.status === 'Pending' ||
+                                        item.status === 'Approved'
+                                    "
                                     class="action-buttons"
                                 >
                                     <button
@@ -224,14 +227,14 @@ const finishBooking = () => {
                                     >
                                         Cancel
                                     </button>
+                                    <button
+                                        v-if="item.status === 'Approved'"
+                                        class="finish-btn"
+                                        @click="bookingToFinish = item.id"
+                                    >
+                                        Akhiri Sekarang
+                                    </button>
                                 </div>
-                                <button
-                                    v-else-if="item.status === 'Approved'"
-                                    class="finish-btn"
-                                    @click="bookingToFinish = item.id"
-                                >
-                                    Akhiri Sekarang
-                                </button>
                             </td>
                         </tr>
 

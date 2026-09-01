@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
     'participants_count',
     'notes',
     'status_id',
+    'processed_by',
     'processed_at',
     'processed_notes',
 ])]

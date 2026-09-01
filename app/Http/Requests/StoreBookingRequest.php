@@ -4,9 +4,17 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreBookingRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->user()?->role === 'admin' && $this->filled('status')) {
+            $this->merge(['status' => strtoupper($this->string('status')->toString())]);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -22,9 +30,10 @@ class StoreBookingRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isAdmin = $this->user()?->role === 'admin';
         $dateRules = ['required', 'date'];
 
-        if ($this->user()?->role !== 'admin') {
+        if (! $isAdmin) {
             $dateRules[] = 'after_or_equal:today';
         }
 
@@ -37,7 +46,18 @@ class StoreBookingRequest extends FormRequest
             'participants' => ['required', 'integer', 'min:1'],
             'request' => ['nullable', 'string'],
             'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
-            'status' => ['nullable', 'string', 'in:pending,approved'],
+            'user_id' => $isAdmin
+                ? [
+                    'required',
+                    'integer',
+                    Rule::exists('users', 'id')->where(fn ($query) => $query
+                        ->whereIn('role', ['user', 'admin'])
+                        ->whereNull('deleted_at')),
+                ]
+                : ['prohibited'],
+            'status' => $isAdmin
+                ? ['required', 'string', Rule::exists('booking_statuses', 'code')]
+                : ['prohibited'],
         ];
     }
 }

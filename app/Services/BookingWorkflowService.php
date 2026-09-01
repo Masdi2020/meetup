@@ -8,6 +8,7 @@ use App\Models\BookingAttachment;
 use App\Models\BookingStatus;
 use App\Models\Room;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -16,37 +17,47 @@ class BookingWorkflowService
     public function __construct(private AuditService $audits) {}
 
     /** @param array<string, mixed> $data */
-    public function create(array $data, int $userId, bool $isAdmin): Booking
+    public function create(array $data, int $actorUserId, bool $isAdmin): Booking
     {
         if (! Room::query()->whereKey($data['room_id'])->where('is_available', true)->exists()) {
             throw ValidationException::withMessages(['room_id' => 'Ruangan tidak tersedia untuk dipinjam']);
         }
 
-        $overlaps = Booking::query()
-            ->where('room_id', $data['room_id'])->where('date', $data['date'])
+        $statusCode = $isAdmin ? (string) $data['status'] : 'PENDING';
+        $borrowerId = $isAdmin ? (int) $data['user_id'] : $actorUserId;
+        $activeStatus = in_array($statusCode, ['PENDING', 'APPROVED'], true);
+        $overlaps = $activeStatus && Booking::query()
+            ->where('room_id', $data['room_id'])
+            ->whereDate('date', $data['date'])
             ->whereHas('status', fn ($query) => $query->whereIn('code', ['PENDING', 'APPROVED']))
-            ->where('start_time', '<', $data['end_time'])->where('end_time', '>', $data['start_time'])
+            ->whereTime('start_time', '<', $data['end_time'])
+            ->whereTime('end_time', '>', $data['start_time'])
             ->exists();
 
         if ($overlaps) {
             throw ValidationException::withMessages(['room_id' => 'Ruangan sudah dibooking pada waktu tersebut.']);
         }
 
-        $statusCode = $isAdmin && in_array($data['status'] ?? null, ['pending', 'approved'], true)
-            ? strtoupper($data['status']) : 'PENDING';
-
-        $booking = DB::transaction(function () use ($data, $userId, $statusCode) {
+        $booking = DB::transaction(function () use ($data, $actorUserId, $borrowerId, $statusCode) {
             $statusId = BookingStatus::where('code', $statusCode)->firstOrFail()->id;
-            $approved = $statusCode === 'APPROVED';
+            $processed = $statusCode !== 'PENDING';
             $booking = Booking::create([
-                'room_id' => $data['room_id'], 'user_id' => $userId, 'date' => $data['date'],
+                'room_id' => $data['room_id'], 'user_id' => $borrowerId, 'date' => $data['date'],
                 'start_time' => $data['start_time'], 'end_time' => $data['end_time'], 'title' => $data['title'],
                 'participants_count' => $data['participants'], 'notes' => $data['request'] ?? null,
-                'status_id' => $statusId, 'processed_by' => $approved ? $userId : null,
-                'processed_at' => $approved ? now() : null,
-                'processed_notes' => $approved ? 'Disetujui oleh admin saat dibuat' : null,
+                'status_id' => $statusId, 'processed_by' => $processed ? $actorUserId : null,
+                'processed_at' => $processed ? now() : null,
+                'processed_notes' => $processed ? "Status {$statusCode} ditetapkan oleh admin saat dibuat" : null,
             ]);
-            $this->audits->record('Booking', $booking->id, 'created', null, ['status_id' => $statusId], $userId, $approved ? 'booking dibuat dan disetujui' : 'booking dibuat');
+            $this->audits->record(
+                'Booking',
+                $booking->id,
+                'created',
+                null,
+                ['status_id' => $statusId, 'user_id' => $borrowerId],
+                $actorUserId,
+                'booking dibuat oleh '.($actorUserId === $borrowerId ? 'peminjam' : 'admin'),
+            );
 
             if (($data['banner'] ?? null) instanceof UploadedFile) {
                 $file = $data['banner'];
@@ -54,7 +65,7 @@ class BookingWorkflowService
                 BookingAttachment::create([
                     'booking_id' => $booking->id, 'original_filename' => $file->getClientOriginalName(),
                     'filename' => $file->hashName(), 'path' => $path, 'mime_type' => $file->getClientMimeType(),
-                    'size' => $file->getSize(), 'uploaded_by' => $userId,
+                    'size' => $file->getSize(), 'uploaded_by' => $actorUserId,
                 ]);
             }
 
@@ -68,12 +79,60 @@ class BookingWorkflowService
         return $booking;
     }
 
+    /** @param array{title: string, date: string, start_time: string, end_time: string} $data */
+    public function update(
+        Booking $booking,
+        array $data,
+        int $userId,
+        string $auditComment = 'booking diperbarui oleh peminjam',
+    ): void {
+        $overlaps = Booking::query()
+            ->whereKeyNot($booking->id)
+            ->where('room_id', $booking->room_id)
+            ->whereDate('date', $data['date'])
+            ->whereHas('status', fn ($query) => $query->whereIn('code', ['PENDING', 'APPROVED']))
+            ->whereTime('start_time', '<', $data['end_time'])
+            ->whereTime('end_time', '>', $data['start_time'])
+            ->exists();
+
+        if ($overlaps) {
+            throw ValidationException::withMessages([
+                'date' => 'Ruangan sudah dibooking pada waktu tersebut.',
+            ]);
+        }
+
+        $oldValues = [
+            'title' => $booking->title,
+            'date' => $booking->date->format('Y-m-d'),
+            'start_time' => $booking->start_time->format('H:i'),
+            'end_time' => $booking->end_time->format('H:i'),
+        ];
+
+        DB::transaction(function () use ($booking, $data, $oldValues, $userId, $auditComment) {
+            $booking->update($data);
+            $this->audits->record(
+                'Booking',
+                $booking->id,
+                'updated',
+                $oldValues,
+                $data,
+                $userId,
+                $auditComment,
+            );
+        });
+
+        if ($booking->status->code === 'APPROVED') {
+            broadcast(new BannerUpdated);
+        }
+    }
+
     public function changeStatus(Booking $booking, string $statusCode, int $userId, string $notes): void
     {
         $booking->loadMissing('status');
+        $previousStatusCode = $booking->status->code;
         $allowedTransitions = [
             'PENDING' => ['APPROVED', 'REJECTED', 'CANCELLED'],
-            'APPROVED' => ['FINISHED'],
+            'APPROVED' => ['FINISHED', 'CANCELLED'],
         ];
 
         if (! in_array($statusCode, $allowedTransitions[$booking->status->code] ?? [], true)) {
@@ -91,8 +150,66 @@ class BookingWorkflowService
             $this->audits->record('Booking', $booking->id, 'status_changed', ['status_id' => $oldStatusId], ['status_id' => $status->id], $userId, $comments[$statusCode]);
         });
 
-        if (in_array($statusCode, ['APPROVED', 'FINISHED'], true)) {
+        if (
+            in_array($statusCode, ['APPROVED', 'FINISHED'], true)
+            || ($statusCode === 'CANCELLED' && $previousStatusCode === 'APPROVED')
+        ) {
             broadcast(new BannerUpdated);
         }
+    }
+
+    public function finishExpired(?Carbon $now = null): int
+    {
+        $now ??= now();
+        $approvedStatus = BookingStatus::where('code', 'APPROVED')->firstOrFail();
+        $finishedStatus = BookingStatus::where('code', 'FINISHED')->firstOrFail();
+        $finishedCount = 0;
+
+        Booking::query()
+            ->where('status_id', $approvedStatus->id)
+            ->where(function ($query) use ($now) {
+                $query->whereDate('date', '<', $now->toDateString())
+                    ->orWhere(function ($query) use ($now) {
+                        $query->whereDate('date', $now->toDateString())
+                            ->whereTime('end_time', '<=', $now->format('H:i:s'));
+                    });
+            })
+            ->select('id')
+            ->chunkById(100, function ($bookings) use ($approvedStatus, $finishedStatus, $now, &$finishedCount) {
+                foreach ($bookings as $expiredBooking) {
+                    DB::transaction(function () use ($expiredBooking, $approvedStatus, $finishedStatus, $now, &$finishedCount) {
+                        $booking = Booking::query()->lockForUpdate()->find($expiredBooking->id);
+
+                        if (! $booking || $booking->status_id !== $approvedStatus->id) {
+                            return;
+                        }
+
+                        $booking->forceFill([
+                            'status_id' => $finishedStatus->id,
+                            'processed_by' => null,
+                            'processed_at' => $now,
+                            'processed_notes' => 'Otomatis selesai karena waktu booking telah berakhir',
+                        ])->save();
+
+                        $this->audits->record(
+                            'Booking',
+                            $booking->id,
+                            'status_changed',
+                            ['status_id' => $approvedStatus->id],
+                            ['status_id' => $finishedStatus->id],
+                            null,
+                            'booking otomatis diakhiri oleh sistem',
+                        );
+
+                        $finishedCount++;
+                    });
+                }
+            });
+
+        if ($finishedCount > 0) {
+            broadcast(new BannerUpdated);
+        }
+
+        return $finishedCount;
     }
 }

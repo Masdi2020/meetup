@@ -33,11 +33,7 @@ class BookingController extends Controller
 
     public function update(UpdateBookingRequest $request, Booking $booking): RedirectResponse
     {
-        if ($booking->status->code !== 'PENDING') {
-            abort(403);
-        }
-
-        $booking->update($request->validated());
+        $this->bookingWorkflow->update($booking, $request->bookingData(), $request->user()->id);
 
         return back()->with('success', 'Peminjaman berhasil diperbarui.');
     }
