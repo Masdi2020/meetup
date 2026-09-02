@@ -69,7 +69,7 @@ it('shows the active booking for the selected display room', function () {
     );
 
     $this->actingAs($display)
-        ->get(route('meeting.banner', ['room' => $secondRoom]))
+        ->get(route('display.banner', ['room' => $secondRoom]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Banner')
@@ -83,6 +83,6 @@ it('does not expose a banner route for a room without a display', function () {
     $room = bannerRoom('Ruang Tanpa Display', false);
 
     $this->actingAs($display)
-        ->get(route('meeting.banner', ['room' => $room]))
+        ->get(route('display.banner', ['room' => $room]))
         ->assertNotFound();
 });
