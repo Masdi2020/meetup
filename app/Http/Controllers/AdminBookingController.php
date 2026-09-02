@@ -22,7 +22,7 @@ class AdminBookingController extends Controller
 {
     /** @var array<string, string> */
     private const EXPORT_COLUMNS = [
-        'code' => 'Kode',
+        'id' => 'ID',
         'borrower' => 'Peminjam',
         'room' => 'Ruangan',
         'activity' => 'Kegiatan',
@@ -50,9 +50,13 @@ class AdminBookingController extends Controller
 
     public function index(Request $request): Response
     {
-        $bookings = $this->filteredBookings($request)->latest()->paginate(10)
+        $search = $request->string('search')->trim()->toString();
+        $status = $request->string('status')->trim()->lower()->toString();
+        $room = $request->integer('room') ?: null;
+
+        $bookings = $this->filteredBookings($request)->latest()->paginate(10)->withQueryString()
             ->through(fn ($booking) => [
-                'id' => $booking->id, 'code' => $booking->id, 'room' => $booking->room->name,
+                'id' => $booking->id, 'room' => $booking->room->name,
                 'borrower' => $booking->user->name ?? 'Pengguna dihapus', 'activity' => $booking->title,
                 'date' => $booking->date->format('d/m/Y'), 'start' => $booking->start_time->format('H:i'),
                 'end' => $booking->end_time->format('H:i'), 'status' => strtolower($booking->status->code),
@@ -70,7 +74,11 @@ class AdminBookingController extends Controller
                     'label' => ucfirst(strtolower($status->label)),
                 ]),
             'stats' => ['total' => Booking::count(), 'pending' => $count('PENDING'), 'approved' => $count('APPROVED'), 'finished' => $count('FINISHED')],
-            'filters' => $request->only(['search', 'status', 'room']),
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'room' => $room ? (string) $room : '',
+            ],
         ]);
     }
 
@@ -119,9 +127,13 @@ class AdminBookingController extends Controller
             'columns' => collect($selectedColumns)->map(fn (string $key) => [
                 'key' => $key,
                 'label' => self::EXPORT_COLUMNS[$key],
+            ])->prepend([
+                'key' => 'number',
+                'label' => 'No',
             ])->values(),
-            'rows' => $bookings->map(fn (Booking $booking) => collect($selectedColumns)
-                ->mapWithKeys(fn (string $column) => [$column => $this->exportValue($booking, $column)])),
+            'rows' => $bookings->values()->map(fn (Booking $booking, int $index) => collect($selectedColumns)
+                ->mapWithKeys(fn (string $column) => [$column => $this->exportValue($booking, $column)])
+                ->prepend($index + 1, 'number')),
             'meta' => [
                 'total' => $bookings->count(),
                 'exported_at' => now()->format('d/m/Y H:i'),
@@ -211,7 +223,7 @@ class AdminBookingController extends Controller
     private function exportValue(Booking $booking, string $column): string|int
     {
         return match ((string) $column) {
-            'code' => $booking->id,
+            'id' => $booking->id,
             'borrower' => $booking->user->name ?? 'Pengguna dihapus',
             'room' => $booking->room->name,
             'activity' => $booking->title,

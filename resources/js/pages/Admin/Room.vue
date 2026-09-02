@@ -7,9 +7,11 @@ import CheckboxField from '@/components/molecules/CheckboxField.vue';
 import CheckboxGroup from '@/components/molecules/CheckboxGroup.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
+import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useAdminFilters } from '@/composables/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import type { AdminRoom as Room, FacilityOption } from '@/types/admin';
 const props = defineProps<{
@@ -39,17 +41,13 @@ const roomForm = useForm({
 });
 
 const rooms = computed(() => props.rooms);
-
-const filteredRooms = computed(() =>
-    rooms.value.filter((room) => {
-        const term = search.value.toLowerCase();
-
-        return (
-            room.name.toLowerCase().includes(term) ||
-            room.location.toLowerCase().includes(term)
-        );
-    }),
-);
+const { applyFilters, resetFilters } = useAdminFilters('/admin/rooms', {
+    debouncedSources: [search],
+    query: () => ({ search: search.value }),
+    reset: () => {
+        search.value = '';
+    },
+});
 
 const totalCapacity = computed(() =>
     rooms.value.reduce((total, room) => total + room.capacity, 0),
@@ -163,17 +161,12 @@ function toggleAvailability() {
             <StatCard label="Total Kapasitas" :value="totalCapacity" />
             <StatCard label="Total Fasilitas" :value="totalFacilities" />
         </div>
-        <div class="rounded-xl bg-white p-5 shadow">
-            <div class="grid gap-4 md:grid-cols-2">
-                <AppInput
-                    v-model="search"
-                    appearance="admin"
-                    type="text"
-                    placeholder="Cari ruangan..."
-                    class="rounded-lg border px-4 py-2"
-                />
-            </div>
-        </div>
+        <AdminSearchPanel
+            v-model="search"
+            placeholder="Cari ruangan..."
+            @search="applyFilters"
+            @reset="resetFilters"
+        />
 
         <div class="overflow-x-auto rounded-xl bg-white shadow">
             <table class="w-full min-w-[900px]">
@@ -190,7 +183,7 @@ function toggleAvailability() {
 
                 <tbody>
                     <tr
-                        v-for="room in filteredRooms"
+                        v-for="room in rooms"
                         :key="room.id"
                         class="border-t hover:bg-gray-50"
                     >

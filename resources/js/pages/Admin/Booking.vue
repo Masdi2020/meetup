@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { watchDebounced } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
@@ -8,9 +7,11 @@ import AppSelect from '@/components/atoms/AppSelect.vue';
 import AppTextarea from '@/components/atoms/AppTextarea.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
+import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useAdminFilters } from '@/composables/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import { downloadBookingExport } from '@/lib/bookingExport';
 import type {
@@ -53,6 +54,23 @@ const props = defineProps<{
 const search = ref(props.filters?.search ?? '');
 const statusFilter = ref(props.filters?.status ?? '');
 const roomFilter = ref(props.filters?.room ?? '');
+const { applyFilters, resetFilters, goToPage } = useAdminFilters(
+    '/admin/bookings',
+    {
+        debouncedSources: [search],
+        instantSources: [statusFilter, roomFilter],
+        query: () => ({
+            search: search.value,
+            status: statusFilter.value,
+            room: roomFilter.value,
+        }),
+        reset: () => {
+            search.value = '';
+            statusFilter.value = '';
+            roomFilter.value = '';
+        },
+    },
+);
 const today = new Date().toISOString().split('T')[0];
 
 const showAddBookingModal = computed(() => isModalOpen('add'));
@@ -67,7 +85,6 @@ const showFinishModal = computed(() => isModalOpen('finish'));
 const showDetailModal = computed(() => isModalOpen('detail'));
 const showExportModal = computed(() => isModalOpen('export'));
 const selectedBookingId = ref<number | null>(null);
-const selectedBookingCode = ref<string | null>(null);
 const detailBooking = ref<Booking | null>(null);
 const bookingToDelete = ref<Booking | null>(null);
 const bookingToCancel = ref<Booking | null>(null);
@@ -88,6 +105,9 @@ const exportStartDate = ref('');
 const exportEndDate = ref('');
 const exportMonth = ref('');
 const exportYear = ref(String(new Date().getFullYear()));
+const exportYearOptions = Array.from({ length: 51 }, (_, index) =>
+    String(2050 - index),
+);
 const exportPeriodOptions: Array<{
     value: ExportPeriod;
     label: string;
@@ -95,7 +115,7 @@ const exportPeriodOptions: Array<{
 }> = [
     { value: 'all', label: 'Semua', description: 'Tanpa batas waktu' },
     { value: 'date', label: 'Tanggal', description: 'Satu tanggal' },
-    { value: 'range', label: 'Rentang', description: 'Tanggal mulai–selesai' },
+    { value: 'range', label: 'Rentang', description: 'Tanggal mulai-selesai' },
     { value: 'month', label: 'Bulan', description: 'Satu bulan' },
     { value: 'year', label: 'Tahun', description: 'Satu tahun' },
 ];
@@ -113,7 +133,7 @@ const exportColumnOptions: Array<{
     key: BookingExportColumnKey;
     label: string;
 }> = [
-    { key: 'code', label: 'Kode' },
+    { key: 'id', label: 'ID' },
     { key: 'borrower', label: 'Peminjam' },
     { key: 'room', label: 'Ruangan' },
     { key: 'activity', label: 'Kegiatan' },
@@ -489,21 +509,18 @@ async function downloadPreview() {
     }
 }
 
-function openApproveModal(id: number, code: string) {
+function openApproveModal(id: number) {
     selectedBookingId.value = id;
-    selectedBookingCode.value = code;
     openModal('approve');
 }
 
 function closeApproveModal() {
     closeModal();
     selectedBookingId.value = null;
-    selectedBookingCode.value = null;
 }
 
-function openRejectModal(id: number, code: string) {
+function openRejectModal(id: number) {
     selectedBookingId.value = id;
-    selectedBookingCode.value = code;
     rejectReason.value = '';
     rejectValidationErrors.value.reason = '';
     openModal('reject');
@@ -512,21 +529,18 @@ function openRejectModal(id: number, code: string) {
 function closeRejectModal() {
     closeModal();
     selectedBookingId.value = null;
-    selectedBookingCode.value = null;
     rejectReason.value = '';
     rejectValidationErrors.value.reason = '';
 }
 
-function openFinishModal(id: number, code: string) {
+function openFinishModal(id: number) {
     selectedBookingId.value = id;
-    selectedBookingCode.value = code;
     openModal('finish');
 }
 
 function closeFinishModal() {
     closeModal();
     selectedBookingId.value = null;
-    selectedBookingCode.value = null;
 }
 
 function openDetailModal(booking: Booking) {
@@ -592,28 +606,6 @@ function submitAddBooking() {
         },
     });
 }
-
-function fetchBookings() {
-    router.get(
-        '/admin/bookings',
-        {
-            search: search.value,
-            status: statusFilter.value,
-            room: roomFilter.value,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        },
-    );
-}
-
-watchDebounced(search, fetchBookings, {
-    debounce: 500,
-});
-
-watch([statusFilter, roomFilter], fetchBookings);
 
 function badgeClass(status: BookingStatus) {
     return {
@@ -682,12 +674,12 @@ function confirmFinish() {
     );
 }
 
-function approve(id: number, code: string) {
-    openApproveModal(id, code);
+function approve(id: number) {
+    openApproveModal(id);
 }
 
-function reject(id: number, code: string) {
-    openRejectModal(id, code);
+function reject(id: number) {
+    openRejectModal(id);
 }
 </script>
 
@@ -871,7 +863,7 @@ function reject(id: number, code: string) {
                                       ? 'Pilih rentang tanggal'
                                       : exportPeriod === 'month'
                                         ? 'Pilih bulan'
-                                        : 'Masukkan tahun'
+                                        : 'Pilih tahun'
                             }}
                         </label>
                         <AppInput
@@ -917,16 +909,20 @@ function reject(id: number, code: string) {
                                 />
                             </label>
                         </div>
-                        <input
+                        <AppSelect
                             v-else
                             v-model="exportYear"
-                            type="number"
-                            min="2000"
-                            max="2100"
-                            step="1"
                             :disabled="exportBusy"
-                            class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 sm:max-w-xs"
-                        />
+                            class="mt-2 sm:max-w-xs"
+                        >
+                            <option
+                                v-for="year in exportYearOptions"
+                                :key="year"
+                                :value="year"
+                            >
+                                {{ year }}
+                            </option>
+                        </AppSelect>
                     </div>
                 </div>
 
@@ -1401,8 +1397,8 @@ function reject(id: number, code: string) {
         >
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                    <p class="text-sm text-gray-500">Kode Booking</p>
-                    <p class="mt-1 font-medium">{{ detailBooking?.code }}</p>
+                    <p class="text-sm text-gray-500">ID Booking</p>
+                    <p class="mt-1 font-medium">{{ detailBooking?.id }}</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Status</p>
@@ -1459,7 +1455,7 @@ function reject(id: number, code: string) {
         >
             <div class="space-y-4">
                 <p class="text-sm text-gray-700">
-                    Booking <strong>{{ selectedBookingCode }}</strong> akan
+                    Booking ID <strong>{{ selectedBookingId }}</strong> akan
                     langsung ditandai sebagai <strong>Approved</strong> dan
                     tercatat sebagai diproses.
                 </p>
@@ -1524,7 +1520,7 @@ function reject(id: number, code: string) {
         >
             <div class="space-y-4">
                 <p class="text-sm text-gray-700">
-                    Peminjaman <strong>{{ selectedBookingCode }}</strong> akan
+                    Peminjaman ID <strong>{{ selectedBookingId }}</strong> akan
                     langsung ditandai sebagai <strong>Finished</strong>.
                 </p>
                 <div class="flex justify-end gap-3">
@@ -1558,26 +1554,26 @@ function reject(id: number, code: string) {
         </div>
         <!-- Filter -->
 
-        <div class="rounded-xl bg-white p-5 shadow">
-            <div class="grid gap-4 md:grid-cols-3">
-                <AppInput
-                    v-model="search"
-                    appearance="admin"
-                    type="text"
-                    placeholder="Cari booking..."
-                    class="rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
-                />
-
+        <AdminSearchPanel
+            v-model="search"
+            placeholder="Cari booking..."
+            :filter-columns="2"
+            @search="applyFilters"
+            @reset="resetFilters"
+        >
+            <template #filters>
                 <AppSelect
                     v-model="statusFilter"
                     class="rounded-lg border px-4 py-2"
                 >
                     <option value="">Semua Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="finished">Finished</option>
+                    <option
+                        v-for="status in statuses"
+                        :key="status.code"
+                        :value="status.code"
+                    >
+                        {{ status.label }}
+                    </option>
                 </AppSelect>
 
                 <AppSelect
@@ -1593,8 +1589,8 @@ function reject(id: number, code: string) {
                         {{ room.name }}
                     </option>
                 </AppSelect>
-            </div>
-        </div>
+            </template>
+        </AdminSearchPanel>
 
         <!-- Table -->
 
@@ -1602,7 +1598,7 @@ function reject(id: number, code: string) {
             <table class="w-full min-w-[1050px]">
                 <thead class="bg-gray-100">
                     <tr class="text-left text-sm">
-                        <th class="px-5 py-4">Kode</th>
+                        <th class="px-5 py-4">ID</th>
                         <th class="px-5 py-4">Peminjam</th>
                         <th class="px-5 py-4">Ruangan</th>
                         <th class="px-5 py-4">Kegiatan</th>
@@ -1619,7 +1615,7 @@ function reject(id: number, code: string) {
                         class="border-t hover:bg-gray-50"
                     >
                         <td class="px-5 py-4 font-medium">
-                            {{ booking.code }}
+                            {{ booking.id }}
                         </td>
 
                         <td class="px-5 py-4">
@@ -1661,7 +1657,7 @@ function reject(id: number, code: string) {
                                 <ActionIconButton
                                     v-if="booking.status === 'pending'"
                                     action="approve"
-                                    @click="approve(booking.id, booking.code)"
+                                    @click="approve(booking.id)"
                                 />
 
                                 <ActionIconButton
@@ -1679,18 +1675,13 @@ function reject(id: number, code: string) {
                                 <ActionIconButton
                                     v-if="booking.status === 'approved'"
                                     action="finish"
-                                    @click="
-                                        openFinishModal(
-                                            booking.id,
-                                            booking.code,
-                                        )
-                                    "
+                                    @click="openFinishModal(booking.id)"
                                 />
 
                                 <ActionIconButton
                                     v-if="booking.status === 'pending'"
                                     action="reject"
-                                    @click="reject(booking.id, booking.code)"
+                                    @click="reject(booking.id)"
                                 />
                                 <ActionIconButton
                                     action="delete"
@@ -1709,14 +1700,7 @@ function reject(id: number, code: string) {
             <button
                 class="rounded-lg border px-4 py-2 hover:bg-gray-100"
                 :disabled="bookings?.current_page === 1"
-                @click="
-                    router.get('/admin/bookings', {
-                        page: bookings.current_page - 1,
-                        search,
-                        status: statusFilter,
-                        room: roomFilter,
-                    })
-                "
+                @click="goToPage(bookings.current_page - 1)"
             >
                 Previous
             </button>
@@ -1724,14 +1708,7 @@ function reject(id: number, code: string) {
             <button
                 class="rounded-lg border px-4 py-2 hover:bg-gray-100"
                 :disabled="bookings.current_page === bookings.last_page"
-                @click="
-                    router.get('/admin/bookings', {
-                        page: bookings.current_page + 1,
-                        search,
-                        status: statusFilter,
-                        room: roomFilter,
-                    })
-                "
+                @click="goToPage(bookings.current_page + 1)"
             >
                 Next
             </button>
@@ -1739,7 +1716,7 @@ function reject(id: number, code: string) {
         <ConfirmModal
             v-if="bookingToCancel"
             title="Batalkan Booking Approved"
-            :message="`Booking ${bookingToCancel.code} milik ${bookingToCancel.borrower} akan dibatalkan.`"
+            :message="`Booking ID ${bookingToCancel.id} milik ${bookingToCancel.borrower} akan dibatalkan.`"
             confirm-label="Batalkan Booking"
             :processing="isCancellingBooking"
             @close="closeCancelBookingModal"
@@ -1748,7 +1725,7 @@ function reject(id: number, code: string) {
         <ConfirmModal
             v-if="bookingToDelete"
             title="Hapus Booking"
-            :message="`Booking ${bookingToDelete.code} untuk ${bookingToDelete.room} akan dihapus. Jadwalnya akan tersedia kembali untuk dipinjam.`"
+            :message="`Booking ID ${bookingToDelete.id} untuk ${bookingToDelete.room} akan dihapus. Jadwalnya akan tersedia kembali untuk dipinjam.`"
             confirm-label="Hapus"
             @close="closeDeleteModal"
             @confirm="deleteBooking"
