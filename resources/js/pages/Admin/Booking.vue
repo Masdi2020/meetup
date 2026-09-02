@@ -1567,11 +1567,13 @@ function reject(id: number, code: string) {
                     class="rounded-lg border px-4 py-2"
                 >
                     <option value="">Semua Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="finished">Finished</option>
+                    <option
+                        v-for="status in statuses"
+                        :key="status.code"
+                        :value="status.code"
+                    >
+                        {{ status.label }}
+                    </option>
                 </AppSelect>
 
                 <AppSelect

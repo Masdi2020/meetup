@@ -114,6 +114,8 @@ it('filters bookings by search status and room on the server', function () {
             ->has('bookings.data', 1)
             ->where('bookings.data.0.room', 'Ruang Cadangan')
             ->where('bookings.data.0.status', 'approved')
+            ->where('statuses.0.code', 'approved')
+            ->where('statuses.0.label', 'Approved')
             ->where('filters.search', 'Mingguan')
             ->where('filters.status', 'approved')
             ->where('filters.room', (string) $secondRoom->id));

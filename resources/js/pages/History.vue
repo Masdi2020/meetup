@@ -16,6 +16,11 @@ interface BookingHistory {
     status: Status;
 }
 
+interface BookingStatusOption {
+    value: Status;
+    label: string;
+}
+
 const showEditModal = ref(false);
 const showDateAlertModal = ref(false);
 const bookingToCancel = ref<number | null>(null);
@@ -88,14 +93,15 @@ const submitEdit = () => {
     });
 };
 
-const filterStatus = ref('Semua');
+const filterStatus = ref<Status | ''>('');
 
-const { histories } = defineProps<{
+const { histories, statuses } = defineProps<{
     histories: BookingHistory[];
+    statuses: BookingStatusOption[];
 }>();
 
 const filteredHistory = computed(() => {
-    if (filterStatus.value === 'Semua') {
+    if (!filterStatus.value) {
         return histories;
     }
 
@@ -164,12 +170,14 @@ const finishBooking = () => {
         <div class="page-card">
             <div class="filter">
                 <select v-model="filterStatus">
-                    <option>Semua</option>
-                    <option>Approved</option>
-                    <option>Pending</option>
-                    <option>Rejected</option>
-                    <option>Cancelled</option>
-                    <option>Finished</option>
+                    <option value="">Semua</option>
+                    <option
+                        v-for="status in statuses"
+                        :key="status.value"
+                        :value="status.value"
+                    >
+                        {{ status.label }}
+                    </option>
                 </select>
             </div>
 
