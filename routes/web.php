@@ -41,8 +41,8 @@ Route::middleware(['auth'])->group(function () {
         ->prefix('display')
         ->name('display.')
         ->group(function () {
-            Route::get('/display', [DisplayController::class, 'index'])->name('index');
-            Route::get('/display/{room}', [BannerController::class, 'index'])->name('banner');
+            Route::get('/', [DisplayController::class, 'index'])->name('index');
+            Route::get('/{room}', [BannerController::class, 'index'])->name('banner');
         });
 
     Route::middleware('role:admin')
