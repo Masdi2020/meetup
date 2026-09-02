@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             if ($user && $user->role === 'display') {
-                return route('meeting.banner');
+                return route('display.index');
             }
 
             return '/';

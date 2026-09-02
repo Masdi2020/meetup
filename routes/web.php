@@ -36,8 +36,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('display.index');
 
     Route::middleware('role:display')
-        ->get('/meeting/banner', [BannerController::class, 'index'])
-        ->name('meeting.banner');
+        ->get('/display/{room}', [BannerController::class, 'index'])
+        ->name('display.banner');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -54,10 +54,12 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
             Route::get('/bookings/export-data', [AdminBookingController::class, 'exportData'])->name('bookings.export-data');
             Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
-            Route::patch('/bookings/{booking}/approve', [AdminBookingController::class, 'approve'])->name('bookings.approve');
-            Route::patch('/bookings/{booking}/reject', [AdminBookingController::class, 'reject'])->name('bookings.reject');
-            Route::patch('/bookings/{booking}/finish', [AdminBookingController::class, 'finish'])->name('bookings.finish');
-            Route::delete('/bookings/{booking}', [AdminBookingController::class, 'destroy'])->name('bookings.destroy');
+            Route::put('/bookings/{booking}', [AdminBookingController::class, 'update'])->middleware('booking.action:update')->name('bookings.update');
+            Route::put('/bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->middleware('booking.action:cancel')->name('bookings.cancel');
+            Route::patch('/bookings/{booking}/approve', [AdminBookingController::class, 'approve'])->middleware('booking.action:approve')->name('bookings.approve');
+            Route::patch('/bookings/{booking}/reject', [AdminBookingController::class, 'reject'])->middleware('booking.action:reject')->name('bookings.reject');
+            Route::patch('/bookings/{booking}/finish', [AdminBookingController::class, 'finish'])->middleware('booking.action:finish')->name('bookings.finish');
+            Route::delete('/bookings/{booking}', [AdminBookingController::class, 'destroy'])->middleware('booking.action:destroy')->name('bookings.destroy');
 
             Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');
             Route::post('/facilities', [AdminFacilityController::class, 'store'])->name('facilities.store');
@@ -89,8 +91,8 @@ Route::middleware(['auth'])->group(function () {
 
             Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');
             Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
-            Route::put('/booking/{booking}', [BookingController::class, 'update'])->name('booking.update');
-            Route::put('/booking/{booking}/cancel', [BookingController::class, 'cancel'])->name('booking.cancel');
-            Route::patch('/booking/{booking}/finish', [BookingController::class, 'finish'])->name('booking.finish');
+            Route::put('/booking/{booking}', [BookingController::class, 'update'])->middleware('booking.action:update')->name('booking.update');
+            Route::put('/booking/{booking}/cancel', [BookingController::class, 'cancel'])->middleware('booking.action:cancel')->name('booking.cancel');
+            Route::patch('/booking/{booking}/finish', [BookingController::class, 'finish'])->middleware('booking.action:finish')->name('booking.finish');
         });
 });

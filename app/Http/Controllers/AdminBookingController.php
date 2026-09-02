@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Events\BannerUpdated;
 use App\Http\Requests\RejectBookingRequest;
+use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
+use App\Models\BookingStatus;
 use App\Models\Room;
+use App\Models\User;
 use App\Services\BookingWorkflowService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -60,6 +63,12 @@ class AdminBookingController extends Controller
 
         return Inertia::render('Admin/Booking', [
             'bookings' => $bookings, 'rooms' => Room::select('id', 'name')->orderBy('name')->get(),
+            'users' => User::query()->select('id', 'name', 'role')->whereIn('role', ['user', 'admin'])->orderBy('name')->get(),
+            'statuses' => BookingStatus::query()->select('code', 'label')->orderBy('id')->get()
+                ->map(fn (BookingStatus $status) => [
+                    'code' => strtolower($status->code),
+                    'label' => ucfirst(strtolower($status->label)),
+                ]),
             'stats' => ['total' => Booking::count(), 'pending' => $count('PENDING'), 'approved' => $count('APPROVED'), 'finished' => $count('FINISHED')],
             'filters' => $request->only(['search', 'status', 'room']),
         ]);
@@ -139,6 +148,30 @@ class AdminBookingController extends Controller
         $this->bookingWorkflow->changeStatus($booking, 'FINISHED', $request->user()->id, 'Diakhiri oleh admin');
 
         return back()->with('success', 'Booking berhasil diakhiri.');
+    }
+
+    public function update(UpdateBookingRequest $request, Booking $booking): RedirectResponse
+    {
+        $this->bookingWorkflow->update(
+            $booking,
+            $request->bookingData(),
+            $request->user()->id,
+            'booking diperbarui oleh admin',
+        );
+
+        return back()->with('success', 'Booking berhasil diperbarui.');
+    }
+
+    public function cancel(Request $request, Booking $booking): RedirectResponse
+    {
+        $this->bookingWorkflow->changeStatus(
+            $booking,
+            'CANCELLED',
+            $request->user()->id,
+            'Dibatalkan oleh admin',
+        );
+
+        return back()->with('success', 'Booking berhasil dibatalkan.');
     }
 
     public function destroy(Booking $booking): RedirectResponse

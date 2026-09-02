@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { useEchoPublic } from '@laravel/echo-vue';
-import { ArrowLeft } from '@lucide/vue';
+import { ArrowLeft, Maximize, Minimize } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -149,8 +149,19 @@ onUnmounted(() => {
     >
         <ArrowLeft :size="24" />
     </button>
-    <button class="fullscreen-btn" @click="toggleFullscreen">
-        {{ isFullscreen ? '⤢' : '⛶' }}
+    <button
+        type="button"
+        class="fullscreen-btn"
+        :aria-label="
+            isFullscreen ? 'Keluar dari layar penuh' : 'Tampilkan layar penuh'
+        "
+        :title="
+            isFullscreen ? 'Keluar dari layar penuh' : 'Tampilkan layar penuh'
+        "
+        @click="toggleFullscreen"
+    >
+        <Minimize v-if="isFullscreen" :size="24" aria-hidden="true" />
+        <Maximize v-else :size="24" aria-hidden="true" />
     </button>
 
     <div class="screen">
@@ -261,7 +272,11 @@ onUnmounted(() => {
     right: 24px;
     bottom: 24px;
 
-    padding: 12px 16px;
+    display: flex;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
 
     border: none;
     border-radius: 12px;

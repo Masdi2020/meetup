@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\Room;
 
 class BannerService
 {
@@ -13,12 +14,12 @@ class BannerService
      *      now: string
      * }
      */
-    public function current(): array
+    public function current(Room $room): array
     {
         $now = now();
 
         $baseQuery = Booking::query()
-            ->where('room_id', 1)
+            ->where('room_id', $room->id)
             ->whereDate('date', $now->toDateString())
             ->whereHas('status', fn ($q) => $q->where('code', 'APPROVED'));
 

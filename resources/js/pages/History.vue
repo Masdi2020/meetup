@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 
@@ -208,30 +209,27 @@ const finishBooking = () => {
 
                             <td>
                                 <div
-                                    v-if="item.status === 'Pending'"
+                                    v-if="
+                                        item.status === 'Pending' ||
+                                        item.status === 'Approved'
+                                    "
                                     class="action-buttons"
                                 >
-                                    <button
-                                        class="edit-btn"
+                                    <ActionIconButton
+                                        action="edit"
                                         @click="openEditModal(item)"
-                                    >
-                                        Edit
-                                    </button>
+                                    />
 
-                                    <button
-                                        class="cancel-btn"
+                                    <ActionIconButton
+                                        action="cancel"
                                         @click="openCancelModal(item.id)"
-                                    >
-                                        Cancel
-                                    </button>
+                                    />
+                                    <ActionIconButton
+                                        v-if="item.status === 'Approved'"
+                                        action="finish"
+                                        @click="bookingToFinish = item.id"
+                                    />
                                 </div>
-                                <button
-                                    v-else-if="item.status === 'Approved'"
-                                    class="finish-btn"
-                                    @click="bookingToFinish = item.id"
-                                >
-                                    Akhiri Sekarang
-                                </button>
                             </td>
                         </tr>
 

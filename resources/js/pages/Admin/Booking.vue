@@ -2,6 +2,7 @@
 import { router, useForm } from '@inertiajs/vue3';
 import { watchDebounced } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
+import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import AppTextarea from '@/components/atoms/AppTextarea.vue';
@@ -24,9 +25,23 @@ import type {
     Pagination,
     RoomOption as Room,
 } from '@/types/admin';
+
+interface BorrowerOption {
+    id: number;
+    name: string;
+    role: 'user' | 'admin';
+}
+
+interface BookingStatusOption {
+    code: BookingStatus;
+    label: string;
+}
+
 const props = defineProps<{
     bookings: Pagination<Booking>;
     rooms?: Room[];
+    users?: BorrowerOption[];
+    statuses?: BookingStatusOption[];
     stats?: Stats;
     filters?: {
         search?: string;
@@ -43,8 +58,9 @@ const today = new Date().toISOString().split('T')[0];
 const showAddBookingModal = computed(() => isModalOpen('add'));
 const showAddBookingSuccess = ref(false);
 const { openModal, closeModal, isModalOpen } = useModalManager<
-    'add' | 'approve' | 'reject' | 'finish' | 'detail' | 'export'
+    'add' | 'edit' | 'approve' | 'reject' | 'finish' | 'detail' | 'export'
 >();
+const showEditBookingModal = computed(() => isModalOpen('edit'));
 const showApproveModal = computed(() => isModalOpen('approve'));
 const showRejectModal = computed(() => isModalOpen('reject'));
 const showFinishModal = computed(() => isModalOpen('finish'));
@@ -54,6 +70,8 @@ const selectedBookingId = ref<number | null>(null);
 const selectedBookingCode = ref<string | null>(null);
 const detailBooking = ref<Booking | null>(null);
 const bookingToDelete = ref<Booking | null>(null);
+const bookingToCancel = ref<Booking | null>(null);
+const isCancellingBooking = ref(false);
 const rejectReason = ref('');
 const rejectValidationErrors = ref({ reason: '' });
 const addBookingPreview = ref<string | null>(null);
@@ -182,6 +200,7 @@ const exportPeriodDescription = computed(() => {
 });
 
 const addBookingForm = useForm({
+    user_id: null as number | null,
     room_id: null as number | null,
     date: '',
     start_time: '',
@@ -189,9 +208,83 @@ const addBookingForm = useForm({
     title: '',
     participants: null as number | null,
     request: '',
-    status: 'pending' as 'pending' | 'approved',
+    status: 'pending' as BookingStatus,
     banner: null as File | null,
 });
+
+const editBookingForm = useForm({
+    title: '',
+    date: '',
+    start_time: '',
+    end_time: '',
+});
+const editingBooking = ref<Booking | null>(null);
+
+function bookingDateForInput(value: string): string {
+    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+
+    return match ? `${match[3]}-${match[2]}-${match[1]}` : value;
+}
+
+function openEditBookingModal(booking: Booking) {
+    editingBooking.value = booking;
+    editBookingForm.clearErrors();
+    editBookingForm.title = booking.activity;
+    editBookingForm.date = bookingDateForInput(booking.date);
+    editBookingForm.start_time = booking.start;
+    editBookingForm.end_time = booking.end;
+    openModal('edit');
+}
+
+function closeEditBookingModal() {
+    if (editBookingForm.processing) {
+        return;
+    }
+
+    closeModal();
+    editingBooking.value = null;
+    editBookingForm.reset();
+}
+
+function submitEditBooking() {
+    if (!editingBooking.value) {
+        return;
+    }
+
+    editBookingForm.put(`/admin/bookings/${editingBooking.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => closeEditBookingModal(),
+    });
+}
+
+function openCancelBookingModal(booking: Booking) {
+    bookingToCancel.value = booking;
+}
+
+function closeCancelBookingModal() {
+    if (!isCancellingBooking.value) {
+        bookingToCancel.value = null;
+    }
+}
+
+function cancelApprovedBooking() {
+    if (!bookingToCancel.value) {
+        return;
+    }
+
+    isCancellingBooking.value = true;
+    router.put(
+        `/admin/bookings/${bookingToCancel.value.id}/cancel`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isCancellingBooking.value = false;
+                bookingToCancel.value = null;
+            },
+        },
+    );
+}
 
 const addBookingHasWarning = (field: string): boolean => {
     if (!addBookingSubmitted.value) {
@@ -199,6 +292,8 @@ const addBookingHasWarning = (field: string): boolean => {
     }
 
     switch (field) {
+        case 'user_id':
+            return addBookingForm.user_id === null;
         case 'room_id':
             return addBookingForm.room_id === null;
         case 'date':
@@ -476,6 +571,7 @@ function submitAddBooking() {
     addBookingSubmitted.value = true;
 
     if (
+        addBookingHasWarning('user_id') ||
         addBookingHasWarning('room_id') ||
         addBookingHasWarning('date') ||
         addBookingHasWarning('start_time') ||
@@ -1010,10 +1106,45 @@ function reject(id: number, code: string) {
             </div>
 
             <div class="grid gap-4 md:grid-cols-2">
-                <FormField label="Status" appearance="admin">
+                <FormField
+                    label="Nama Peminjam"
+                    appearance="admin"
+                    required
+                    :error="
+                        addBookingForm.errors.user_id ||
+                        (addBookingHasWarning('user_id')
+                            ? 'Nama peminjam wajib dipilih.'
+                            : '')
+                    "
+                >
+                    <AppSelect v-model="addBookingForm.user_id">
+                        <option :value="null" disabled hidden>
+                            Pilih Peminjam
+                        </option>
+                        <option
+                            v-for="user in users"
+                            :key="user.id"
+                            :value="user.id"
+                        >
+                            {{ user.name
+                            }}{{ user.role === 'admin' ? ' (Admin)' : '' }}
+                        </option>
+                    </AppSelect>
+                </FormField>
+                <FormField
+                    label="Status"
+                    appearance="admin"
+                    required
+                    :error="addBookingForm.errors.status"
+                >
                     <AppSelect v-model="addBookingForm.status">
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
+                        <option
+                            v-for="status in statuses"
+                            :key="status.code"
+                            :value="status.code"
+                        >
+                            {{ status.label }}
+                        </option>
                     </AppSelect>
                 </FormField>
                 <FormField
@@ -1174,6 +1305,88 @@ function reject(id: number, code: string) {
                             addBookingForm.processing
                                 ? 'Menyimpan...'
                                 : 'Simpan'
+                        }}
+                    </button>
+                </div>
+            </div>
+        </AppModal>
+
+        <AppModal
+            v-if="showEditBookingModal"
+            title="Edit Booking Approved"
+            max-width="2xl"
+            @close="closeEditBookingModal"
+        >
+            <div class="grid gap-4 md:grid-cols-2">
+                <FormField
+                    class="md:col-span-2"
+                    label="Judul Kegiatan"
+                    appearance="admin"
+                    required
+                    :error="editBookingForm.errors.title"
+                >
+                    <AppInput
+                        v-model="editBookingForm.title"
+                        appearance="admin"
+                    />
+                </FormField>
+                <FormField
+                    label="Tanggal"
+                    appearance="admin"
+                    required
+                    :error="editBookingForm.errors.date"
+                >
+                    <AppInput
+                        v-model="editBookingForm.date"
+                        appearance="admin"
+                        type="date"
+                        :min="today"
+                    />
+                </FormField>
+                <div class="hidden md:block" />
+                <FormField
+                    label="Dari Jam"
+                    appearance="admin"
+                    required
+                    :error="editBookingForm.errors.start_time"
+                >
+                    <AppInput
+                        v-model="editBookingForm.start_time"
+                        appearance="admin"
+                        type="time"
+                    />
+                </FormField>
+                <FormField
+                    label="Sampai Jam"
+                    appearance="admin"
+                    required
+                    :error="editBookingForm.errors.end_time"
+                >
+                    <AppInput
+                        v-model="editBookingForm.end_time"
+                        appearance="admin"
+                        type="time"
+                    />
+                </FormField>
+                <div class="flex justify-end gap-3 md:col-span-2">
+                    <button
+                        type="button"
+                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        :disabled="editBookingForm.processing"
+                        @click="closeEditBookingModal"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                        :disabled="editBookingForm.processing"
+                        @click="submitEditBooking"
+                    >
+                        {{
+                            editBookingForm.processing
+                                ? 'Menyimpan...'
+                                : 'Simpan Perubahan'
                         }}
                     </button>
                 </div>
@@ -1439,13 +1652,11 @@ function reject(id: number, code: string) {
                         </td>
 
                         <td class="px-5 py-4">
-                            <div class="flex justify-end gap-2">
-                                <button
-                                    class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-100"
+                            <div class="flex flex-wrap justify-end gap-2">
+                                <ActionIconButton
+                                    action="detail"
                                     @click="openDetailModal(booking)"
-                                >
-                                    Detail
-                                </button>
+                                />
 
                                 <button
                                     v-if="booking.status === 'pending'"
@@ -1455,18 +1666,28 @@ function reject(id: number, code: string) {
                                     Approve
                                 </button>
 
-                                <button
+                                <ActionIconButton
                                     v-if="booking.status === 'approved'"
-                                    class="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                                    action="edit"
+                                    @click="openEditBookingModal(booking)"
+                                />
+
+                                <ActionIconButton
+                                    v-if="booking.status === 'approved'"
+                                    action="cancel"
+                                    @click="openCancelBookingModal(booking)"
+                                />
+
+                                <ActionIconButton
+                                    v-if="booking.status === 'approved'"
+                                    action="finish"
                                     @click="
                                         openFinishModal(
                                             booking.id,
                                             booking.code,
                                         )
                                     "
-                                >
-                                    Akhiri Sekarang
-                                </button>
+                                />
 
                                 <button
                                     v-if="booking.status === 'pending'"
@@ -1475,12 +1696,10 @@ function reject(id: number, code: string) {
                                 >
                                     Reject
                                 </button>
-                                <button
-                                    class="rounded-lg bg-red-700 px-3 py-2 text-sm text-white hover:bg-red-800"
+                                <ActionIconButton
+                                    action="delete"
                                     @click="openDeleteModal(booking)"
-                                >
-                                    Hapus
-                                </button>
+                                />
                             </div>
                         </td>
                     </tr>
@@ -1521,6 +1740,15 @@ function reject(id: number, code: string) {
                 Next
             </button>
         </div>
+        <ConfirmModal
+            v-if="bookingToCancel"
+            title="Batalkan Booking Approved"
+            :message="`Booking ${bookingToCancel.code} milik ${bookingToCancel.borrower} akan dibatalkan.`"
+            confirm-label="Batalkan Booking"
+            :processing="isCancellingBooking"
+            @close="closeCancelBookingModal"
+            @confirm="cancelApprovedBooking"
+        />
         <ConfirmModal
             v-if="bookingToDelete"
             title="Hapus Booking"

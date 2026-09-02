@@ -7,6 +7,17 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateBookingRequest extends FormRequest
 {
+    /** @return array{title: string, date: string, start_time: string, end_time: string} */
+    public function bookingData(): array
+    {
+        return [
+            'title' => $this->string('title')->toString(),
+            'date' => $this->string('date')->toString(),
+            'start_time' => $this->string('start_time')->toString(),
+            'end_time' => $this->string('end_time')->toString(),
+        ];
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,9 +35,9 @@ class UpdateBookingRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'date' => ['required', 'date'],
-            'start_time' => ['required'],
-            'end_time' => ['required'],
+            'date' => ['required', 'date', 'after_or_equal:today'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
         ];
     }
 }

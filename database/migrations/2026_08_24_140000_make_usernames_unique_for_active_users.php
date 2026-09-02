@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('active_username')
                 ->nullable()
-                ->storedAs('if(`deleted_at` is null, `username`, null)')
+                ->storedAs('case when `deleted_at` is null then `username` else null end')
                 ->unique();
         });
     }
