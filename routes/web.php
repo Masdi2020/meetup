@@ -31,19 +31,19 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware(['auth'])->group(function () {
-    Route::middleware('role:display')
-        ->get('/display', [DisplayController::class, 'index'])
-        ->name('display.index');
-
-    Route::middleware('role:display')
-        ->get('/display/{room}', [BannerController::class, 'index'])
-        ->name('display.banner');
-
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::put('/profile/forced-password', [ProfileController::class, 'updateForcedPassword'])->name('profile.forced-password');
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
+    Route::middleware('role:display')
+        ->prefix('display')
+        ->name('display.')
+        ->group(function () {
+            Route::get('/display', [DisplayController::class, 'index'])->name('index');
+            Route::get('/display/{room}', [BannerController::class, 'index'])->name('banner');
+        });
 
     Route::middleware('role:admin')
         ->prefix('admin')
