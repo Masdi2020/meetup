@@ -120,3 +120,42 @@ it('filters bookings by search status and room on the server', function () {
             ->where('filters.status', 'approved')
             ->where('filters.room', (string) $secondRoom->id));
 });
+
+it('exports an automatic number column followed by the selected ID column', function () {
+    $admin = filterUser('Admin', 'export-admin', 'admin');
+    $owner = filterUser('Pemilik Booking', 'export-owner', 'user');
+    $room = filterRoom('Ruang Ekspor');
+    $approved = BookingStatus::create([
+        'code' => 'APPROVED',
+        'label' => 'Approved',
+    ]);
+
+    $bookings = collect(['Rapat Pertama', 'Rapat Kedua'])->map(fn (string $title, int $index) => Booking::create([
+        'room_id' => $room->id,
+        'user_id' => $owner->id,
+        'date' => '2026-09-03',
+        'start_time' => sprintf('%02d:00', 9 + $index),
+        'end_time' => sprintf('%02d:00', 10 + $index),
+        'title' => $title,
+        'participants_count' => 5,
+        'status_id' => $approved->id,
+    ]));
+
+    $query = http_build_query([
+        'columns' => ['id', 'activity'],
+        'period' => 'all',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->getJson("/admin/bookings/export-data?{$query}")
+        ->assertOk()
+        ->assertJsonPath('columns.0.key', 'number')
+        ->assertJsonPath('columns.0.label', 'No')
+        ->assertJsonPath('columns.1.key', 'id')
+        ->assertJsonPath('columns.1.label', 'ID')
+        ->assertJsonPath('rows.0.number', 1)
+        ->assertJsonPath('rows.1.number', 2);
+
+    expect($response->json('rows.*.id'))
+        ->toEqualCanonicalizing($bookings->pluck('id')->all());
+});

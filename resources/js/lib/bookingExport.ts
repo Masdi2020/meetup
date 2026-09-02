@@ -1,7 +1,8 @@
 export type BookingExportFormat = 'pdf' | 'xlsx' | 'csv';
 
 export type BookingExportColumnKey =
-    | 'code'
+    | 'number'
+    | 'id'
     | 'borrower'
     | 'room'
     | 'activity'
