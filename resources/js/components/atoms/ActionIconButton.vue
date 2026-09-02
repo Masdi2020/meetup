@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import {
+    CalendarCheck,
+    CalendarOff,
+    CalendarX,
     CircleStop,
-    CircleX,
     Eye,
     Pencil,
     RotateCcwKey,
@@ -9,7 +11,15 @@ import {
 } from '@lucide/vue';
 import type { Component } from 'vue';
 
-type Action = 'detail' | 'edit' | 'cancel' | 'delete' | 'finish' | 'reset';
+type Action =
+    | 'detail'
+    | 'edit'
+    | 'approve'
+    | 'cancel'
+    | 'reject'
+    | 'delete'
+    | 'finish'
+    | 'reset';
 
 const props = defineProps<{
     action: Action;
@@ -30,9 +40,19 @@ const actions: Record<
         label: 'Edit',
         classes: 'bg-amber-500 text-white hover:bg-amber-600',
     },
+    approve: {
+        icon: CalendarCheck,
+        label: 'Approve',
+        classes: 'bg-green-600 text-white hover:bg-green-700',
+    },
     cancel: {
-        icon: CircleX,
+        icon: CalendarOff,
         label: 'Cancel',
+        classes: 'bg-red-600 text-white hover:bg-red-700',
+    },
+    reject: {
+        icon: CalendarX,
+        label: 'Reject',
         classes: 'bg-red-600 text-white hover:bg-red-700',
     },
     delete: {

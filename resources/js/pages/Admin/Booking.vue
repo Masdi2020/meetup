@@ -1658,13 +1658,11 @@ function reject(id: number, code: string) {
                                     @click="openDetailModal(booking)"
                                 />
 
-                                <button
+                                <ActionIconButton
                                     v-if="booking.status === 'pending'"
-                                    class="rounded-lg bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"
+                                    action="approve"
                                     @click="approve(booking.id, booking.code)"
-                                >
-                                    Approve
-                                </button>
+                                />
 
                                 <ActionIconButton
                                     v-if="booking.status === 'approved'"
@@ -1689,13 +1687,11 @@ function reject(id: number, code: string) {
                                     "
                                 />
 
-                                <button
+                                <ActionIconButton
                                     v-if="booking.status === 'pending'"
-                                    class="rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700"
+                                    action="reject"
                                     @click="reject(booking.id, booking.code)"
-                                >
-                                    Reject
-                                </button>
+                                />
                                 <ActionIconButton
                                     action="delete"
                                     @click="openDeleteModal(booking)"
