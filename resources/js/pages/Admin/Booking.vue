@@ -2,6 +2,7 @@
 import { router, useForm } from '@inertiajs/vue3';
 import { watchDebounced } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
+import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import AppTextarea from '@/components/atoms/AppTextarea.vue';
@@ -1652,12 +1653,10 @@ function reject(id: number, code: string) {
 
                         <td class="px-5 py-4">
                             <div class="flex flex-wrap justify-end gap-2">
-                                <button
-                                    class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-100"
+                                <ActionIconButton
+                                    action="detail"
                                     @click="openDetailModal(booking)"
-                                >
-                                    Detail
-                                </button>
+                                />
 
                                 <button
                                     v-if="booking.status === 'pending'"
@@ -1667,34 +1666,28 @@ function reject(id: number, code: string) {
                                     Approve
                                 </button>
 
-                                <button
+                                <ActionIconButton
                                     v-if="booking.status === 'approved'"
-                                    class="rounded-lg border border-blue-600 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50"
+                                    action="edit"
                                     @click="openEditBookingModal(booking)"
-                                >
-                                    Edit
-                                </button>
+                                />
 
-                                <button
+                                <ActionIconButton
                                     v-if="booking.status === 'approved'"
-                                    class="rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700"
+                                    action="cancel"
                                     @click="openCancelBookingModal(booking)"
-                                >
-                                    Cancel
-                                </button>
+                                />
 
-                                <button
+                                <ActionIconButton
                                     v-if="booking.status === 'approved'"
-                                    class="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                                    action="finish"
                                     @click="
                                         openFinishModal(
                                             booking.id,
                                             booking.code,
                                         )
                                     "
-                                >
-                                    Akhiri Sekarang
-                                </button>
+                                />
 
                                 <button
                                     v-if="booking.status === 'pending'"
@@ -1703,12 +1696,10 @@ function reject(id: number, code: string) {
                                 >
                                     Reject
                                 </button>
-                                <button
-                                    class="rounded-lg bg-red-700 px-3 py-2 text-sm text-white hover:bg-red-800"
+                                <ActionIconButton
+                                    action="delete"
                                     @click="openDeleteModal(booking)"
-                                >
-                                    Hapus
-                                </button>
+                                />
                             </div>
                         </td>
                     </tr>

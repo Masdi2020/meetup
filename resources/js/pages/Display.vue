@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { Eye } from '@lucide/vue';
+import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 interface Room {
     id: number;
     name: string;
@@ -80,24 +80,17 @@ const openRoomBanner = (room: Room) => {
                     </div>
 
                     <!-- Detail Button -->
-                    <button
-                        type="button"
+                    <ActionIconButton
+                        action="detail"
                         :disabled="!room.has_display"
-                        :class="[
-                            'ml-4 rounded-lg p-2.5 transition',
-                            room.has_display
-                                ? 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'
-                                : 'cursor-not-allowed text-gray-300',
-                        ]"
-                        :title="
+                        :label="
                             room.has_display
                                 ? 'Lihat banner rapat'
                                 : 'Banner tidak tersedia'
                         "
+                        class="ml-4"
                         @click="openRoomBanner(room)"
-                    >
-                        <Eye class="h-5 w-5" />
-                    </button>
+                    />
                 </div>
             </div>
 

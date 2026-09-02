@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 
@@ -214,26 +215,20 @@ const finishBooking = () => {
                                     "
                                     class="action-buttons"
                                 >
-                                    <button
-                                        class="edit-btn"
+                                    <ActionIconButton
+                                        action="edit"
                                         @click="openEditModal(item)"
-                                    >
-                                        Edit
-                                    </button>
+                                    />
 
-                                    <button
-                                        class="cancel-btn"
+                                    <ActionIconButton
+                                        action="cancel"
                                         @click="openCancelModal(item.id)"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
+                                    />
+                                    <ActionIconButton
                                         v-if="item.status === 'Approved'"
-                                        class="finish-btn"
+                                        action="finish"
                                         @click="bookingToFinish = item.id"
-                                    >
-                                        Akhiri Sekarang
-                                    </button>
+                                    />
                                 </div>
                             </td>
                         </tr>

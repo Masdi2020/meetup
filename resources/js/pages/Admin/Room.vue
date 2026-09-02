@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import CheckboxField from '@/components/molecules/CheckboxField.vue';
 import CheckboxGroup from '@/components/molecules/CheckboxGroup.vue';
@@ -230,19 +231,15 @@ function toggleAvailability() {
 
                         <td class="px-5 py-4">
                             <div class="flex justify-end gap-2">
-                                <button
+                                <ActionIconButton
+                                    action="detail"
                                     @click="openDetailModal(room)"
-                                    class="rounded-lg border px-3 py-2 hover:bg-gray-100"
-                                >
-                                    Detail
-                                </button>
+                                />
 
-                                <button
+                                <ActionIconButton
+                                    action="edit"
                                     @click="openEditModal(room)"
-                                    class="rounded-lg bg-yellow-500 px-3 py-2 text-white hover:bg-yellow-600"
-                                >
-                                    Edit
-                                </button>
+                                />
 
                                 <button
                                     @click="openAvailabilityModal(room)"

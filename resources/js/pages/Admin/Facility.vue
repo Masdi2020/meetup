@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
@@ -197,26 +198,20 @@ function deleteFacility() {
 
                         <td class="px-5 py-4">
                             <div class="flex justify-end gap-2">
-                                <button
-                                    class="rounded-lg border px-3 py-2 transition hover:bg-gray-100"
+                                <ActionIconButton
+                                    action="detail"
                                     @click="openDetailModal(facility)"
-                                >
-                                    Detail
-                                </button>
+                                />
 
-                                <button
-                                    class="rounded-lg bg-yellow-500 px-3 py-2 text-white transition hover:bg-yellow-600"
+                                <ActionIconButton
+                                    action="edit"
                                     @click="openEditModal(facility)"
-                                >
-                                    Edit
-                                </button>
+                                />
 
-                                <button
-                                    class="transitiom rounded-lg bg-red-600 px-3 py-2 text-white hover:bg-red-700"
+                                <ActionIconButton
+                                    action="delete"
                                     @click="openDeleteModal(facility)"
-                                >
-                                    Hapus
-                                </button>
+                                />
                             </div>
                         </td>
                     </tr>

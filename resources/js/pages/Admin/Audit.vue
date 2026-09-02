@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
@@ -257,13 +258,10 @@ function formatValue(value: unknown) {
                             <!-- Action -->
                             <td class="px-5 py-4">
                                 <div class="flex justify-end">
-                                    <button
-                                        type="button"
-                                        class="rounded-lg border px-3 py-2 hover:bg-gray-100"
+                                    <ActionIconButton
+                                        action="detail"
                                         @click="showAuditDetail(audit)"
-                                    >
-                                        Detail
-                                    </button>
+                                    />
                                 </div>
                             </td>
                         </tr>
