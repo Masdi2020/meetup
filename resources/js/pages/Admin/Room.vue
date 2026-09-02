@@ -7,6 +7,7 @@ import CheckboxField from '@/components/molecules/CheckboxField.vue';
 import CheckboxGroup from '@/components/molecules/CheckboxGroup.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
+import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
@@ -160,34 +161,12 @@ function toggleAvailability() {
             <StatCard label="Total Kapasitas" :value="totalCapacity" />
             <StatCard label="Total Fasilitas" :value="totalFacilities" />
         </div>
-        <div class="rounded-xl bg-white p-5 shadow">
-            <div class="grid gap-4 md:grid-cols-[1fr_auto_auto]">
-                <AppInput
-                    v-model="search"
-                    appearance="admin"
-                    type="text"
-                    placeholder="Cari ruangan..."
-                    class="rounded-lg border px-4 py-2"
-                    @keyup.enter="applyFilters"
-                />
-
-                <button
-                    type="button"
-                    class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
-                    @click="applyFilters"
-                >
-                    Cari
-                </button>
-
-                <button
-                    type="button"
-                    class="rounded-lg border px-5 py-2 hover:bg-gray-100"
-                    @click="resetFilters"
-                >
-                    Reset
-                </button>
-            </div>
-        </div>
+        <AdminSearchPanel
+            v-model="search"
+            placeholder="Cari ruangan..."
+            @search="applyFilters"
+            @reset="resetFilters"
+        />
 
         <div class="overflow-x-auto rounded-xl bg-white shadow">
             <table class="w-full min-w-[900px]">

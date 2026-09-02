@@ -2,9 +2,9 @@
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
-import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
+import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useAdminFilters } from '@/composables/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
@@ -125,17 +125,14 @@ function formatValue(value: unknown) {
         </div>
 
         <!-- Filter -->
-        <div class="rounded-xl bg-white p-5 shadow">
-            <div class="grid gap-4 md:grid-cols-[1fr_220px_auto_auto]">
-                <AppInput
-                    v-model="search"
-                    appearance="admin"
-                    type="text"
-                    placeholder="Cari aktivitas..."
-                    class="rounded-lg border px-4 py-2"
-                    @keyup.enter="applyFilters"
-                />
-
+        <AdminSearchPanel
+            v-model="search"
+            placeholder="Cari aktivitas..."
+            :filter-columns="1"
+            @search="applyFilters"
+            @reset="resetFilters"
+        >
+            <template #filters>
                 <AppSelect
                     v-model="roleFilter"
                     class="rounded-lg border px-4 py-2"
@@ -146,29 +143,15 @@ function formatValue(value: unknown) {
 
                     <option value="user">User</option>
                 </AppSelect>
+            </template>
 
-                <button
-                    type="button"
-                    class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
-                    @click="applyFilters"
-                >
-                    Cari
-                </button>
-
-                <button
-                    type="button"
-                    class="rounded-lg border px-5 py-2 hover:bg-gray-100"
-                    @click="resetFilters"
-                >
-                    Reset
-                </button>
-            </div>
-
-            <div class="mt-3 text-sm text-gray-500">
-                Menampilkan {{ props.audits.data.length }} dari
-                {{ filteredCount }} aktivitas
-            </div>
-        </div>
+            <template #footer>
+                <div class="text-sm text-gray-500">
+                    Menampilkan {{ props.audits.data.length }} dari
+                    {{ filteredCount }} aktivitas
+                </div>
+            </template>
+        </AdminSearchPanel>
 
         <!-- Table -->
         <div class="rounded-xl bg-white shadow">

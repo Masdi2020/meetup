@@ -7,6 +7,7 @@ import AppSelect from '@/components/atoms/AppSelect.vue';
 import AppTextarea from '@/components/atoms/AppTextarea.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
+import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
@@ -1553,17 +1554,14 @@ function reject(id: number, code: string) {
         </div>
         <!-- Filter -->
 
-        <div class="rounded-xl bg-white p-5 shadow">
-            <div class="grid gap-4 lg:grid-cols-[1fr_180px_220px_auto_auto]">
-                <AppInput
-                    v-model="search"
-                    appearance="admin"
-                    type="text"
-                    placeholder="Cari booking..."
-                    class="rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
-                    @keyup.enter="applyFilters"
-                />
-
+        <AdminSearchPanel
+            v-model="search"
+            placeholder="Cari booking..."
+            :filter-columns="2"
+            @search="applyFilters"
+            @reset="resetFilters"
+        >
+            <template #filters>
                 <AppSelect
                     v-model="statusFilter"
                     class="rounded-lg border px-4 py-2"
@@ -1589,24 +1587,8 @@ function reject(id: number, code: string) {
                         {{ room.name }}
                     </option>
                 </AppSelect>
-
-                <button
-                    type="button"
-                    class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
-                    @click="applyFilters"
-                >
-                    Cari
-                </button>
-
-                <button
-                    type="button"
-                    class="rounded-lg border px-5 py-2 hover:bg-gray-100"
-                    @click="resetFilters"
-                >
-                    Reset
-                </button>
-            </div>
-        </div>
+            </template>
+        </AdminSearchPanel>
 
         <!-- Table -->
 
