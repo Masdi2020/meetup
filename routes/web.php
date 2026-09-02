@@ -36,8 +36,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('display.index');
 
     Route::middleware('role:display')
-        ->get('/meeting/banner', [BannerController::class, 'index'])
-        ->name('meeting.banner');
+        ->get('/display/{room}', [BannerController::class, 'index'])
+        ->name('display.banner');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');

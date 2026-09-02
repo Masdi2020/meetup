@@ -17,7 +17,7 @@ const props = defineProps<{
 
 const openRoomBanner = (room: Room) => {
     if (room.has_display) {
-        router.visit('/meeting/banner');
+        router.visit(`/display/${room.id}`);
     }
 };
 </script>
