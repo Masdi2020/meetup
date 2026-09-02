@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { watchDebounced } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
@@ -11,6 +10,7 @@ import StatCard from '@/components/molecules/StatCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useAdminFilters } from '@/composables/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import { downloadBookingExport } from '@/lib/bookingExport';
 import type {
@@ -53,6 +53,23 @@ const props = defineProps<{
 const search = ref(props.filters?.search ?? '');
 const statusFilter = ref(props.filters?.status ?? '');
 const roomFilter = ref(props.filters?.room ?? '');
+const { applyFilters, resetFilters, goToPage } = useAdminFilters(
+    '/admin/bookings',
+    {
+        debouncedSources: [search],
+        instantSources: [statusFilter, roomFilter],
+        query: () => ({
+            search: search.value,
+            status: statusFilter.value,
+            room: roomFilter.value,
+        }),
+        reset: () => {
+            search.value = '';
+            statusFilter.value = '';
+            roomFilter.value = '';
+        },
+    },
+);
 const today = new Date().toISOString().split('T')[0];
 
 const showAddBookingModal = computed(() => isModalOpen('add'));
@@ -592,28 +609,6 @@ function submitAddBooking() {
         },
     });
 }
-
-function fetchBookings() {
-    router.get(
-        '/admin/bookings',
-        {
-            search: search.value,
-            status: statusFilter.value,
-            room: roomFilter.value,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        },
-    );
-}
-
-watchDebounced(search, fetchBookings, {
-    debounce: 500,
-});
-
-watch([statusFilter, roomFilter], fetchBookings);
 
 function badgeClass(status: BookingStatus) {
     return {
@@ -1559,13 +1554,14 @@ function reject(id: number, code: string) {
         <!-- Filter -->
 
         <div class="rounded-xl bg-white p-5 shadow">
-            <div class="grid gap-4 md:grid-cols-3">
+            <div class="grid gap-4 lg:grid-cols-[1fr_180px_220px_auto_auto]">
                 <AppInput
                     v-model="search"
                     appearance="admin"
                     type="text"
                     placeholder="Cari booking..."
                     class="rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
+                    @keyup.enter="applyFilters"
                 />
 
                 <AppSelect
@@ -1593,6 +1589,22 @@ function reject(id: number, code: string) {
                         {{ room.name }}
                     </option>
                 </AppSelect>
+
+                <button
+                    type="button"
+                    class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+                    @click="applyFilters"
+                >
+                    Cari
+                </button>
+
+                <button
+                    type="button"
+                    class="rounded-lg border px-5 py-2 hover:bg-gray-100"
+                    @click="resetFilters"
+                >
+                    Reset
+                </button>
             </div>
         </div>
 
@@ -1709,14 +1721,7 @@ function reject(id: number, code: string) {
             <button
                 class="rounded-lg border px-4 py-2 hover:bg-gray-100"
                 :disabled="bookings?.current_page === 1"
-                @click="
-                    router.get('/admin/bookings', {
-                        page: bookings.current_page - 1,
-                        search,
-                        status: statusFilter,
-                        room: roomFilter,
-                    })
-                "
+                @click="goToPage(bookings.current_page - 1)"
             >
                 Previous
             </button>
@@ -1724,14 +1729,7 @@ function reject(id: number, code: string) {
             <button
                 class="rounded-lg border px-4 py-2 hover:bg-gray-100"
                 :disabled="bookings.current_page === bookings.last_page"
-                @click="
-                    router.get('/admin/bookings', {
-                        page: bookings.current_page + 1,
-                        search,
-                        status: statusFilter,
-                        room: roomFilter,
-                    })
-                "
+                @click="goToPage(bookings.current_page + 1)"
             >
                 Next
             </button>

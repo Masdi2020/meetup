@@ -10,6 +10,7 @@ import StatCard from '@/components/molecules/StatCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useAdminFilters } from '@/composables/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import type { AdminRoom as Room, FacilityOption } from '@/types/admin';
 const props = defineProps<{
@@ -39,17 +40,13 @@ const roomForm = useForm({
 });
 
 const rooms = computed(() => props.rooms);
-
-const filteredRooms = computed(() =>
-    rooms.value.filter((room) => {
-        const term = search.value.toLowerCase();
-
-        return (
-            room.name.toLowerCase().includes(term) ||
-            room.location.toLowerCase().includes(term)
-        );
-    }),
-);
+const { applyFilters, resetFilters } = useAdminFilters('/admin/rooms', {
+    debouncedSources: [search],
+    query: () => ({ search: search.value }),
+    reset: () => {
+        search.value = '';
+    },
+});
 
 const totalCapacity = computed(() =>
     rooms.value.reduce((total, room) => total + room.capacity, 0),
@@ -164,14 +161,31 @@ function toggleAvailability() {
             <StatCard label="Total Fasilitas" :value="totalFacilities" />
         </div>
         <div class="rounded-xl bg-white p-5 shadow">
-            <div class="grid gap-4 md:grid-cols-2">
+            <div class="grid gap-4 md:grid-cols-[1fr_auto_auto]">
                 <AppInput
                     v-model="search"
                     appearance="admin"
                     type="text"
                     placeholder="Cari ruangan..."
                     class="rounded-lg border px-4 py-2"
+                    @keyup.enter="applyFilters"
                 />
+
+                <button
+                    type="button"
+                    class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+                    @click="applyFilters"
+                >
+                    Cari
+                </button>
+
+                <button
+                    type="button"
+                    class="rounded-lg border px-5 py-2 hover:bg-gray-100"
+                    @click="resetFilters"
+                >
+                    Reset
+                </button>
             </div>
         </div>
 
@@ -190,7 +204,7 @@ function toggleAvailability() {
 
                 <tbody>
                     <tr
-                        v-for="room in filteredRooms"
+                        v-for="room in rooms"
                         :key="room.id"
                         class="border-t hover:bg-gray-50"
                     >

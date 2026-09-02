@@ -11,6 +11,7 @@ import StatCard from '@/components/molecules/StatCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useAdminFilters } from '@/composables/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import type { AdminUser as User } from '@/types/admin';
 import type { UserRole as Role } from '@/types/auth';
@@ -36,6 +37,15 @@ const users = computed(() => props.users);
 
 const search = ref(props.filters.search ?? '');
 const roleFilter = ref(props.filters.role ?? '');
+const { applyFilters, resetFilters } = useAdminFilters('/admin/users', {
+    debouncedSources: [search],
+    instantSources: [roleFilter],
+    query: () => ({ search: search.value, role: roleFilter.value }),
+    reset: () => {
+        search.value = '';
+        roleFilter.value = '';
+    },
+});
 const selectedUser = ref<User | null>(null);
 const userToConfirm = ref<User | null>(null);
 const confirmAction = ref<'reset' | 'delete' | null>(null);
@@ -290,13 +300,14 @@ function deleteUser() {
             />
         </div>
         <div class="rounded-xl bg-white p-5 shadow">
-            <div class="grid gap-4 lg:grid-cols-3">
+            <div class="grid gap-4 lg:grid-cols-[1fr_220px_auto_auto]">
                 <AppInput
                     v-model="search"
                     appearance="admin"
                     type="text"
-                    placeholder="Cari nama, username, email..."
+                    placeholder="Cari nama atau username..."
                     class="rounded-lg border px-4 py-2"
+                    @keyup.enter="applyFilters"
                 />
 
                 <AppSelect
@@ -311,6 +322,22 @@ function deleteUser() {
 
                     <option value="display">Display</option>
                 </AppSelect>
+
+                <button
+                    type="button"
+                    class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+                    @click="applyFilters"
+                >
+                    Cari
+                </button>
+
+                <button
+                    type="button"
+                    class="rounded-lg border px-5 py-2 hover:bg-gray-100"
+                    @click="resetFilters"
+                >
+                    Reset
+                </button>
             </div>
         </div>
 

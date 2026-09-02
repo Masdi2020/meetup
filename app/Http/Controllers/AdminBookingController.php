@@ -50,7 +50,11 @@ class AdminBookingController extends Controller
 
     public function index(Request $request): Response
     {
-        $bookings = $this->filteredBookings($request)->latest()->paginate(10)
+        $search = $request->string('search')->trim()->toString();
+        $status = $request->string('status')->trim()->lower()->toString();
+        $room = $request->integer('room') ?: null;
+
+        $bookings = $this->filteredBookings($request)->latest()->paginate(10)->withQueryString()
             ->through(fn ($booking) => [
                 'id' => $booking->id, 'code' => $booking->id, 'room' => $booking->room->name,
                 'borrower' => $booking->user->name ?? 'Pengguna dihapus', 'activity' => $booking->title,
@@ -70,7 +74,11 @@ class AdminBookingController extends Controller
                     'label' => ucfirst(strtolower($status->label)),
                 ]),
             'stats' => ['total' => Booking::count(), 'pending' => $count('PENDING'), 'approved' => $count('APPROVED'), 'finished' => $count('FINISHED')],
-            'filters' => $request->only(['search', 'status', 'room']),
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'room' => $room ? (string) $room : '',
+            ],
         ]);
     }
 

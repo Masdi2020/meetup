@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
@@ -8,14 +8,18 @@ import StatCard from '@/components/molecules/StatCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useAdminFilters } from '@/composables/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import type { Facility } from '@/types/admin';
 const props = defineProps<{
     facilities: Facility[];
+    filters: {
+        search: string;
+    };
 }>();
 
-const facilities = ref<Facility[]>([...props.facilities]);
-const search = ref('');
+const facilities = computed(() => props.facilities);
+const search = ref(props.filters.search ?? '');
 const showAddModal = computed(() => isModalOpen('add'));
 const { openModal, closeModal, isModalOpen } = useModalManager<
     'add' | 'detail' | 'edit'
@@ -27,19 +31,13 @@ const facilityToDelete = ref<Facility | null>(null);
 const addFacilityForm = useForm({ name: '' });
 const editFacilityForm = useForm({ name: '' });
 
-watch(
-    () => props.facilities,
-    (value) => {
-        facilities.value = [...value];
+const { applyFilters, resetFilters } = useAdminFilters('/admin/facilities', {
+    debouncedSources: [search],
+    query: () => ({ search: search.value }),
+    reset: () => {
+        search.value = '';
     },
-    { immediate: true },
-);
-
-const filteredFacilities = computed(() =>
-    facilities.value.filter((facility) =>
-        facility.name.toLowerCase().includes(search.value.toLowerCase()),
-    ),
-);
+});
 
 const totalUsage = computed(() =>
     facilities.value.reduce(
@@ -160,13 +158,32 @@ function deleteFacility() {
 
         <!-- Filter -->
         <div class="rounded-xl bg-white p-5 shadow">
-            <AppInput
-                v-model="search"
-                appearance="admin"
-                type="text"
-                placeholder="Cari fasilitas..."
-                class="w-full rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
-            />
+            <div class="grid gap-4 md:grid-cols-[1fr_auto_auto]">
+                <AppInput
+                    v-model="search"
+                    appearance="admin"
+                    type="text"
+                    placeholder="Cari fasilitas..."
+                    class="w-full rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
+                    @keyup.enter="applyFilters"
+                />
+
+                <button
+                    type="button"
+                    class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+                    @click="applyFilters"
+                >
+                    Cari
+                </button>
+
+                <button
+                    type="button"
+                    class="rounded-lg border px-5 py-2 hover:bg-gray-100"
+                    @click="resetFilters"
+                >
+                    Reset
+                </button>
+            </div>
         </div>
 
         <!-- Table -->
@@ -184,7 +201,7 @@ function deleteFacility() {
 
                 <tbody>
                     <tr
-                        v-for="facility in filteredFacilities"
+                        v-for="facility in facilities"
                         :key="facility.id"
                         class="border-t transition hover:bg-gray-50"
                     >
@@ -216,7 +233,7 @@ function deleteFacility() {
                         </td>
                     </tr>
 
-                    <tr v-if="filteredFacilities.length === 0">
+                    <tr v-if="facilities.length === 0">
                         <td colspan="3" class="py-10 text-center text-gray-500">
                             Tidak ada fasilitas yang ditemukan.
                         </td>

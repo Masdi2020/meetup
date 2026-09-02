@@ -6,6 +6,7 @@ import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
+import { useAdminFilters } from '@/composables/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import type {
     AuditLog as Audit,
@@ -24,34 +25,21 @@ const props = defineProps<{
 
 const search = ref(props.filters.search);
 const roleFilter = ref(props.filters.role);
+const { applyFilters, resetFilters } = useAdminFilters('/admin/audits', {
+    debouncedSources: [search],
+    instantSources: [roleFilter],
+    query: () => ({ search: search.value, role: roleFilter.value }),
+    reset: () => {
+        search.value = '';
+        roleFilter.value = '';
+    },
+});
 
 const selectedAudit = ref<Audit | null>(null);
 const { openModal, closeModal, isModalOpen } = useModalManager<'detail'>();
 const showDetail = computed(() => isModalOpen('detail'));
 
 const filteredCount = computed(() => props.audits.total);
-
-function applyFilter() {
-    router.get(
-        '/admin/audits',
-        {
-            search: search.value || undefined,
-            role: roleFilter.value || undefined,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        },
-    );
-}
-
-function clearFilter() {
-    search.value = '';
-    roleFilter.value = '';
-
-    applyFilter();
-}
 
 function showAuditDetail(audit: Audit) {
     selectedAudit.value = audit;
@@ -145,7 +133,7 @@ function formatValue(value: unknown) {
                     type="text"
                     placeholder="Cari aktivitas..."
                     class="rounded-lg border px-4 py-2"
-                    @keyup.enter="applyFilter"
+                    @keyup.enter="applyFilters"
                 />
 
                 <AppSelect
@@ -162,7 +150,7 @@ function formatValue(value: unknown) {
                 <button
                     type="button"
                     class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
-                    @click="applyFilter"
+                    @click="applyFilters"
                 >
                     Cari
                 </button>
@@ -170,7 +158,7 @@ function formatValue(value: unknown) {
                 <button
                     type="button"
                     class="rounded-lg border px-5 py-2 hover:bg-gray-100"
-                    @click="clearFilter"
+                    @click="resetFilters"
                 >
                     Reset
                 </button>
