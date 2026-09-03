@@ -10,7 +10,9 @@ use App\Models\Room;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class BookingWorkflowService
 {
@@ -61,11 +63,48 @@ class BookingWorkflowService
 
             if (($data['banner'] ?? null) instanceof UploadedFile) {
                 $file = $data['banner'];
-                $path = $file->store('banners', 'public');
+
+                if (! $file->isValid()) {
+                    throw ValidationException::withMessages([
+                        'banner' => 'File banner tidak valid.',
+                    ]);
+                }
+
+                $sourcePath = $file->getPathname();
+
+                if ($sourcePath === '' || ! is_file($sourcePath)) {
+                    throw ValidationException::withMessages([
+                        'banner' => 'File sementara banner tidak ditemukan.',
+                    ]);
+                }
+
+                $filename = $file->hashName();
+                $path = "banners/{$filename}";
+
+                $stream = fopen($sourcePath, 'rb');
+
+                if ($stream === false) {
+                    throw new RuntimeException('Gagal membuka file banner.');
+                }
+
+                try {
+                    if (! Storage::disk('public')->writeStream($path, $stream)) {
+                        throw new RuntimeException('Gagal menyimpan file banner');
+                    }
+                } finally {
+                    if (is_resource($stream)) {
+                        fclose($stream);
+                    }
+                }
+
                 BookingAttachment::create([
-                    'booking_id' => $booking->id, 'original_filename' => $file->getClientOriginalName(),
-                    'filename' => $file->hashName(), 'path' => $path, 'mime_type' => $file->getClientMimeType(),
-                    'size' => $file->getSize(), 'uploaded_by' => $actorUserId,
+                    'booking_id' => $booking->id,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'filename' => $filename,
+                    'path' => $path,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'uploaded_by' => $actorUserId,
                 ]);
             }
 
