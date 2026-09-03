@@ -9,11 +9,13 @@ use App\Models\Booking;
 use App\Models\BookingStatus;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\AuditService;
 use App\Services\BookingWorkflowService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -46,7 +48,10 @@ class AdminBookingController extends Controller
         'FINISHED',
     ];
 
-    public function __construct(private BookingWorkflowService $bookingWorkflow) {}
+    public function __construct(
+        private BookingWorkflowService $bookingWorkflow,
+        private AuditService $audits,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -186,9 +191,33 @@ class AdminBookingController extends Controller
         return back()->with('success', 'Booking berhasil dibatalkan.');
     }
 
-    public function destroy(Booking $booking): RedirectResponse
+    public function destroy(Request $request, Booking $booking): RedirectResponse
     {
-        $booking->delete();
+        DB::transaction(function () use ($booking, $request) {
+            $booking->loadMissing('status:id,code');
+            $oldValues = [
+                'room_id' => $booking->room_id,
+                'user_id' => $booking->user_id,
+                'date' => $booking->date->format('Y-m-d'),
+                'start_time' => $booking->start_time->format('H:i'),
+                'end_time' => $booking->end_time->format('H:i'),
+                'title' => $booking->title,
+                'participants_count' => $booking->participants_count,
+                'status' => $booking->status->code,
+            ];
+
+            $booking->delete();
+
+            $this->audits->record(
+                'Booking',
+                $booking->id,
+                'deleted',
+                $oldValues,
+                null,
+                $request->user()->id,
+                'booking dihapus oleh admin',
+            );
+        });
 
         broadcast(new BannerUpdated);
 

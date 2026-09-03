@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SetPasswordRequest;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Services\AuditService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(private AuditService $audits) {}
+
     public function edit(): Response
     {
         return inertia('Profile', [
@@ -22,7 +26,21 @@ class ProfileController extends Controller
     {
         $validated = $request->validated();
 
-        $request->user()->update($validated);
+        DB::transaction(function () use ($request, $validated) {
+            $user = $request->user();
+            $oldValues = $user->only(['name', 'username']);
+            $user->update($validated);
+
+            $this->audits->record(
+                'User',
+                $user->id,
+                'profile_updated',
+                $oldValues,
+                $user->only(['name', 'username']),
+                $user->id,
+                'profil diperbarui oleh pengguna',
+            );
+        });
 
         return back()->with('success', 'Profil berhasil diperbarui.');
     }
@@ -37,10 +55,23 @@ class ProfileController extends Controller
             ]);
         }
 
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-            'force_change_password' => false,
-        ]);
+        DB::transaction(function () use ($request, $validated) {
+            $user = $request->user();
+            $user->update([
+                'password' => Hash::make($validated['password']),
+                'force_change_password' => false,
+            ]);
+
+            $this->audits->record(
+                'User',
+                $user->id,
+                'password_changed',
+                null,
+                ['force_change_password' => false],
+                $user->id,
+                'password diubah oleh pengguna',
+            );
+        });
 
         return back()->with('success', 'Password berhasil diubah.');
     }
@@ -51,10 +82,23 @@ class ProfileController extends Controller
 
         $validated = $request->validated();
 
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-            'force_change_password' => false,
-        ]);
+        DB::transaction(function () use ($request, $validated) {
+            $user = $request->user();
+            $user->update([
+                'password' => Hash::make($validated['password']),
+                'force_change_password' => false,
+            ]);
+
+            $this->audits->record(
+                'User',
+                $user->id,
+                'password_changed',
+                ['force_change_password' => true],
+                ['force_change_password' => false],
+                $user->id,
+                'password awal dibuat oleh pengguna',
+            );
+        });
 
         return back()->with('success', 'Password berhasil dibuat.');
     }

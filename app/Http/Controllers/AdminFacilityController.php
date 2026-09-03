@@ -4,13 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SaveFacilityRequest;
 use App\Models\Facility;
+use App\Services\AuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AdminFacilityController extends Controller
 {
+    public function __construct(private AuditService $audits) {}
+
     public function index(Request $request): Response
     {
         $search = $request->string('search')->trim()->toString();
@@ -37,7 +41,19 @@ class AdminFacilityController extends Controller
     {
         $validated = $request->validated();
 
-        Facility::create($validated);
+        DB::transaction(function () use ($validated, $request) {
+            $facility = Facility::create($validated);
+
+            $this->audits->record(
+                'Facility',
+                $facility->id,
+                'created',
+                null,
+                $facility->only(['name']),
+                $request->user()->id,
+                'fasilitas dibuat oleh admin',
+            );
+        });
 
         return redirect()->back()->with('success', 'Fasilitas berhasil ditambahkan.');
     }
@@ -46,14 +62,40 @@ class AdminFacilityController extends Controller
     {
         $validated = $request->validated();
 
-        $facility->update($validated);
+        DB::transaction(function () use ($facility, $validated, $request) {
+            $oldValues = $facility->only(['name']);
+            $facility->update($validated);
+
+            $this->audits->record(
+                'Facility',
+                $facility->id,
+                'updated',
+                $oldValues,
+                $facility->only(['name']),
+                $request->user()->id,
+                'fasilitas diperbarui oleh admin',
+            );
+        });
 
         return redirect()->back()->with('success', 'Fasilitas berhasil diperbarui.');
     }
 
-    public function destroy(Facility $facility): RedirectResponse
+    public function destroy(Request $request, Facility $facility): RedirectResponse
     {
-        $facility->delete();
+        DB::transaction(function () use ($facility, $request) {
+            $oldValues = $facility->only(['name']);
+            $facility->delete();
+
+            $this->audits->record(
+                'Facility',
+                $facility->id,
+                'deleted',
+                $oldValues,
+                null,
+                $request->user()->id,
+                'fasilitas dihapus oleh admin',
+            );
+        });
 
         return back()->with('success', 'Fasilitas berhasil dihapus');
     }
