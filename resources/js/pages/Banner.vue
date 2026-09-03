@@ -3,12 +3,9 @@ import { router } from '@inertiajs/vue3';
 import { useEchoPublic } from '@laravel/echo-vue';
 import { ArrowLeft, Maximize, Minimize } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { BannerPageProps } from '@/types/booking';
 
-const props = defineProps<{
-    booking: any;
-    next_change: string | null;
-    now: string;
-}>();
+const props = defineProps<BannerPageProps>();
 
 const isFullscreen = ref(false);
 

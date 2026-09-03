@@ -4,22 +4,11 @@ import { computed, ref } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
-
-type Status = 'Approved' | 'Pending' | 'Rejected' | 'Cancelled' | 'Finished';
-
-interface BookingHistory {
-    id: number;
-    room: string;
-    date: string;
-    time: string;
-    title: string;
-    status: Status;
-}
-
-interface BookingStatusOption {
-    value: Status;
-    label: string;
-}
+import type {
+    BookingHistory,
+    BookingHistoryStatus,
+    HistoryStatusOption,
+} from '@/types/booking';
 
 const showEditModal = ref(false);
 const showDateAlertModal = ref(false);
@@ -93,11 +82,11 @@ const submitEdit = () => {
     });
 };
 
-const filterStatus = ref<Status | ''>('');
+const filterStatus = ref<BookingHistoryStatus | ''>('');
 
 const { histories, statuses } = defineProps<{
     histories: BookingHistory[];
-    statuses: BookingStatusOption[];
+    statuses: HistoryStatusOption[];
 }>();
 
 const filteredHistory = computed(() => {

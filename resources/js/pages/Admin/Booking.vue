@@ -21,29 +21,20 @@ import type {
     BookingExportPayload,
 } from '@/lib/bookingExport';
 import type {
+    AdminBookingStatusOption,
     AdminBooking as Booking,
     BookingStatus,
     BookingStats as Stats,
+    BorrowerOption,
     Pagination,
     RoomOption as Room,
 } from '@/types/admin';
-
-interface BorrowerOption {
-    id: number;
-    name: string;
-    role: 'user' | 'admin';
-}
-
-interface BookingStatusOption {
-    code: BookingStatus;
-    label: string;
-}
 
 const props = defineProps<{
     bookings: Pagination<Booking>;
     rooms?: Room[];
     users?: BorrowerOption[];
-    statuses?: BookingStatusOption[];
+    statuses?: AdminBookingStatusOption[];
     stats?: Stats;
     filters?: {
         search?: string;
