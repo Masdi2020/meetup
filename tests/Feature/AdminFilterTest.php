@@ -159,3 +159,18 @@ it('exports an automatic number column followed by the selected ID column', func
     expect($response->json('rows.*.id'))
         ->toEqualCanonicalizing($bookings->pluck('id')->all());
 });
+
+it('rejects unsupported booking export options through its form request', function () {
+    $admin = filterUser('Admin', 'invalid-export-admin', 'admin');
+
+    $query = http_build_query([
+        'columns' => ['password'],
+        'statuses' => ['unknown'],
+        'period' => 'invalid',
+    ]);
+
+    $this->actingAs($admin)
+        ->getJson("/admin/bookings/export-data?{$query}")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['columns.0', 'statuses.0', 'period']);
+});

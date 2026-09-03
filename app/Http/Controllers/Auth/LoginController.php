@@ -4,15 +4,15 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
-use App\Models\User;
+use App\Services\AuthenticationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Inertia\Response;
 
 class LoginController extends Controller
 {
+    public function __construct(private AuthenticationService $authentication) {}
+
     public function create(): Response
     {
         return inertia('Login');
@@ -22,16 +22,7 @@ class LoginController extends Controller
     {
         $credentials = $request->validated();
 
-        $user = User::where('username', $credentials['username'])->first();
-
-        if (
-            $user &&
-            Hash::check($credentials['password'], $user->password)
-        ) {
-            $remember = $user->role === 'display';
-
-            Auth::login($user, $remember);
-
+        if ($user = $this->authentication->attempt($credentials)) {
             return match ($user->role) {
                 'admin' => to_route('admin.dashboard')
                     ->with('success', 'Login Berhasil'),
@@ -53,7 +44,9 @@ class LoginController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::logout();
+        $user = $request->user();
+
+        $this->authentication->logout($user);
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

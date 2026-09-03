@@ -22,9 +22,33 @@ const currentClock = computed(() =>
     currentTime.value.toLocaleTimeString('id-ID', {
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit',
     }),
 );
+
+const titleFontSize = computed(() => {
+    const wordCount = String(props.booking?.title ?? '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean).length;
+
+    if (wordCount <= 2) {
+        return 'clamp(6rem, 12vw, 11rem)';
+    }
+
+    if (wordCount <= 4) {
+        return 'clamp(5rem, 10vw, 9rem)';
+    }
+
+    if (wordCount <= 7) {
+        return 'clamp(4rem, 8vw, 7rem)';
+    }
+
+    if (wordCount <= 10) {
+        return 'clamp(3.5rem, 6vw, 5.5rem)';
+    }
+
+    return 'clamp(3rem, 5vw, 4.5rem)';
+});
 
 const remainingTime = computed(() => {
     if (!props.booking) {
@@ -172,7 +196,7 @@ onUnmounted(() => {
         />
 
         <div v-else-if="booking" class="meeting-info">
-            <h1 class="title">
+            <h1 class="title" :style="{ fontSize: titleFontSize }">
                 {{ booking.title }}
             </h1>
 
@@ -246,6 +270,8 @@ onUnmounted(() => {
 
 .meeting-info {
     display: flex;
+    width: 100%;
+    box-sizing: border-box;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -255,9 +281,10 @@ onUnmounted(() => {
 }
 
 .title {
-    font-size: 72px;
     font-weight: bold;
+    line-height: 1.05;
     margin-bottom: 24px;
+    overflow-wrap: anywhere;
 }
 
 .time {

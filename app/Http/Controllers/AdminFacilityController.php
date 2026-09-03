@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SaveFacilityRequest;
 use App\Models\Facility;
+use App\Services\FacilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,22 +12,14 @@ use Inertia\Response;
 
 class AdminFacilityController extends Controller
 {
+    public function __construct(private FacilityService $facilities) {}
+
     public function index(Request $request): Response
     {
         $search = $request->string('search')->trim()->toString();
 
-        $facilities = Facility::query()
-            ->with('rooms:id,name')
-            ->withCount('rooms')
-            ->when(
-                $search !== '',
-                fn ($query) => $query->where('name', 'like', "%{$search}%")
-            )
-            ->orderBy('name')
-            ->get();
-
         return Inertia::render('Admin/Facility', [
-            'facilities' => $facilities,
+            'facilities' => $this->facilities->search($search),
             'filters' => [
                 'search' => $search,
             ],
@@ -37,7 +30,7 @@ class AdminFacilityController extends Controller
     {
         $validated = $request->validated();
 
-        Facility::create($validated);
+        $this->facilities->create($validated, $request->user()->id);
 
         return redirect()->back()->with('success', 'Fasilitas berhasil ditambahkan.');
     }
@@ -46,14 +39,14 @@ class AdminFacilityController extends Controller
     {
         $validated = $request->validated();
 
-        $facility->update($validated);
+        $this->facilities->update($facility, $validated, $request->user()->id);
 
         return redirect()->back()->with('success', 'Fasilitas berhasil diperbarui.');
     }
 
-    public function destroy(Facility $facility): RedirectResponse
+    public function destroy(Request $request, Facility $facility): RedirectResponse
     {
-        $facility->delete();
+        $this->facilities->delete($facility, $request->user()->id);
 
         return back()->with('success', 'Fasilitas berhasil dihapus');
     }

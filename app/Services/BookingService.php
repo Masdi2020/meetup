@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\BookingStatus;
 use Illuminate\Support\Collection;
 
 // use ILluminate\Http\UploadedFile;
@@ -41,5 +42,18 @@ class BookingService
                     'status' => ucfirst(strtolower((string) $booking->status->code)),
                 ];
             });
+    }
+
+    /** @return Collection<int, array{value: string, label: string}> */
+    public function historyStatuses(): Collection
+    {
+        return BookingStatus::query()
+            ->select(['code', 'label'])
+            ->orderBy('id')
+            ->get()
+            ->map(fn (BookingStatus $status) => [
+                'value' => ucfirst(strtolower($status->code)),
+                'label' => ucfirst(strtolower($status->label)),
+            ]);
     }
 }

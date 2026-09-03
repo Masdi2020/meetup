@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SaveRoomRequest;
 use App\Models\Facility;
 use App\Models\Room;
+use App\Services\RoomService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,32 +13,14 @@ use Inertia\Response;
 
 class AdminRoomController extends Controller
 {
+    public function __construct(private RoomService $rooms) {}
+
     public function index(Request $request): Response
     {
         $search = $request->string('search')->toString();
 
-        $rooms = Room::query()
-            ->with('facilities:id,name')
-            ->when($search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('location', 'like', "%{$search}%");
-            })
-            ->orderBy('name')
-            ->get()
-            ->map(function ($room) {
-                return [
-                    'id' => $room->id,
-                    'name' => $room->name,
-                    'location' => $room->location,
-                    'capacity' => $room->capacity,
-                    'is_available' => (bool) $room->is_available,
-                    'facilities' => $room->facilities->pluck('name')->values()->all(),
-                    'facility_ids' => $room->facilities->pluck('id')->values()->all(),
-                ];
-            });
-
         return Inertia::render('Admin/Room', [
-            'rooms' => $rooms,
+            'rooms' => $this->rooms->adminList($search),
             'facilities' => Facility::query()
                 ->select(['id', 'name'])
                 ->get()
@@ -54,16 +37,7 @@ class AdminRoomController extends Controller
     {
         $validated = $request->validated();
 
-        $room = Room::create([
-            'name' => $validated['name'],
-            'capacity' => $validated['capacity'],
-            'location' => $validated['location'],
-            'is_available' => $validated['is_available'] ?? true,
-        ]);
-
-        if (isset($validated['facilities'])) {
-            $room->facilities()->sync($validated['facilities']);
-        }
+        $this->rooms->create($validated, $request->user()->id);
 
         return redirect()->route('admin.rooms.index')->with('success', 'Ruangan berhasil ditambahkan.');
     }
@@ -72,25 +46,14 @@ class AdminRoomController extends Controller
     {
         $validated = $request->validated();
 
-        $room->update([
-            'name' => $validated['name'],
-            'capacity' => $validated['capacity'],
-            'location' => $validated['location'],
-            'is_available' => $validated['is_available'] ?? $room->is_available,
-        ]);
-
-        if (isset($validated['facilities'])) {
-            $room->facilities()->sync($validated['facilities']);
-        }
+        $this->rooms->update($room, $validated, $request->user()->id);
 
         return redirect()->route('admin.rooms.index')->with('success', 'Ruangan berhasil diperbarui.');
     }
 
-    public function toggleAvailability(Room $room): RedirectResponse
+    public function toggleAvailability(Request $request, Room $room): RedirectResponse
     {
-        $room->update([
-            'is_available' => ! $room->is_available,
-        ]);
+        $this->rooms->toggleAvailability($room, $request->user()->id);
 
         return redirect()->back()->with('success', $room->is_available ? 'Ruangan diaktifkan.' : 'Ruangan dinonaktifkan.');
     }

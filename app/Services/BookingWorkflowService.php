@@ -56,7 +56,17 @@ class BookingWorkflowService
                 $booking->id,
                 'created',
                 null,
-                ['status_id' => $statusId, 'user_id' => $borrowerId],
+                [
+                    'room_id' => (int) $data['room_id'],
+                    'user_id' => $borrowerId,
+                    'date' => (string) $data['date'],
+                    'start_time' => (string) $data['start_time'],
+                    'end_time' => (string) $data['end_time'],
+                    'title' => (string) $data['title'],
+                    'participants_count' => (int) $data['participants'],
+                    'notes' => $data['request'] ?? null,
+                    'status_id' => $statusId,
+                ],
                 $actorUserId,
                 'booking dibuat oleh '.($actorUserId === $borrowerId ? 'peminjam' : 'admin'),
             );
@@ -97,7 +107,7 @@ class BookingWorkflowService
                     }
                 }
 
-                BookingAttachment::create([
+                $attachment = BookingAttachment::create([
                     'booking_id' => $booking->id,
                     'original_filename' => $file->getClientOriginalName(),
                     'filename' => $filename,
@@ -106,6 +116,21 @@ class BookingWorkflowService
                     'size' => $file->getSize(),
                     'uploaded_by' => $actorUserId,
                 ]);
+
+                $this->audits->record(
+                    'BookingAttachment',
+                    $attachment->id,
+                    'created',
+                    null,
+                    [
+                        'booking_id' => $booking->id,
+                        'original_filename' => $attachment->original_filename,
+                        'mime_type' => $attachment->mime_type,
+                        'size' => $attachment->size,
+                    ],
+                    $actorUserId,
+                    'banner booking diunggah',
+                );
             }
 
             return $booking;
@@ -178,15 +203,26 @@ class BookingWorkflowService
             throw ValidationException::withMessages(['booking' => 'Perubahan status booking tidak valid.']);
         }
 
-        DB::transaction(function () use ($booking, $statusCode, $userId, $notes) {
+        DB::transaction(function () use ($booking, $statusCode, $previousStatusCode, $userId, $notes) {
             $oldStatusId = $booking->status_id;
             $status = BookingStatus::where('code', $statusCode)->firstOrFail();
             $booking->forceFill([
                 'status_id' => $status->id, 'processed_by' => $userId,
                 'processed_at' => now(), 'processed_notes' => $notes,
             ])->save();
-            $comments = ['APPROVED' => 'booking disetujui', 'REJECTED' => 'booking ditolak', 'CANCELLED' => 'Dibatalkan oleh peminjam', 'FINISHED' => 'booking diakhiri'];
-            $this->audits->record('Booking', $booking->id, 'status_changed', ['status_id' => $oldStatusId], ['status_id' => $status->id], $userId, $comments[$statusCode]);
+            $this->audits->record(
+                'Booking',
+                $booking->id,
+                'status_changed',
+                ['status_id' => $oldStatusId, 'status' => $previousStatusCode],
+                [
+                    'status_id' => $status->id,
+                    'status' => $statusCode,
+                    'processed_notes' => $notes,
+                ],
+                $userId,
+                $notes,
+            );
         });
 
         if (
@@ -250,5 +286,36 @@ class BookingWorkflowService
         }
 
         return $finishedCount;
+    }
+
+    public function delete(Booking $booking, int $actorId): void
+    {
+        DB::transaction(function () use ($booking, $actorId) {
+            $booking->loadMissing('status:id,code');
+            $oldValues = [
+                'room_id' => $booking->room_id,
+                'user_id' => $booking->user_id,
+                'date' => $booking->date->format('Y-m-d'),
+                'start_time' => $booking->start_time->format('H:i'),
+                'end_time' => $booking->end_time->format('H:i'),
+                'title' => $booking->title,
+                'participants_count' => $booking->participants_count,
+                'status' => $booking->status->code,
+            ];
+
+            $booking->delete();
+
+            $this->audits->record(
+                'Booking',
+                $booking->id,
+                'deleted',
+                $oldValues,
+                null,
+                $actorId,
+                'booking dihapus oleh admin',
+            );
+        });
+
+        broadcast(new BannerUpdated);
     }
 }

@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SetPasswordRequest;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Services\AccountService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Hash;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(private AccountService $accounts) {}
+
     public function edit(): Response
     {
         return inertia('Profile', [
@@ -22,7 +24,7 @@ class ProfileController extends Controller
     {
         $validated = $request->validated();
 
-        $request->user()->update($validated);
+        $this->accounts->updateProfile($request->user(), $validated);
 
         return back()->with('success', 'Profil berhasil diperbarui.');
     }
@@ -31,30 +33,19 @@ class ProfileController extends Controller
     {
         $validated = $request->validated();
 
-        if (! Hash::check($validated['current_password'], $request->user()->password)) {
-            return back()->withErrors([
-                'current_password' => 'Password lama tidak sesuai.',
-            ]);
-        }
-
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-            'force_change_password' => false,
-        ]);
+        $this->accounts->changePassword(
+            $request->user(),
+            $validated['current_password'],
+            $validated['password'],
+        );
 
         return back()->with('success', 'Password berhasil diubah.');
     }
 
     public function updateForcedPassword(SetPasswordRequest $request): RedirectResponse
     {
-        abort_unless($request->user()->force_change_password, 403);
-
         $validated = $request->validated();
-
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-            'force_change_password' => false,
-        ]);
+        $this->accounts->setInitialPassword($request->user(), $validated['password']);
 
         return back()->with('success', 'Password berhasil dibuat.');
     }
