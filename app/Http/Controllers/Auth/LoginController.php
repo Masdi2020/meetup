@@ -4,17 +4,14 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
-use App\Models\User;
-use App\Services\AuditService;
+use App\Services\AuthenticationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Inertia\Response;
 
 class LoginController extends Controller
 {
-    public function __construct(private AuditService $audits) {}
+    public function __construct(private AuthenticationService $authentication) {}
 
     public function create(): Response
     {
@@ -25,26 +22,7 @@ class LoginController extends Controller
     {
         $credentials = $request->validated();
 
-        $user = User::where('username', $credentials['username'])->first();
-
-        if (
-            $user &&
-            Hash::check($credentials['password'], $user->password)
-        ) {
-            $remember = $user->role === 'display';
-
-            Auth::login($user, $remember);
-
-            $this->audits->record(
-                'User',
-                $user->id,
-                'logged_in',
-                null,
-                ['role' => $user->role],
-                $user->id,
-                'pengguna masuk ke sistem',
-            );
-
+        if ($user = $this->authentication->attempt($credentials)) {
             return match ($user->role) {
                 'admin' => to_route('admin.dashboard')
                     ->with('success', 'Login Berhasil'),
@@ -59,28 +37,6 @@ class LoginController extends Controller
             };
         }
 
-        if ($user) {
-            $this->audits->record(
-                'User',
-                $user->id,
-                'login_failed',
-                null,
-                null,
-                null,
-                'percobaan masuk gagal',
-            );
-        } else {
-            $this->audits->record(
-                'Authentication',
-                0,
-                'login_failed',
-                null,
-                ['username' => $credentials['username']],
-                null,
-                'percobaan masuk gagal untuk username yang tidak dikenal',
-            );
-        }
-
         return back()->withErrors([
             'username' => 'Username atau password salah',
         ])->withInput();
@@ -90,17 +46,7 @@ class LoginController extends Controller
     {
         $user = $request->user();
 
-        $this->audits->record(
-            'User',
-            $user->id,
-            'logged_out',
-            null,
-            null,
-            $user->id,
-            'pengguna keluar dari sistem',
-        );
-
-        Auth::logout();
+        $this->authentication->logout($user);
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

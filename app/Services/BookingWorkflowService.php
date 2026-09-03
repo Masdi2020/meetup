@@ -287,4 +287,35 @@ class BookingWorkflowService
 
         return $finishedCount;
     }
+
+    public function delete(Booking $booking, int $actorId): void
+    {
+        DB::transaction(function () use ($booking, $actorId) {
+            $booking->loadMissing('status:id,code');
+            $oldValues = [
+                'room_id' => $booking->room_id,
+                'user_id' => $booking->user_id,
+                'date' => $booking->date->format('Y-m-d'),
+                'start_time' => $booking->start_time->format('H:i'),
+                'end_time' => $booking->end_time->format('H:i'),
+                'title' => $booking->title,
+                'participants_count' => $booking->participants_count,
+                'status' => $booking->status->code,
+            ];
+
+            $booking->delete();
+
+            $this->audits->record(
+                'Booking',
+                $booking->id,
+                'deleted',
+                $oldValues,
+                null,
+                $actorId,
+                'booking dihapus oleh admin',
+            );
+        });
+
+        broadcast(new BannerUpdated);
+    }
 }
