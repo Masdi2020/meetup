@@ -8,12 +8,17 @@ import type { BannerPageProps } from '@/types/booking';
 const props = defineProps<BannerPageProps>();
 
 const isFullscreen = ref(false);
-
-let timer: number | undefined;
-
 const currentTime = ref(new Date(props.now));
 
+let timer: number | undefined;
 let clock: number | undefined;
+let isActive = false;
+
+let serverOffset = new Date(props.now).getTime() - Date.now();
+
+function getServerNow(): number {
+    return Date.now() + serverOffset;
+}
 
 const currentClock = computed(() =>
     currentTime.value.toLocaleTimeString('id-ID', {
@@ -74,9 +79,17 @@ const remainingTime = computed(() => {
 });
 
 function reloadBanner() {
+    if (!isActive) {
+        return;
+    }
+
     router.reload({
         only: ['booking', 'next_change', 'now'],
-        onFinish: scheduleReload,
+        onFinish: () => {
+            if (isActive) {
+                scheduleReload();
+            }
+        },
     });
 }
 
@@ -85,8 +98,13 @@ function backToDisplay() {
 }
 
 function scheduleReload() {
+    if (!isActive) {
+        return;
+    }
+
     if (timer) {
         clearTimeout(timer);
+        timer = undefined;
     }
 
     if (!props.next_change) {
@@ -94,13 +112,24 @@ function scheduleReload() {
     }
 
     const target = new Date(props.next_change).getTime();
-    const delay = Math.max(target - Date.now(), 1000);
 
-    timer = window.setTimeout(reloadBanner, delay);
+    if (Number.isNaN(target)) {
+        console.error('Invalid next_change:', props.next_change);
+
+        return;
+    }
+
+    const delay = Math.max(target - getServerNow(), 1000);
+
+    timer = window.setTimeout(() => {
+        if (isActive) {
+            reloadBanner();
+        }
+    }, delay);
 }
 
 function refreshWhenVisible() {
-    if (!document.hidden) {
+    if (isActive && !document.hidden) {
         reloadBanner();
     }
 }
@@ -124,10 +153,12 @@ function onFullscreenChange() {
 useEchoPublic('meeting-banner', '.banner.updated', reloadBanner);
 
 onMounted(() => {
+    isActive = true;
+
     scheduleReload();
 
     clock = window.setInterval(() => {
-        currentTime.value = new Date(currentTime.value.getTime() + 1000);
+        currentTime.value = new Date(getServerNow());
     }, 1000);
 
     document.addEventListener('fullscreenchange', onFullscreenChange);
@@ -137,22 +168,31 @@ onMounted(() => {
 watch(
     () => props.now,
     (now) => {
-        currentTime.value = new Date(now);
+        const serverNow = new Date(now);
+
+        currentTime.value = serverNow;
+        serverOffset = serverNow.getTime() - Date.now();
     },
 );
 
 watch(
     () => props.next_change,
-    () => scheduleReload(),
+    () => {
+        scheduleReload();
+    },
 );
 
 onUnmounted(() => {
+    isActive = false;
+
     if (timer) {
         clearTimeout(timer);
+        timer = undefined;
     }
 
     if (clock) {
         clearInterval(clock);
+        clock = undefined;
     }
 
     document.removeEventListener('fullscreenchange', onFullscreenChange);
