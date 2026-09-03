@@ -1,21 +1,13 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
-interface Room {
-    id: number;
-    name: string;
-    location: string;
-    capacity: number;
-    is_available: boolean;
-    has_display: boolean;
-    facilities: string[];
-}
+import type { DisplayRoom } from '@/types/room';
 
 const props = defineProps<{
-    rooms: Room[];
+    rooms: DisplayRoom[];
 }>();
 
-const openRoomBanner = (room: Room) => {
+const openRoomBanner = (room: DisplayRoom) => {
     if (room.has_display) {
         router.visit(`/display/${room.id}`);
     }

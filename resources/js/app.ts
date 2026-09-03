@@ -7,15 +7,11 @@ import type { DefineComponent } from 'vue';
 import Toast from '@/components/Toast.vue';
 import { useToast } from '@/composables/useToast';
 import Layout from '@/layouts/Layout.vue';
+import type { FlashMessages } from '@/types/shared';
 
 configureEcho({
     broadcaster: 'reverb',
 });
-
-interface Flash {
-    success?: string;
-    error?: string;
-}
 
 createInertiaApp({
     resolve: async (name) => {
@@ -41,7 +37,7 @@ createInertiaApp({
                 router.on('success', (event) => {
                     const flash = (
                         event.detail.page.props as {
-                            flash?: Flash;
+                            flash?: FlashMessages;
                         }
                     ).flash;
 

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { Check, Copy } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
@@ -16,15 +15,9 @@ import { useAdminFilters } from '@/composables/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import type { AdminUser as User } from '@/types/admin';
 import type { UserRole as Role } from '@/types/auth';
-interface pageProps extends InertiaPageProps {
-    flash: {
-        success?: string;
-        error?: string;
-        generated_password?: string;
-    };
-}
+import type { FlashPageProps } from '@/types/shared';
 
-const page = usePage<pageProps>();
+const page = usePage<FlashPageProps>();
 
 const props = defineProps<{
     users: User[];

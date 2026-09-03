@@ -3,12 +3,7 @@ import { useForm } from '@inertiajs/vue3';
 import { X } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AppInput from '@/components/atoms/AppInput.vue';
-
-interface Room {
-    id: number;
-    name: string;
-    has_display: boolean;
-}
+import type { BookingRoom } from '@/types/room';
 
 const today = new Date().toISOString().split('T')[0];
 
@@ -18,7 +13,7 @@ const bannerInput = ref<HTMLInputElement | null>(null);
 const showSuccessDialog = ref(false);
 
 const { rooms } = defineProps<{
-    rooms: Room[];
+    rooms: BookingRoom[];
 }>();
 
 const form = useForm({

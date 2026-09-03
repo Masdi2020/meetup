@@ -2,20 +2,10 @@
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PasswordField from '@/components/molecules/PasswordField.vue';
-
-interface PageProps {
-    user: {
-        name: string;
-        username: string;
-    };
-    flash: {
-        success?: string;
-        error?: string;
-    };
-}
+import type { ProfilePageProps } from '@/types/auth';
 
 const page = usePage();
-const props = page.props as unknown as PageProps;
+const props = page.props as unknown as ProfilePageProps;
 
 const form = useForm({
     name: props.user?.name ?? '',

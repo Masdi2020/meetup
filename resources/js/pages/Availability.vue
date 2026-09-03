@@ -4,24 +4,10 @@ import { ref, computed, watch } from 'vue';
 import Calendar from '@/components/Calendar/Calendar.vue';
 import { getRoomColor } from '@/components/Calendar/roomColors';
 import type { CalendarEvent } from '@/types/calendar';
-
-interface Facility {
-    id: number;
-    name: string;
-}
-
-interface Room {
-    id: number;
-    name: string;
-    capacity: number;
-    location: string;
-    calendar_url: string;
-    facilities: Facility[];
-    image: null;
-}
+import type { AvailabilityRoom } from '@/types/room';
 
 const props = defineProps<{
-    rooms: Room[];
+    rooms: AvailabilityRoom[];
     events: CalendarEvent[];
     month: number;
     year: number;

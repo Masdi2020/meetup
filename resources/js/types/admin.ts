@@ -1,4 +1,5 @@
 import type { UserRole } from './auth';
+import type { NamedEntity } from './room';
 
 export type BookingStatus =
     'pending' | 'approved' | 'rejected' | 'cancelled' | 'finished';
@@ -10,13 +11,16 @@ export interface AdminUser {
     role: UserRole;
 }
 
-export interface RoomOption {
-    id: number;
-    name: string;
+export type RoomOption = NamedEntity;
+export type FacilityOption = NamedEntity;
+
+export interface BorrowerOption extends NamedEntity {
+    role: Extract<UserRole, 'user' | 'admin'>;
 }
-export interface FacilityOption {
-    id: number;
-    name: string;
+
+export interface AdminBookingStatusOption {
+    code: BookingStatus;
+    label: string;
 }
 
 export interface AdminRoom extends RoomOption {
