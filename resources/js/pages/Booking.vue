@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref, computed, onMounted, watch } from 'vue';
+import { X } from '@lucide/vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 
 interface Room {
@@ -12,6 +13,7 @@ interface Room {
 const today = new Date().toISOString().split('T')[0];
 
 const preview = ref<string | null>(null);
+const bannerInput = ref<HTMLInputElement | null>(null);
 
 const showSuccessDialog = ref(false);
 
@@ -91,8 +93,27 @@ const handleFile = (event: Event) => {
     }
 
     const file = target.files[0];
+
+    if (preview.value) {
+        URL.revokeObjectURL(preview.value);
+    }
+
     form.banner = file;
     preview.value = URL.createObjectURL(file);
+};
+
+const clearBanner = () => {
+    if (preview.value) {
+        URL.revokeObjectURL(preview.value);
+    }
+
+    form.banner = null;
+    preview.value = null;
+    form.clearErrors('banner');
+
+    if (bannerInput.value) {
+        bannerInput.value.value = '';
+    }
 };
 
 const submitBooking = () => {
@@ -116,7 +137,7 @@ const submitBooking = () => {
             showSuccessDialog.value = true;
 
             form.reset();
-            preview.value = null;
+            clearBanner();
             submitted.value = false;
         },
     });
@@ -172,6 +193,18 @@ watch(
         }
     },
 );
+
+watch(hasDisplay, (roomHasDisplay) => {
+    if (!roomHasDisplay && form.banner) {
+        clearBanner();
+    }
+});
+
+onBeforeUnmount(() => {
+    if (preview.value) {
+        URL.revokeObjectURL(preview.value);
+    }
+});
 </script>
 
 <template>
@@ -305,6 +338,7 @@ watch(
                     <label>Unggah Banner Rapat</label>
 
                     <input
+                        ref="bannerInput"
                         type="file"
                         accept=".jpg,.jpeg,.png"
                         @change="handleFile"
@@ -314,6 +348,15 @@ watch(
 
                     <div v-if="preview" class="banner-preview">
                         <img :src="preview" alt="Preview Banner" />
+                        <button
+                            type="button"
+                            class="banner-remove"
+                            aria-label="Batalkan unggahan banner"
+                            title="Batalkan unggahan"
+                            @click="clearBanner"
+                        >
+                            <X :size="18" :stroke-width="2.5" />
+                        </button>
                     </div>
 
                     <div v-if="form.errors.banner" class="error">
@@ -465,15 +508,44 @@ button:hover {
 }
 
 .banner-preview {
+    position: relative;
+    width: fit-content;
+    max-width: 350px;
     margin-top: 15px;
 }
 
 .banner-preview img {
+    display: block;
     width: 100%;
     max-width: 350px;
     border-radius: 10px;
     border: 1px solid #ddd;
     object-fit: cover;
+}
+
+.banner-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: grid;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 9999px;
+    color: white;
+    background: rgba(17, 24, 39, 0.82);
+    cursor: pointer;
+}
+
+.banner-remove:hover {
+    background: #dc2626;
+}
+
+.banner-remove:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
 }
 
 .error {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { X } from '@lucide/vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
@@ -92,6 +93,7 @@ const isCancellingBooking = ref(false);
 const rejectReason = ref('');
 const rejectValidationErrors = ref({ reason: '' });
 const addBookingPreview = ref<string | null>(null);
+const addBookingBannerInput = ref<HTMLInputElement | null>(null);
 const addBookingSubmitted = ref(false);
 const exportFormat = ref<BookingExportFormat>('pdf');
 const exportPreview = ref<BookingExportPayload | null>(null);
@@ -359,7 +361,7 @@ function closeAddBookingModal() {
     closeModal();
     showAddBookingSuccess.value = false;
     addBookingForm.reset();
-    addBookingPreview.value = null;
+    clearAddBookingBanner();
     addBookingSubmitted.value = false;
 }
 
@@ -577,8 +579,27 @@ function handleAddBookingFile(event: Event) {
     }
 
     const file = target.files[0];
+
+    if (addBookingPreview.value) {
+        URL.revokeObjectURL(addBookingPreview.value);
+    }
+
     addBookingForm.banner = file;
     addBookingPreview.value = URL.createObjectURL(file);
+}
+
+function clearAddBookingBanner() {
+    if (addBookingPreview.value) {
+        URL.revokeObjectURL(addBookingPreview.value);
+    }
+
+    addBookingForm.banner = null;
+    addBookingPreview.value = null;
+    addBookingForm.clearErrors('banner');
+
+    if (addBookingBannerInput.value) {
+        addBookingBannerInput.value.value = '';
+    }
 }
 
 function submitAddBooking() {
@@ -601,11 +622,26 @@ function submitAddBooking() {
         onSuccess: () => {
             showAddBookingSuccess.value = true;
             addBookingForm.reset();
-            addBookingPreview.value = null;
+            clearAddBookingBanner();
             addBookingSubmitted.value = false;
         },
     });
 }
+
+watch(
+    () => addBookingForm.room_id,
+    (roomId) => {
+        if (roomId !== 1 && addBookingForm.banner) {
+            clearAddBookingBanner();
+        }
+    },
+);
+
+onBeforeUnmount(() => {
+    if (addBookingPreview.value) {
+        URL.revokeObjectURL(addBookingPreview.value);
+    }
+});
 
 function badgeClass(status: BookingStatus) {
     return {
@@ -1274,6 +1310,7 @@ function reject(id: number) {
                     :error="addBookingForm.errors.banner"
                 >
                     <input
+                        ref="addBookingBannerInput"
                         type="file"
                         accept=".jpg,.jpeg,.png"
                         class="w-full"
@@ -1281,6 +1318,15 @@ function reject(id: number) {
                     />
                     <div v-if="addBookingPreview" class="banner-preview mt-3">
                         <img :src="addBookingPreview" alt="Preview Banner" />
+                        <button
+                            type="button"
+                            class="banner-remove"
+                            aria-label="Batalkan unggahan banner"
+                            title="Batalkan unggahan"
+                            @click="clearAddBookingBanner"
+                        >
+                            <X :size="18" :stroke-width="2.5" />
+                        </button>
                     </div>
                 </FormField>
                 <div class="flex justify-end gap-3 md:col-span-2">
@@ -1734,11 +1780,43 @@ function reject(id: number) {
 </template>
 
 <style scoped>
+.banner-preview {
+    position: relative;
+    width: fit-content;
+    max-width: 350px;
+}
+
 .banner-preview img {
+    display: block;
     width: 100%;
     max-width: 350px;
     border-radius: 10px;
     border: 1px solid #ddd;
     object-fit: cover;
+}
+
+.banner-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: grid;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 9999px;
+    color: white;
+    background: rgba(17, 24, 39, 0.82);
+    cursor: pointer;
+}
+
+.banner-remove:hover {
+    background: #dc2626;
+}
+
+.banner-remove:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
 }
 </style>
