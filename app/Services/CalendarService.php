@@ -11,6 +11,7 @@ class CalendarService
      * @return array<int, array{
      *      id: int,
      *      title: string,
+     *      status: string,
      *      room: string,
      *      date: string,
      *      start_time: string,
@@ -35,7 +36,7 @@ class CalendarService
                 $query->where('room_id', $roomId);
             })
             ->whereHas('status', function ($query) {
-                $query->where('code', 'APPROVED');
+                $query->whereIn('code', ['PENDING', 'APPROVED', 'FINISHED']);
             })
             ->orderBy('date')
             ->orderBy('start_time')
@@ -44,6 +45,7 @@ class CalendarService
                 return [
                     'id' => $booking->id,
                     'title' => $booking->title,
+                    'status' => $booking->status->code,
                     'room' => $booking->room->name,
                     'date' => $booking->date->format('Y-m-d'),
                     'start_time' => $booking->start_time->format('H:i'),

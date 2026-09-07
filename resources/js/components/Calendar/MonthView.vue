@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { computed } from 'vue';
+import EventStatus from './EventStatus.vue';
 import { getRoomColor, getRoomTextColor } from './roomColors';
 import type { CalendarEvent } from '@/types/calendar';
 
 const props = defineProps<{
     date: Dayjs;
+    now: Dayjs;
     events: CalendarEvent[];
 }>();
 
@@ -54,18 +55,23 @@ function getEventsForDate(day: Dayjs) {
             class="cell"
             :class="{
                 other: day.month() !== props.date.month(),
-                today: day.isSame(dayjs(), 'day'),
+                today: day.isSame(now, 'day'),
             }"
+            :aria-current="day.isSame(now, 'day') ? 'date' : undefined"
         >
             <div class="number">
                 {{ day.date() }}
+                <span v-if="day.isSame(now, 'day')" class="today-label"
+                    >Hari ini</span
+                >
             </div>
 
             <div v-if="getEventsForDate(day).length" class="event-list">
                 <div
-                    v-for="event in getEventsForDate(day).slice(0, 3)"
+                    v-for="event in getEventsForDate(day)"
                     :key="`${event.id}-${event.date}`"
                     class="event-pill"
+                    :class="{ 'pending-event': event.status === 'PENDING' }"
                     role="button"
                     tabindex="0"
                     :aria-label="`Lihat rincian ${event.title}`"
@@ -78,13 +84,10 @@ function getEventsForDate(day: Dayjs) {
                     @keydown.space.prevent="emit('select', event)"
                 >
                     <span class="event-title">{{ event.title }}</span>
+                    <EventStatus :status="event.status" />
                     <span class="event-time"
                         >{{ event.start_time }}-{{ event.end_time }}</span
                     >
-                </div>
-
-                <div v-if="getEventsForDate(day).length > 3" class="event-more">
-                    +{{ getEventsForDate(day).length - 3 }} lagi
                 </div>
             </div>
         </div>
@@ -125,6 +128,10 @@ function getEventsForDate(day: Dayjs) {
 }
 
 .number {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
     font-weight: bold;
 }
 
@@ -134,7 +141,8 @@ function getEventsForDate(day: Dayjs) {
 }
 
 .today {
-    outline: 3px solid #2563eb;
+    box-shadow: inset 0 0 0 2px #2563eb;
+    background: #eff6ff;
 }
 
 .event-list {
@@ -147,6 +155,8 @@ function getEventsForDate(day: Dayjs) {
 }
 
 .event-pill {
+    box-sizing: border-box;
+    flex-direction: column;
     width: 100%;
     border-radius: 6px;
     padding: 4px 6px;
@@ -154,7 +164,7 @@ function getEventsForDate(day: Dayjs) {
     line-height: 1.3;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 6px;
     min-height: 30px;
     cursor: pointer;
@@ -167,6 +177,7 @@ function getEventsForDate(day: Dayjs) {
 }
 
 .event-title {
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

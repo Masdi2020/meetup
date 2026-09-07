@@ -11,6 +11,7 @@ import {
 
 import CalendarToolbar from './CalendarToolbar.vue';
 import DayView from './DayView.vue';
+import EventStatus from './EventStatus.vue';
 import MonthView from './MonthView.vue';
 import WeekView from './WeekView.vue';
 import type { CalendarEvent } from '@/types/calendar';
@@ -29,6 +30,19 @@ const emit = defineEmits<{
 }>();
 
 const currentDate = ref(dayjs());
+const now = ref(dayjs());
+let clockTimer: ReturnType<typeof setInterval> | undefined;
+function updateClock() {
+    now.value = dayjs();
+}
+onMounted(() => {
+    clockTimer = setInterval(updateClock, 30_000);
+    document.addEventListener('visibilitychange', updateClock);
+});
+onBeforeUnmount(() => {
+    clearInterval(clockTimer);
+    document.removeEventListener('visibilitychange', updateClock);
+});
 const selectedEvent = ref<CalendarEvent | null>(null);
 
 watch(
@@ -132,22 +146,32 @@ const formattedSelectedDate = computed(() => {
             @update:view="emit('change-view', $event)"
         />
 
+        <div class="calendar-legend" aria-label="Keterangan kalender">
+            <EventStatus status="PENDING" />
+            <span>Garis putus-putus: menunggu persetujuan</span>
+            <EventStatus status="APPROVED" />
+            <EventStatus status="FINISHED" />
+            <span class="today-label">Hari ini</span>
+        </div>
         <div class="calendar-scroll">
             <MonthView
                 v-if="props.view === 'month'"
                 :date="currentDate"
+                :now="now"
                 :events="props.events"
                 @select="selectedEvent = $event"
             />
             <WeekView
                 v-else-if="props.view === 'week'"
                 :date="currentDate"
+                :now="now"
                 :events="props.events"
                 @select="selectedEvent = $event"
             />
             <DayView
                 v-else
                 :date="currentDate"
+                :now="now"
                 :events="props.events"
                 @select="selectedEvent = $event"
             />
@@ -184,6 +208,10 @@ const formattedSelectedDate = computed(() => {
                 </div>
                 <dl class="detail-list">
                     <div>
+                        <dt>Status</dt>
+                        <dd><EventStatus :status="selectedEvent.status" /></dd>
+                    </div>
+                    <div>
                         <dt>Peminjam</dt>
                         <dd>{{ selectedEvent.borrower }}</dd>
                     </div>
@@ -219,6 +247,26 @@ const formattedSelectedDate = computed(() => {
 </template>
 
 <style scoped>
+.calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+    font-size: 12px;
+}
+.calendar :deep(.pending-event) {
+    border: 2px dashed #92400e;
+}
+.calendar :deep(.today-label) {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 2px 5px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 10px;
+    font-weight: 700;
+}
 .calendar {
     display: flex;
     flex-direction: column;
