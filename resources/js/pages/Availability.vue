@@ -158,6 +158,7 @@ watch(selectedRoomId, (room) => {
                     :year="year"
                     :date="date"
                     :view="view"
+                    @open-day="loadCalendar($event, 'day')"
                     @navigate="loadCalendar"
                     @change-view="changeView"
                 />
@@ -166,18 +167,20 @@ watch(selectedRoomId, (room) => {
     </div>
 </template>
 
-<style>
+<style scoped>
 .availability {
     width: 100%;
     margin: 0;
-    padding: 30px;
+    padding: 0;
+    min-width: 0;
 }
 
 .page-card {
     background: #cfe2ff;
     border-radius: 10px;
-    padding: 28px;
-    max-width: 1100px;
+    padding: 12px;
+    width: 100%;
+    min-width: 0;
     margin: 0; /* align left with heading */
 }
 
@@ -190,14 +193,15 @@ h2 {
 }
 
 .toolbar {
-    margin: 20px 0;
+    margin: 0 0 8px;
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 8px;
 }
 
 .toolbar select {
-    width: 300px;
+    width: min(300px, 100%);
     padding: 10px;
     border-radius: 8px;
     border: 1px solid #ddd;
@@ -254,7 +258,7 @@ h2 {
     flex-wrap: wrap;
     align-items: center;
     gap: 16px;
-    padding: 16px 20px;
+    padding: 8px 10px;
     background: #fff;
     border-radius: 12px;
     border: 1px solid #e5e7eb;
@@ -290,10 +294,9 @@ h2 {
 }
 
 .calendar-card {
+    min-width: 0;
     border: 1px solid #ddd;
     border-radius: 12px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     padding: 8px;
     background: white;
 }
@@ -305,6 +308,22 @@ h2 {
 }
 
 @media (max-width: 768px) {
+    .page-card {
+        padding: 6px;
+    }
+    .calendar-card {
+        padding: 4px;
+    }
+    .legend-items {
+        gap: 4px 10px;
+    }
+    .legend-item {
+        font-size: 11px;
+    }
+    .room-legend {
+        gap: 4px;
+        padding: 6px;
+    }
     .toolbar select {
         width: 100%;
         min-height: 44px;

@@ -57,10 +57,14 @@ const emit = defineEmits<{
     justify-content: flex-start;
     align-items: center;
     min-height: 44px;
-    gap: 16px;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 .calendar-toolbar h2 {
     margin: 0;
+    border: 0;
+    font-size: clamp(16px, 2vw, 22px);
+    color: #173b7a;
 }
 button {
     min-height: 40px;
@@ -82,15 +86,13 @@ button:hover {
     background: #eff6ff;
 }
 .navigation {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-left: auto;
     display: flex;
     white-space: nowrap;
 }
 .view-switch {
     display: flex;
-    margin-left: auto;
+    margin-left: 0;
 }
 .view-switch button.active {
     border-color: #2563eb;
@@ -100,22 +102,26 @@ button:hover {
 @media (max-width: 720px) {
     .calendar-toolbar {
         align-items: center;
-        flex-direction: column;
-        gap: 12px;
+        flex-direction: row;
+        gap: 6px;
     }
     .calendar-toolbar h2 {
-        font-size: 18px;
+        font-size: 16px;
+        flex: 1 0 100%;
     }
     .navigation {
+        margin-left: 0;
         position: static;
         transform: none;
         justify-content: center;
     }
     .view-switch {
-        margin-left: 0;
+        margin-left: auto;
     }
     button {
-        min-height: 42px;
+        min-height: 36px;
+        padding: 6px 8px;
+        font-size: 12px;
     }
 }
 </style>

@@ -27,6 +27,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     navigate: [date: string];
     'change-view': [view: 'month' | 'week' | 'day'];
+    'open-day': [date: string];
 }>();
 
 const currentDate = ref(dayjs());
@@ -153,13 +154,17 @@ const formattedSelectedDate = computed(() => {
             <EventStatus status="FINISHED" />
             <span class="today-label">Hari ini</span>
         </div>
-        <div class="calendar-scroll">
+        <div
+            class="calendar-scroll"
+            :class="{ 'month-scroll': props.view === 'month' }"
+        >
             <MonthView
                 v-if="props.view === 'month'"
                 :date="currentDate"
                 :now="now"
                 :events="props.events"
                 @select="selectedEvent = $event"
+                @open-day="emit('open-day', $event)"
             />
             <WeekView
                 v-else-if="props.view === 'week'"
@@ -268,15 +273,20 @@ const formattedSelectedDate = computed(() => {
     font-weight: 700;
 }
 .calendar {
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 8px;
 }
 
 .calendar-scroll {
+    min-width: 0;
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+}
+.month-scroll {
+    overflow: visible;
 }
 .detail-overlay {
     position: fixed;
