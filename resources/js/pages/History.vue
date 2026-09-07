@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
+import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import type {
     BookingHistory,
     BookingHistoryStatus,
@@ -88,6 +89,39 @@ const { histories, statuses } = defineProps<{
     histories: BookingHistory[];
     statuses: HistoryStatusOption[];
 }>();
+
+useBookingPageUpdates(['histories']);
+
+watch(
+    () => histories,
+    (bookings) => {
+        const canEdit = (id: number) =>
+            bookings.some(
+                (booking) =>
+                    booking.id === id &&
+                    ['Pending', 'Approved'].includes(booking.status),
+            );
+
+        if (showEditModal.value && !canEdit(editForm.value.id)) {
+            closeEditModal();
+        }
+
+        if (bookingToCancel.value !== null && !canEdit(bookingToCancel.value)) {
+            closeCancelModal();
+        }
+
+        if (
+            bookingToFinish.value !== null &&
+            !bookings.some(
+                (booking) =>
+                    booking.id === bookingToFinish.value &&
+                    booking.status === 'Approved',
+            )
+        ) {
+            closeFinishModal();
+        }
+    },
+);
 
 const filteredHistory = computed(() => {
     if (!filterStatus.value) {

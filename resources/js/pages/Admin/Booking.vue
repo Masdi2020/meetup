@@ -18,6 +18,7 @@ import {
     localDateString,
     useBookingAvailability,
 } from '@/composables/useBookingAvailability';
+import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import { useModalManager } from '@/composables/useModal';
 import { downloadBookingExport } from '@/lib/bookingExport';
 import type {
@@ -49,6 +50,8 @@ const props = defineProps<{
 }>();
 
 const search = ref(props.filters?.search ?? '');
+
+useBookingPageUpdates(['bookings', 'stats']);
 const statusFilter = ref(props.filters?.status ?? '');
 const roomFilter = ref(props.filters?.room ?? '');
 const { applyFilters, resetFilters, goToPage } = useAdminFilters(

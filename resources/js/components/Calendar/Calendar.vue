@@ -31,6 +31,17 @@ const emit = defineEmits<{
 const currentDate = ref(dayjs());
 const selectedEvent = ref<CalendarEvent | null>(null);
 
+watch(
+    () => props.events,
+    (events) => {
+        if (selectedEvent.value) {
+            selectedEvent.value =
+                events.find((event) => event.id === selectedEvent.value?.id) ??
+                null;
+        }
+    },
+);
+
 const startOfWeek = computed(() => {
     const weekday = currentDate.value.day();
 

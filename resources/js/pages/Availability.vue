@@ -3,6 +3,7 @@ import { router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import Calendar from '@/components/Calendar/Calendar.vue';
 import { getRoomColor } from '@/components/Calendar/roomColors';
+import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import type { CalendarEvent } from '@/types/calendar';
 import type { AvailabilityRoom } from '@/types/room';
 
@@ -17,6 +18,8 @@ const props = defineProps<{
 }>();
 
 const rooms = props.rooms;
+
+useBookingPageUpdates(['events']);
 
 const selectedRoomId = ref<number | string>(props.selectedRoomId ?? 0);
 

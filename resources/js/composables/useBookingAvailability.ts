@@ -1,6 +1,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { Ref } from 'vue';
 import type { VCalendarTimeRules } from '@/components/atoms/VCalendarInput.vue';
+import { useBookingUpdates } from '@/composables/useBookingUpdates';
 
 export interface BookedInterval {
     start_time: string;
@@ -165,6 +166,7 @@ export function useBookingAvailability(options: BookingAvailabilityOptions) {
         try {
             const response = await fetch(`/booking/availability?${query}`, {
                 headers: { Accept: 'application/json' },
+                cache: 'no-store',
                 signal: controller.signal,
             });
 
@@ -173,6 +175,11 @@ export function useBookingAvailability(options: BookingAvailabilityOptions) {
             }
 
             const data = (await response.json()) as AvailabilityResponse;
+
+            if (controller.signal.aborted || requestController !== controller) {
+                return;
+            }
+
             bookedIntervals.value = data.booked_intervals;
 
             if (
@@ -182,7 +189,11 @@ export function useBookingAvailability(options: BookingAvailabilityOptions) {
                 options.startTime.value = '';
             }
         } catch (error) {
-            if (!(error instanceof Error && error.name === 'AbortError')) {
+            if (
+                requestController === controller &&
+                !controller.signal.aborted &&
+                !(error instanceof Error && error.name === 'AbortError')
+            ) {
                 loadError.value = 'Jadwal terbooking gagal dimuat.';
             }
         } finally {
@@ -191,6 +202,8 @@ export function useBookingAvailability(options: BookingAvailabilityOptions) {
             }
         }
     }
+
+    useBookingUpdates(loadAvailability);
 
     watch(
         [options.roomId, options.date, ignoreBookingId],
