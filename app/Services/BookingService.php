@@ -13,6 +13,24 @@ use Illuminate\Support\Collection;
 class BookingService
 {
     /**
+     * @return Collection<int, array{start_time: string, end_time: string}>
+     */
+    public function activeIntervals(int $roomId, string $date, ?int $ignoreBookingId = null): Collection
+    {
+        return Booking::query()
+            ->where('room_id', $roomId)
+            ->whereDate('date', $date)
+            ->when($ignoreBookingId, fn ($query) => $query->whereKeyNot($ignoreBookingId))
+            ->whereHas('status', fn ($query) => $query->whereIn('code', ['PENDING', 'APPROVED']))
+            ->orderBy('start_time')
+            ->get(['start_time', 'end_time'])
+            ->map(fn (Booking $booking) => [
+                'start_time' => $booking->start_time->format('H:i'),
+                'end_time' => $booking->end_time->format('H:i'),
+            ]);
+    }
+
+    /**
      * Summary of history
      *
      * @return Collection<int, array{

@@ -45,6 +45,7 @@ class AdminBookingQueryService
             ->withQueryString()
             ->through(fn (Booking $booking) => [
                 'id' => $booking->id,
+                'room_id' => $booking->room_id,
                 'room' => $booking->room->name,
                 'borrower' => $booking->user->name ?? 'Pengguna dihapus',
                 'activity' => $booking->title,

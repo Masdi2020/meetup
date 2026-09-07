@@ -38,6 +38,7 @@ export interface Facility extends FacilityOption {
 
 export interface AdminBooking {
     id: number;
+    room_id: number;
     room: string;
     borrower: string;
     activity: string;

@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { X } from '@lucide/vue';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import AppInput from '@/components/atoms/AppInput.vue';
+import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue';
+import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
+import {
+    localDateString,
+    useBookingAvailability,
+} from '@/composables/useBookingAvailability';
 import type { BookingRoom } from '@/types/room';
 
-const today = new Date().toISOString().split('T')[0];
+const today = localDateString();
 
 const preview = ref<string | null>(null);
 const bannerInput = ref<HTMLInputElement | null>(null);
@@ -56,28 +60,19 @@ const hasWarning = (field: string): boolean => {
     }
 };
 
-const minStartTime = computed(() => {
-    if (form.date !== today) {
-        return '07:00';
-    }
-
-    const now = new Date();
-
-    let hour = now.getHours();
-    let minute = now.getMinutes();
-
-    if (minute > 0 && minute <= 30) {
-        minute = 30;
-    } else if (minute > 30) {
-        hour++;
-        minute = 0;
-    }
-
-    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-});
-
-const minEndTime = computed(() => {
-    return form.start_time || minStartTime.value;
+const {
+    bookedIntervals,
+    isLoading: isLoadingAvailability,
+    loadError: availabilityError,
+    availableStartTimes,
+    availableEndTimes,
+    startRules,
+    endRules,
+} = useBookingAvailability({
+    roomId: toRef(form, 'room_id'),
+    date: toRef(form, 'date'),
+    startTime: toRef(form, 'start_time'),
+    endTime: toRef(form, 'end_time'),
 });
 
 const handleFile = (event: Event) => {
@@ -180,6 +175,11 @@ watch(
     },
 );
 
+watch([() => form.room_id, () => form.date], () => {
+    form.start_time = '';
+    form.end_time = '';
+});
+
 watch(
     () => form.room_id,
     (roomId) => {
@@ -236,10 +236,10 @@ onBeforeUnmount(() => {
                     :class="{ warning: hasWarning('date') }"
                 >
                     <label> Tanggal <span class="required">*</span> </label>
-                    <AppInput
+                    <VCalendarInput
                         v-model="form.date"
-                        type="date"
-                        :min="today"
+                        mode="date"
+                        :min-date="today"
                         :invalid="hasWarning('date')"
                     />
                     <p
@@ -253,44 +253,101 @@ onBeforeUnmount(() => {
                     </p>
                 </div>
 
-                <div
-                    class="form-group"
-                    :class="{ warning: hasWarning('start_time') }"
-                >
-                    <label> Dari Jam <span class="required">*</span> </label>
-                    <AppInput
-                        v-model="form.start_time"
-                        type="time"
-                        :min="minStartTime"
-                        max="23:59"
-                        :invalid="hasWarning('start_time')"
-                    />
-                    <p v-if="hasWarning('start_time')" class="warning-text">
-                        Waktu mulai wajib diisi.
-                    </p>
+                <div class="booking-time-row">
+                    <div
+                        class="form-group"
+                        :class="{ warning: hasWarning('start_time') }"
+                    >
+                        <label>
+                            Dari Jam <span class="required">*</span>
+                        </label>
+                        <VCalendarInput
+                            v-model="form.start_time"
+                            mode="time"
+                            :rules="startRules"
+                            :disabled="
+                                !form.room_id ||
+                                !form.date ||
+                                isLoadingAvailability ||
+                                Boolean(availabilityError) ||
+                                availableStartTimes.length === 0
+                            "
+                            :invalid="hasWarning('start_time')"
+                        />
+                        <p v-if="form.errors.start_time" class="warning-text">
+                            {{ form.errors.start_time }}
+                        </p>
+                        <p
+                            v-else-if="hasWarning('start_time')"
+                            class="warning-text"
+                        >
+                            Waktu mulai wajib dipilih.
+                        </p>
+                    </div>
+
+                    <div
+                        class="form-group"
+                        :class="{ warning: hasWarning('end_time') }"
+                    >
+                        <label>
+                            Sampai Jam <span class="required">*</span>
+                        </label>
+                        <VCalendarInput
+                            v-model="form.end_time"
+                            mode="time"
+                            :rules="endRules"
+                            :disabled="
+                                !form.start_time ||
+                                isLoadingAvailability ||
+                                Boolean(availabilityError) ||
+                                availableEndTimes.length === 0
+                            "
+                            :invalid="hasWarning('end_time')"
+                        />
+
+                        <p v-if="isInvalidTimeRange" class="warning-text">
+                            Waktu selesai harus lebih besar dari waktu mulai
+                        </p>
+
+                        <p v-if="form.errors.end_time" class="warning-text">
+                            {{ form.errors.end_time }}
+                        </p>
+
+                        <p
+                            v-else-if="hasWarning('end_time')"
+                            class="warning-text"
+                        >
+                            Waktu selesai wajib dipilih.
+                        </p>
+                    </div>
                 </div>
 
-                <div
-                    class="form-group"
-                    :class="{ warning: hasWarning('end_time') }"
+                <p v-if="isLoadingAvailability" class="availability-message">
+                    Memuat jam yang tersedia...
+                </p>
+                <p v-else-if="availabilityError" class="warning-text">
+                    {{ availabilityError }} Muat ulang halaman untuk mencoba
+                    lagi.
+                </p>
+                <p
+                    v-else-if="
+                        form.room_id &&
+                        form.date &&
+                        availableStartTimes.length === 0
+                    "
+                    class="warning-text"
                 >
-                    <label> Sampai Jam <span class="required">*</span> </label>
-                    <AppInput
-                        v-model="form.end_time"
-                        type="time"
-                        :min="minEndTime"
-                        max="23:59"
-                        :invalid="hasWarning('end_time')"
-                    />
-
-                    <p v-if="isInvalidTimeRange" class="warning-text">
-                        Waktu selesai harus lebih besar dari waktu mulai
-                    </p>
-
-                    <p v-if="hasWarning('end_time')" class="warning-text">
-                        Waktu selesai wajib diisi.
-                    </p>
-                </div>
+                    Tidak ada jam yang tersedia pada tanggal ini.
+                </p>
+                <p
+                    v-else-if="
+                        form.room_id && form.date && bookedIntervals.length
+                    "
+                    class="availability-message"
+                >
+                    Jam yang sudah terbooking otomatis disembunyikan dari
+                    pilihan.
+                </p>
 
                 <div
                     class="form-group"
@@ -432,6 +489,12 @@ h2 {
     margin-bottom: 18px;
 }
 
+.booking-time-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
 .form-group label {
     font-weight: 600;
     margin-bottom: 6px;
@@ -465,6 +528,12 @@ textarea {
 .warning-text {
     margin-top: 6px;
     color: #dc3545;
+    font-size: 13px;
+}
+
+.availability-message {
+    margin: -8px 0 18px;
+    color: #475569;
     font-size: 13px;
 }
 
