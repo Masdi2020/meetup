@@ -194,8 +194,8 @@ onBeforeUnmount(() => {
                 <div>
                     <h3 class="font-semibold text-slate-800">Dokumentasi</h3>
                     <p class="mt-1 text-xs text-slate-500">
-                        JPG atau PNG <strong> Maks. 5 MB per foto </strong> 10 foto per
-                        unggahan
+                        JPG atau PNG <strong> Maks. 5 MB per foto </strong> 10
+                        foto per unggahan
                     </p>
                 </div>
                 <button
@@ -344,7 +344,8 @@ onBeforeUnmount(() => {
                 <div>
                     <h3 class="font-semibold text-slate-800">Notulensi</h3>
                     <p class="mt-1 text-xs text-slate-500">
-                        PDF, DOC, atau DOCX <strong> Maks. 10 MB </strong> 1 file
+                        PDF, DOC, atau DOCX <strong> Maks. 10 MB </strong> 1
+                        file
                     </p>
                 </div>
                 <button

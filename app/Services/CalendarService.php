@@ -8,6 +8,7 @@ use Carbon\CarbonInterface;
 class CalendarService
 {
     /**
+     * @param  int|array<int, int>|null  $roomId
      * @return array<int, array{
      *      id: int,
      *      title: string,

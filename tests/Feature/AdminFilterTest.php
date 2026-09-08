@@ -28,6 +28,50 @@ function filterRoom(string $name, string $location = 'Lantai 1'): Room
     ]);
 }
 
+it('filters availability by multiple rooms and supports clearing the selection', function () {
+    $user = filterUser('Pengguna', 'availability-user', 'user');
+    $rooms = collect(['Anggrek', 'Melati', 'Mawar'])->map(fn ($name) => filterRoom($name));
+    $status = BookingStatus::create(['code' => 'APPROVED', 'label' => 'Approved']);
+
+    foreach ($rooms as $room) {
+        Booking::create([
+            'room_id' => $room->id,
+            'user_id' => $user->id,
+            'date' => '2026-09-08',
+            'start_time' => '09:00',
+            'end_time' => '10:00',
+            'title' => $room->name,
+            'participants_count' => 5,
+            'status_id' => $status->id,
+        ]);
+    }
+
+    foreach (['month', 'week', 'day'] as $view) {
+        $query = http_build_query([
+            'date' => '2026-09-08',
+            'view' => $view,
+            'room' => [$rooms[0]->id, $rooms[2]->id],
+        ]);
+        $this->actingAs($user)->get('/availability?'.$query)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Availability')
+                ->where('selectedRoomIds', [$rooms[0]->id, $rooms[2]->id])
+                ->has('events', 2)
+                ->where('events', fn ($events) => collect($events)->pluck('room')->sort()->values()->all() === ['Anggrek', 'Mawar']));
+    }
+
+    foreach ([null, 0, $rooms[1]->id, [0]] as $filter) {
+        $expected = is_array($filter) ? [] : ($filter ? [$filter] : $rooms->pluck('id')->all());
+        $query = http_build_query(['date' => '2026-09-08', 'room' => $filter]);
+        $this->actingAs($user)->get('/availability?'.$query)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('selectedRoomIds', $expected)
+                ->has('events', count($expected)));
+    }
+});
+
 it('filters rooms on the server', function () {
     $admin = filterUser('Admin', 'filter-admin', 'admin');
     filterRoom('Ruang Anggrek', 'Lantai 2');

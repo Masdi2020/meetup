@@ -29,5 +29,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/admin.php';
+require __DIR__.'/api.php';
 require __DIR__.'/display.php';
 require __DIR__.'/user.php';
