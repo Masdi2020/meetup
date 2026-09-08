@@ -39,7 +39,10 @@ class BookingService
      *      date: non-falsy-string,
      *      time: non-falsy-string,
      *      title: string,
-     *      status: string
+     *      status: string,
+     *      results_available: bool,
+     *      documentations: array<int, array<string, mixed>>,
+     *      meeting_minutes: array<string, mixed>|null
      * }>
      */
     public function history(int $userId): Collection
@@ -47,6 +50,8 @@ class BookingService
         return Booking::with([
             'room:id,name',
             'status:id,code,label',
+            'documentations:id,booking_id,original_filename,path,mime_type,size,type',
+            'meetingMinutes:id,booking_id,original_filename,path,mime_type,size,type',
         ])->where('user_id', $userId)
             ->orderBy('created_at', 'asc')
             ->get()
@@ -58,6 +63,19 @@ class BookingService
                     'time' => (string) $booking->start_time->format('H:i').' - '.$booking->end_time->format('H:i'),
                     'title' => (string) $booking->title,
                     'status' => ucfirst(strtolower((string) $booking->status->code)),
+                    'results_available' => $booking->status->code === 'FINISHED',
+                    'documentations' => $booking->documentations->map(fn ($attachment) => [
+                        'id' => (int) $attachment->id,
+                        'original_filename' => (string) $attachment->original_filename,
+                        'path' => (string) $attachment->path,
+                        'mime_type' => (string) $attachment->mime_type,
+                    ])->values()->all(),
+                    'meeting_minutes' => $booking->meetingMinutes ? [
+                        'id' => (int) $booking->meetingMinutes->id,
+                        'original_filename' => (string) $booking->meetingMinutes->original_filename,
+                        'path' => (string) $booking->meetingMinutes->path,
+                        'mime_type' => (string) $booking->meetingMinutes->mime_type,
+                    ] : null,
                 ];
             });
     }

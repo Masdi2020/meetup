@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\BookingAttachmentType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -91,5 +93,18 @@ class Booking extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(BookingAttachment::class);
+    }
+
+    /** @return HasMany<BookingAttachment, $this> */
+    public function documentations(): HasMany
+    {
+        return $this->attachments()->where('type', BookingAttachmentType::Documentation->value);
+    }
+
+    /** @return HasOne<BookingAttachment, $this> */
+    public function meetingMinutes(): HasOne
+    {
+        return $this->hasOne(BookingAttachment::class)
+            ->where('type', BookingAttachmentType::MeetingMinutes->value);
     }
 }

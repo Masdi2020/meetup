@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BookingAttachmentType;
 use App\Events\BannerUpdated;
 use App\Events\BookingsUpdated;
 use App\Models\Booking;
@@ -115,6 +116,7 @@ class BookingWorkflowService
                     'path' => $path,
                     'mime_type' => $file->getMimeType(),
                     'size' => $file->getSize(),
+                    'type' => BookingAttachmentType::Banner,
                     'uploaded_by' => $actorUserId,
                 ]);
 

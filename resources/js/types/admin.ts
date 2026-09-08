@@ -1,4 +1,5 @@
 import type { UserRole } from './auth';
+import type { BookingResultFile } from './booking';
 import type { NamedEntity } from './room';
 
 export type BookingStatus =
@@ -48,6 +49,8 @@ export interface AdminBooking {
     status: BookingStatus;
     request?: string;
     processed_notes?: string;
+    documentations: BookingResultFile[];
+    meeting_minutes: BookingResultFile | null;
 }
 
 export interface Pagination<T> {

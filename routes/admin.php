@@ -18,6 +18,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/bookings/{booking}/reject', [Controllers\AdminBookingController::class, 'reject'])->middleware('booking.action:reject')->name('bookings.reject');
         Route::patch('/bookings/{booking}/finish', [Controllers\AdminBookingController::class, 'finish'])->middleware('booking.action:finish')->name('bookings.finish');
         Route::delete('/bookings/{booking}', [Controllers\AdminBookingController::class, 'destroy'])->middleware('booking.action:destroy')->name('bookings.destroy');
+        Route::post('/bookings/{booking}/results/documentation', [Controllers\BookingResultController::class, 'storeDocumentation'])->name('bookings.results.documentation');
+        Route::post('/bookings/{booking}/results/meeting-minutes', [Controllers\BookingResultController::class, 'storeMeetingMinutes'])->name('bookings.results.meeting-minutes');
+        Route::delete('/bookings/{booking}/attachments/{attachment}', [Controllers\BookingResultController::class, 'destroy'])->name('bookings.results.destroy');
 
         Route::get('/facilities', [Controllers\AdminFacilityController::class, 'index'])->name('facilities.index');
         Route::post('/facilities', [Controllers\AdminFacilityController::class, 'store'])->name('facilities.store');
@@ -40,4 +43,3 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/settings', [Controllers\AdminSettingController::class, 'edit'])->name('settings');
         Route::put('/settings', [Controllers\AdminSettingController::class, 'update'])->name('settings.update');
     });
-

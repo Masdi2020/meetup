@@ -55,6 +55,16 @@ class AdminBookingQueryService
                 'status' => strtolower($booking->status->code),
                 'request' => $booking->notes,
                 'processed_notes' => $booking->processed_notes,
+                'documentations' => $booking->documentations->map(fn ($attachment) => [
+                    'id' => (int) $attachment->id,
+                    'original_filename' => (string) $attachment->original_filename,
+                    'path' => (string) $attachment->path,
+                ])->values()->all(),
+                'meeting_minutes' => $booking->meetingMinutes ? [
+                    'id' => (int) $booking->meetingMinutes->id,
+                    'original_filename' => (string) $booking->meetingMinutes->original_filename,
+                    'path' => (string) $booking->meetingMinutes->path,
+                ] : null,
             ]);
 
         $count = fn (string $code) => Booking::whereHas(
@@ -159,7 +169,13 @@ class AdminBookingQueryService
         ?array $statuses = null,
     ): Builder {
         $query = Booking::query()
-            ->with(['room:id,name', 'user:id,name', 'status:id,code,label'])
+            ->with([
+                'room:id,name',
+                'user:id,name',
+                'status:id,code,label',
+                'documentations:id,booking_id,original_filename,path',
+                'meetingMinutes:id,booking_id,original_filename,path',
+            ])
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('title', 'like', "%{$search}%")
                 ->orWhereHas('user', fn ($query) => $query->where('name', 'like', "%{$search}%"))

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
+import { FileText } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
+import BookingResults from '@/components/organisms/BookingResults.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import type {
@@ -18,6 +20,9 @@ const bookingToCancel = ref<number | null>(null);
 const isCancelling = ref(false);
 const bookingToFinish = ref<number | null>(null);
 const isFinishing = ref(false);
+const resultsBusy = ref(false);
+const selectedResultsBooking = ref<BookingHistory | null>(null);
+const showResultsModal = ref(false);
 const today = new Date().toISOString().split('T')[0];
 
 const editForm = ref({
@@ -91,11 +96,48 @@ const { histories, statuses } = defineProps<{
     statuses: HistoryStatusOption[];
 }>();
 
+const openResultsModal = (booking: BookingHistory) => {
+    selectedResultsBooking.value = booking;
+    showResultsModal.value = true;
+};
+
+const closeResultsModal = () => {
+    if (resultsBusy.value) {
+        return;
+    }
+
+    selectedResultsBooking.value = null;
+    showResultsModal.value = false;
+};
+
+const resultStatus = (booking: BookingHistory) => {
+    const hasDocumentation = booking.documentations.length > 0;
+    const hasMinutes = booking.meeting_minutes !== null;
+
+    if (hasDocumentation && hasMinutes) {
+        return 'Lengkap';
+    }
+
+    if (hasDocumentation || hasMinutes) {
+        return 'Sebagian';
+    }
+
+    return 'Belum dilengkapi';
+};
+
 useBookingPageUpdates(['histories']);
 
 watch(
     () => histories,
     (bookings) => {
+        if (selectedResultsBooking.value) {
+            selectedResultsBooking.value =
+                bookings.find(
+                    (booking) =>
+                        booking.id === selectedResultsBooking.value?.id,
+                ) ?? null;
+        }
+
         const canEdit = (id: number) =>
             bookings.some(
                 (booking) =>
@@ -210,7 +252,6 @@ const finishBooking = () => {
                     </option>
                 </select>
             </div>
-
             <div class="table-card ui-card">
                 <table>
                     <thead>
@@ -221,6 +262,7 @@ const finishBooking = () => {
                             <th>Waktu</th>
                             <th>Judul</th>
                             <th>Status</th>
+                            <th>Hasil Rapat</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -245,20 +287,55 @@ const finishBooking = () => {
                                 </span>
                             </td>
 
-                            <td>
-                                <div
-                                    v-if="
-                                        item.status === 'Pending' ||
-                                        item.status === 'Approved'
+                            <td class="results-cell">
+                                <span
+                                    class="result-status"
+                                    :class="
+                                        resultStatus(item)
+                                            .toLowerCase()
+                                            .replaceAll(' ', '-')
                                     "
-                                    class="action-buttons"
                                 >
+                                    {{ resultStatus(item) }}
+                                </span>
+                                <p
+                                    v-if="item.results_available"
+                                    class="result-summary"
+                                >
+                                    {{ item.documentations.length }} dokumentasi
+                                    ·
+                                    {{ item.meeting_minutes ? 1 : 0 }} notulensi
+                                </p>
+                            </td>
+
+                            <td>
+                                <div class="action-buttons">
+                                    <button
+                                        v-if="item.results_available"
+                                        type="button"
+                                        class="result-action-button"
+                                        aria-label="Kelola hasil rapat"
+                                        title="Kelola hasil rapat"
+                                        @click="openResultsModal(item)"
+                                    >
+                                        <FileText
+                                            :size="15"
+                                            aria-hidden="true"
+                                        />
+                                    </button>
                                     <ActionIconButton
+                                        v-if="
+                                            item.status === 'Pending' ||
+                                            item.status === 'Approved'
+                                        "
                                         action="edit"
                                         @click="openEditModal(item)"
                                     />
-
                                     <ActionIconButton
+                                        v-if="
+                                            item.status === 'Pending' ||
+                                            item.status === 'Approved'
+                                        "
                                         action="cancel"
                                         @click="openCancelModal(item.id)"
                                     />
@@ -272,13 +349,60 @@ const finishBooking = () => {
                         </tr>
 
                         <tr v-if="filteredHistory.length === 0">
-                            <td colspan="7" class="empty">Tidak ada data.</td>
+                            <td colspan="8" class="empty">Tidak ada data.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <AppModal
+        v-if="showResultsModal && selectedResultsBooking"
+        title="Hasil Rapat"
+        max-width="2xl"
+        @close="closeResultsModal"
+    >
+        <div class="results-modal-content">
+            <div class="booking-summary">
+                <div>
+                    <span>Ruangan</span>
+                    <strong>{{ selectedResultsBooking.room }}</strong>
+                </div>
+                <div>
+                    <span>Tanggal</span>
+                    <strong>{{ selectedResultsBooking.date }}</strong>
+                </div>
+                <div>
+                    <span>Waktu</span>
+                    <strong>{{ selectedResultsBooking.time }}</strong>
+                </div>
+                <div class="sm:col-span-2">
+                    <span>Judul rapat</span>
+                    <strong>{{ selectedResultsBooking.title }}</strong>
+                </div>
+            </div>
+
+            <BookingResults
+                :key="selectedResultsBooking.id"
+                :base-url="`/booking/${selectedResultsBooking.id}`"
+                :documentations="selectedResultsBooking.documentations"
+                :meeting-minutes="selectedResultsBooking.meeting_minutes"
+                :editable="selectedResultsBooking.results_available"
+                @busy="resultsBusy = $event"
+            />
+        </div>
+        <template #actions>
+            <button
+                type="button"
+                class="ui-button"
+                :disabled="resultsBusy"
+                @click="closeResultsModal"
+            >
+                Tutup
+            </button>
+        </template>
+    </AppModal>
 
     <AppModal
         v-if="showDateAlertModal"
@@ -448,5 +572,88 @@ tbody tr:hover {
     padding: 10px 12px;
     border: 1px solid var(--ui-border);
     border-radius: 8px;
+}
+
+.results-cell {
+    min-width: 150px;
+}
+
+.result-status {
+    display: inline-block;
+    margin-bottom: 8px;
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.belum-dilengkapi {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.sebagian {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.lengkap {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.result-summary {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.result-action-button {
+    display: inline-flex;
+    height: 32px;
+    width: 32px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    color: #2563eb;
+    transition: background-color 0.2s;
+}
+
+.result-action-button:hover {
+    background: #eff6ff;
+}
+
+.results-modal-content {
+    display: grid;
+    gap: 20px;
+}
+
+.booking-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 14px;
+}
+
+.booking-summary span {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.booking-summary strong {
+    display: block;
+    margin-top: 3px;
+    color: #0f172a;
+    font-size: 14px;
+}
+
+@media (max-width: 640px) {
+    .booking-summary {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 </style>

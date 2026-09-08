@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { X } from '@lucide/vue';
+import { Check, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue';
 import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
 import RoomSummaryCard from '@/components/molecules/RoomSummaryCard.vue';
@@ -472,7 +472,9 @@ onBeforeUnmount(() => {
         @close="showSuccessDialog = false"
     >
         <div class="text-center">
-            <div class="dialog-icon" aria-hidden="true">?</div>
+            <div class="dialog-icon" aria-hidden="true">
+                <Check :size="36" :stroke-width="3" />
+            </div>
             <p>
                 Permintaan peminjaman ruangan telah berhasil dikirim dan sedang
                 menunggu persetujuan admin.
@@ -680,8 +682,5 @@ button:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-
-    font-size: 32px;
-    font-weight: bold;
 }
 </style>

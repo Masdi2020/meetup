@@ -11,6 +11,7 @@ import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
 import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
+import BookingResults from '@/components/organisms/BookingResults.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useAdminFilters } from '@/composables/useAdminFilters';
@@ -93,6 +94,7 @@ const rejectReason = ref('');
 const rejectValidationErrors = ref({ reason: '' });
 const addBookingPreview = ref<string | null>(null);
 const addBookingBannerInput = ref<HTMLInputElement | null>(null);
+const resultsBusy = ref(false);
 const addBookingSubmitted = ref(false);
 const exportFormat = ref<BookingExportFormat>('pdf');
 const exportPreview = ref<BookingExportPayload | null>(null);
@@ -537,12 +539,28 @@ function closeFinishModal() {
     selectedBookingId.value = null;
 }
 
+watch(
+    () => props.bookings.data,
+    (bookings) => {
+        if (detailBooking.value) {
+            detailBooking.value =
+                bookings.find(
+                    (booking) => booking.id === detailBooking.value?.id,
+                ) ?? null;
+        }
+    },
+);
+
 function openDetailModal(booking: Booking) {
     detailBooking.value = booking;
     openModal('detail');
 }
 
 function closeDetailModal() {
+    if (resultsBusy.value) {
+        return;
+    }
+
     closeModal();
     detailBooking.value = null;
 }
@@ -1556,6 +1574,19 @@ function reject(id: number) {
                     <p class="mt-1 font-medium">
                         {{ detailBooking.processed_notes }}
                     </p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-500">Hasil Rapat</p>
+                    <BookingResults
+                        v-if="detailBooking"
+                        :key="detailBooking.id"
+                        class="mt-3"
+                        :base-url="`/admin/bookings/${detailBooking.id}`"
+                        :documentations="detailBooking.documentations"
+                        :meeting-minutes="detailBooking.meeting_minutes"
+                        :editable="detailBooking.status === 'finished'"
+                        @busy="resultsBusy = $event"
+                    />
                 </div>
             </div>
         </DetailModal>
