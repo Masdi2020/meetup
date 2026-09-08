@@ -79,7 +79,7 @@ const actions: Record<
         :aria-label="props.label ?? actions[action].label"
         :title="props.label ?? actions[action].label"
         :class="actions[action].classes"
-        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
     >
         <component
             :is="actions[action].icon"

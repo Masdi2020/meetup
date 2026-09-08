@@ -3,6 +3,7 @@ import { router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
+import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import type {
@@ -187,12 +188,18 @@ const finishBooking = () => {
 </script>
 
 <template>
-    <div class="history-page">
-        <h2>Riwayat Peminjaman Ruang Rapat</h2>
+    <div class="app-page history-page">
+        <header class="page-header page-heading">
+            <h1 class="page-title">Riwayat Peminjaman Ruang Rapat</h1>
+        </header>
 
         <div class="page-card">
             <div class="filter">
-                <select v-model="filterStatus">
+                <select
+                    v-model="filterStatus"
+                    class="ui-control"
+                    aria-label="Filter status peminjaman"
+                >
                     <option value="">Semua</option>
                     <option
                         v-for="status in statuses"
@@ -204,7 +211,7 @@ const finishBooking = () => {
                 </select>
             </div>
 
-            <div class="table-card">
+            <div class="table-card ui-card">
                 <table>
                     <thead>
                         <tr>
@@ -273,22 +280,22 @@ const finishBooking = () => {
         </div>
     </div>
 
-    <div v-if="showDateAlertModal" class="modal-overlay">
-        <div
-            class="modal"
-            role="alertdialog"
-            aria-modal="true"
-            aria-label="Tanggal tidak valid"
+    <AppModal
+        v-if="showDateAlertModal"
+        title="Tanggal Tidak Valid"
+        max-width="md"
+        @close="showDateAlertModal = false"
+    >
+        <p>Tanggal tidak boleh kurang dari hari ini.</p>
+        <template #actions
+            ><button
+                class="ui-button ui-button--primary"
+                @click="showDateAlertModal = false"
+            >
+                Mengerti
+            </button></template
         >
-            <h3>Tanggal Tidak Valid</h3>
-            <p>Tanggal tidak boleh kurang dari hari ini.</p>
-            <div class="modal-actions">
-                <button class="edit-btn" @click="showDateAlertModal = false">
-                    Mengerti
-                </button>
-            </div>
-        </div>
-    </div>
+    </AppModal>
 
     <ConfirmModal
         v-if="bookingToCancel !== null"
@@ -308,81 +315,50 @@ const finishBooking = () => {
         @close="closeFinishModal"
         @confirm="finishBooking"
     />
-    <div v-if="showEditModal" class="modal-overlay">
-        <div class="modal">
-            <h3>Edit Booking</h3>
-
-            <div class="form-group">
-                <label>Judul</label>
-                <input type="text" v-model="editForm.title" />
-            </div>
-
-            <div class="form-group">
-                <label>Tanggal</label>
-                <AppInput v-model="editForm.date" type="date" :min="today" />
-            </div>
-
-            <div class="form-group">
-                <label>Jam Mulai</label>
-                <AppInput v-model="editForm.start_time" type="time" />
-            </div>
-
-            <div class="form-group">
-                <label>Jam Selesai</label>
-                <AppInput v-model="editForm.end_time" type="time" />
-            </div>
-
-            <div class="modal-actions">
-                <button class="cancel-btn" @click="closeEditModal">
-                    Batal
-                </button>
-
-                <button class="edit-btn" @click="submitEdit">Simpan</button>
-            </div>
+    <AppModal v-if="showEditModal" title="Edit Booking" @close="closeEditModal">
+        <div class="form-group">
+            <label>Judul</label>
+            <input type="text" v-model="editForm.title" />
         </div>
-    </div>
+
+        <div class="form-group">
+            <label>Tanggal</label>
+            <AppInput v-model="editForm.date" type="date" :min="today" />
+        </div>
+
+        <div class="form-group">
+            <label>Jam Mulai</label>
+            <AppInput v-model="editForm.start_time" type="time" />
+        </div>
+
+        <div class="form-group">
+            <label>Jam Selesai</label>
+            <AppInput v-model="editForm.end_time" type="time" />
+        </div>
+
+        <template #actions>
+            <button class="ui-button" @click="closeEditModal">Batal</button>
+
+            <button class="ui-button ui-button--primary" @click="submitEdit">
+                Simpan
+            </button>
+        </template>
+    </AppModal>
 </template>
 
 <style scoped>
-.history-page {
-    padding: 30px;
-}
-
 .page-card {
-    background: #cfe2ff;
-    border-radius: 10px;
-    padding: 28px;
-    max-width: 1100px;
-    margin: 0; /* align left with heading */
-}
-
-h2 {
-    width: fit-content;
-    color: #1b3768;
-    border-bottom: 2px solid #d9d9d9;
-    padding-bottom: 5px;
-    margin-bottom: 15px;
+    display: grid;
+    min-width: 0;
+    gap: var(--ui-gap);
 }
 
 .filter {
-    margin-bottom: 20px;
-}
-
-.filter select {
-    background: #efc74a;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-weight: 600;
-    cursor: pointer;
+    width: min(100%, 280px);
 }
 
 .table-card {
-    background: white;
-    border-radius: 12px;
-    padding: 18px;
-    min-height: 420px;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+    min-width: 0;
     overflow-x: auto;
 }
 
@@ -394,13 +370,13 @@ table {
 th {
     text-align: left;
     color: #1b3768;
-    padding: 10px 14px;
+    padding: 12px 16px;
     font-weight: 600;
 }
 
 td {
-    padding: 10px 14px;
-    color: #243b73;
+    padding: 12px 16px;
+    color: var(--ui-text);
 }
 
 tbody tr:hover {
@@ -412,26 +388,30 @@ tbody tr:hover {
     min-width: 85px;
     text-align: center;
     padding: 4px 12px;
-    border-radius: 6px;
+    border-radius: 999px;
     color: white;
     font-size: 13px;
     font-weight: 600;
 }
 
 .approved {
-    background: #2da10c;
+    background: #dcfce7;
+    color: #15803d;
 }
 
 .pending {
-    background: #d8bc00;
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .rejected {
-    background: #d62828;
+    background: #fee2e2;
+    color: #b91c1c;
 }
 
 .cancelled {
-    background: #6c757d;
+    background: #f1f5f9;
+    color: #475569;
 }
 
 .empty {
@@ -441,10 +421,6 @@ tbody tr:hover {
 }
 
 @media (max-width: 768px) {
-    .history-page {
-        padding: 15px;
-    }
-
     table {
         min-width: 650px;
     }
@@ -455,108 +431,22 @@ tbody tr:hover {
     gap: 8px;
 }
 
-.edit-btn,
-.cancel-btn {
-    border: none;
-    border-radius: 6px;
-    padding: 5px 12px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    transition: 0.2s;
-}
-
-.edit-btn {
-    background: #2b6cb0;
-    color: white;
-}
-
-.edit-btn:hover {
-    background: #1f4f82;
-}
-
-.cancel-btn {
-    background: #dc3545;
-    color: white;
-}
-
-.cancel-btn:hover {
-    background: #b52b38;
-}
-
 .finished {
-    background: #2563eb;
-}
-
-.finish-btn {
-    border: none;
-    border-radius: 6px;
-    padding: 5px 12px;
-    cursor: pointer;
-    background: #2563eb;
-    color: white;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.finish-btn:hover {
-    background: #1d4ed8;
-}
-
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    z-index: 999;
-}
-
-.modal {
-    width: 500px;
-    max-width: 95%;
-
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
+    background: #dbeafe;
+    color: #1d4ed8;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    margin-bottom: 15px;
+    gap: 8px;
+    margin-bottom: var(--ui-gap);
 }
 
 .form-group input {
-    padding: 10px;
-    border: 1px solid #ddd;
+    min-height: var(--ui-control-height);
+    padding: 10px 12px;
+    border: 1px solid var(--ui-border);
     border-radius: 8px;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-.save-btn {
-    background: #2563eb;
-    color: white;
-    border: none;
-    padding: 8px 18px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.close-btn {
-    background: #dc3545;
-    color: white;
-    border: none;
-    padding: 8px 18px;
-    border-radius: 8px;
-    cursor: pointer;
 }
 </style>

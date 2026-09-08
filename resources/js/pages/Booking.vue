@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/vue3';
 import { X } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue';
 import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
+import AppModal from '@/components/organisms/AppModal.vue';
 import {
     localDateString,
     useBookingAvailability,
@@ -203,34 +204,59 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="booking-page">
-        <h2>Formulir Peminjaman</h2>
+    <div class="app-page booking-page">
+        <header class="page-header page-heading">
+            <h1 class="page-title">Formulir Peminjaman</h1>
+        </header>
 
         <div class="page-card">
-            <div
-                class="room-selector"
-                :class="{ warning: hasWarning('room_id') }"
+            <form
+                class="booking-card ui-card ui-card-body"
+                novalidate
+                @submit.prevent="submitBooking"
             >
-                <label> Ruangan <span class="required">*</span> </label>
-                <select v-model.number="form.room_id">
-                    <option :value="null" disabled hidden>Pilih Ruangan</option>
-                    <option
-                        v-for="room in rooms"
-                        :key="room.id"
-                        :value="room.id"
+                <fieldset
+                    class="room-selector"
+                    :class="{ warning: hasWarning('room_id') }"
+                >
+                    <legend>Ruangan <span class="required">*</span></legend>
+                    <div class="room-options">
+                        <label
+                            v-for="room in rooms"
+                            :key="room.id"
+                            class="room-option"
+                        >
+                            <input
+                                v-model="form.room_id"
+                                type="radio"
+                                name="room_id"
+                                :value="room.id"
+                                :aria-invalid="hasWarning('room_id')"
+                                :aria-describedby="
+                                    hasWarning('room_id')
+                                        ? 'room-error'
+                                        : undefined
+                                "
+                            />
+                            {{ room.name }}
+                        </label>
+                    </div>
+                    <p
+                        v-if="form.errors.room_id"
+                        id="room-error"
+                        class="warning-text"
                     >
-                        {{ room.name }}
-                    </option>
-                </select>
-                <p v-if="form.errors.room_id" class="warning-text">
-                    {{ form.errors.room_id }}
-                </p>
-                <p v-else-if="hasWarning('room_id')" class="warning-text">
-                    Ruangan wajib dipilih.
-                </p>
-            </div>
+                        {{ form.errors.room_id }}
+                    </p>
+                    <p
+                        v-else-if="hasWarning('room_id')"
+                        id="room-error"
+                        class="warning-text"
+                    >
+                        Ruangan wajib dipilih.
+                    </p>
+                </fieldset>
 
-            <div class="booking-card">
                 <div
                     class="form-group"
                     :class="{ warning: hasWarning('date') }"
@@ -417,76 +443,83 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div class="button-wrapper">
-                    <form @submit.prevent="submitBooking">
-                        <button type="submit" :disabled="form.processing">
-                            {{ form.processing ? 'Menyimpan...' : 'Booking' }}
-                        </button>
-                    </form>
+                    <button type="submit" :disabled="form.processing">
+                        {{ form.processing ? 'Menyimpan...' : 'Booking' }}
+                    </button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 
-    <div
+    <AppModal
         v-if="showSuccessDialog"
-        class="dialog-overlay"
-        @click.self="showSuccessDialog = false"
+        title="Booking Berhasil Diajukan"
+        max-width="md"
+        @close="showSuccessDialog = false"
     >
-        <div class="dialog">
-            <div class="dialog-icon">✓</div>
-
-            <h3>Booking Berhasil Diajukan</h3>
-
+        <div class="text-center">
+            <div class="dialog-icon" aria-hidden="true">?</div>
             <p>
                 Permintaan peminjaman ruangan telah berhasil dikirim dan sedang
                 menunggu persetujuan admin.
             </p>
-
-            <button @click="showSuccessDialog = false">Tutup</button>
         </div>
-    </div>
+        <template #actions
+            ><button type="button" @click="showSuccessDialog = false">
+                Tutup
+            </button></template
+        >
+    </AppModal>
 </template>
 
 <style scoped>
-.booking-page {
-    width: 100%;
-    margin: 0;
-    padding: 30px;
-}
-
-h2 {
-    font-size: 24px;
-    margin-bottom: 15px;
-    color: #173b7a;
-    border-bottom: 2px solid #d9d9d9;
-    width: fit-content;
-}
-
 .room-selector {
-    margin-bottom: 20px;
+    min-width: 0;
+    margin: 0 0 var(--ui-gap);
+    padding: 0;
+    border: 0;
 }
 
-.room-selector select {
-    background: #efc74a;
-    border: none;
+.room-selector legend {
+    margin-bottom: 8px;
+}
+
+.room-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.room-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
     border-radius: 8px;
     padding: 8px 12px;
     font-weight: 600;
     cursor: pointer;
 }
 
+.room-option input {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    accent-color: #173b7a;
+}
+
 .booking-card {
-    background: #cfe2ff;
-    border-radius: 10px;
-    padding: 28px;
-    max-width: 700px;
-    margin: 0; /* align left with heading */
+    width: 100%;
+    max-width: var(--ui-form-width);
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    margin-bottom: 18px;
+    min-width: 0;
+    margin-bottom: var(--ui-gap);
 }
 
 .booking-time-row {
@@ -501,12 +534,13 @@ h2 {
     color: #2c2c2c;
 }
 
-input,
+input:not([type='radio']),
 select,
 textarea {
     width: 100%;
-    padding: 11px 14px;
-    border: none;
+    min-height: var(--ui-control-height);
+    padding: 10px 12px;
+    border: 1px solid var(--ui-border);
     border-radius: 8px;
     background: white;
     font-size: 14px;
@@ -515,7 +549,7 @@ textarea {
 
 .form-group.warning input,
 .form-group.warning select,
-.room-selector.warning select,
+.room-selector.warning .room-option,
 .form-group.warning textarea {
     border: 1px solid #dc3545;
     background: #fff5f5;
@@ -547,27 +581,28 @@ textarea {
 }
 
 button {
-    background: #1f3768;
+    min-height: var(--ui-control-height);
+    background: var(--ui-primary);
     color: white;
     border: none;
-    border-radius: 7px;
-    padding: 10px 28px;
+    border-radius: var(--ui-radius);
+    padding: 10px 16px;
     cursor: pointer;
     font-weight: bold;
     transition: 0.2s;
 }
 
 button:hover {
-    background: #2a4b90;
+    background: var(--ui-primary-hover);
 }
 
 @media (max-width: 768px) {
-    .booking-page {
-        padding: 15px;
+    input:not([type='radio']),
+    textarea {
+        font-size: 16px;
     }
-
-    .booking-card {
-        padding: 20px;
+    .booking-time-row {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
@@ -592,8 +627,9 @@ button:hover {
     top: 8px;
     right: 8px;
     display: grid;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
     padding: 0;
     place-items: center;
     border: 0;
@@ -618,29 +654,6 @@ button:hover {
     font-size: 13px;
 }
 
-.dialog-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    z-index: 9999;
-}
-
-.dialog {
-    background: white;
-    width: 420px;
-    max-width: 90%;
-    border-radius: 12px;
-    padding: 30px;
-    text-align: center;
-
-    animation: popup 0.2s ease;
-}
-
 .dialog-icon {
     width: 70px;
     height: 70px;
@@ -656,32 +669,5 @@ button:hover {
 
     font-size: 32px;
     font-weight: bold;
-}
-
-.dialog h3 {
-    margin-bottom: 10px;
-    color: #173b7a;
-}
-
-.dialog p {
-    color: #555;
-    margin-bottom: 25px;
-    line-height: 1.5;
-}
-
-.dialog button {
-    min-width: 120px;
-}
-
-@keyframes popup {
-    from {
-        transform: scale(0.9);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
 }
 </style>

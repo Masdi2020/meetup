@@ -17,9 +17,8 @@ withDefaults(
 
 <template>
     <article
-        class="rounded-xl bg-white shadow"
+        class="ui-card ui-card-body stat-card"
         :class="[
-            size === 'large' ? 'p-6' : 'p-5',
             { 'border-l-4': accent },
             {
                 'border-blue-500': accent && tone === 'info',
@@ -39,7 +38,7 @@ withDefaults(
         <p
             class="mt-2 font-bold"
             :class="[
-                size === 'large' ? 'text-4xl' : 'text-3xl',
+                'text-3xl',
                 {
                     'text-blue-600': tone === 'info',
                     'text-indigo-600': tone === 'indigo',
@@ -52,3 +51,21 @@ withDefaults(
         </p>
     </article>
 </template>
+
+<style scoped>
+.stat-card.border-l-4 {
+    border-left-width: 4px;
+}
+.stat-card.border-blue-500 {
+    border-left-color: #3b82f6;
+}
+.stat-card.border-indigo-500 {
+    border-left-color: #6366f1;
+}
+.stat-card.border-yellow-500 {
+    border-left-color: #eab308;
+}
+.stat-card.border-green-500 {
+    border-left-color: #22c55e;
+}
+</style>

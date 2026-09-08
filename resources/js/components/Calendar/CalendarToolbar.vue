@@ -53,12 +53,11 @@ const emit = defineEmits<{
 <style scoped>
 .calendar-toolbar {
     position: relative;
-    display: flex;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     min-height: 44px;
     gap: 8px;
-    flex-wrap: wrap;
 }
 .calendar-toolbar h2 {
     margin: 0;
@@ -67,7 +66,7 @@ const emit = defineEmits<{
     color: #173b7a;
 }
 button {
-    min-height: 40px;
+    min-height: var(--ui-control-height);
     padding: 8px 14px;
     border: 1px solid #cbd5e1;
     background: #fff;
@@ -86,28 +85,27 @@ button:hover {
     background: #eff6ff;
 }
 .navigation {
-    margin-left: auto;
+    justify-self: center;
     display: flex;
     white-space: nowrap;
 }
 .view-switch {
     display: flex;
-    margin-left: 0;
+    justify-self: end;
 }
 .view-switch button.active {
     border-color: #2563eb;
     background: #2563eb;
     color: #fff;
 }
-@media (max-width: 720px) {
+@container (max-width: 760px) {
     .calendar-toolbar {
-        align-items: center;
-        flex-direction: row;
+        grid-template-columns: minmax(0, 1fr);
         gap: 6px;
     }
     .calendar-toolbar h2 {
         font-size: 16px;
-        flex: 1 0 100%;
+        text-align: center;
     }
     .navigation {
         margin-left: 0;
@@ -116,12 +114,12 @@ button:hover {
         justify-content: center;
     }
     .view-switch {
-        margin-left: auto;
+        justify-self: center;
     }
     button {
-        min-height: 36px;
+        min-height: var(--ui-control-height);
         padding: 6px 8px;
-        font-size: 12px;
+        font-size: 14px;
     }
 }
 </style>

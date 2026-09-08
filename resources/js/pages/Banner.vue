@@ -34,22 +34,22 @@ const titleFontSize = computed(() => {
         .filter(Boolean).length;
 
     if (wordCount <= 2) {
-        return 'clamp(6rem, 12vw, 11rem)';
+        return 'clamp(2.25rem, 12vw, 11rem)';
     }
 
     if (wordCount <= 4) {
-        return 'clamp(5rem, 10vw, 9rem)';
+        return 'clamp(2rem, 10vw, 9rem)';
     }
 
     if (wordCount <= 7) {
-        return 'clamp(4rem, 8vw, 7rem)';
+        return 'clamp(1.75rem, 8vw, 7rem)';
     }
 
     if (wordCount <= 10) {
-        return 'clamp(3.5rem, 6vw, 5.5rem)';
+        return 'clamp(1.5rem, 6vw, 5.5rem)';
     }
 
-    return 'clamp(3rem, 5vw, 4.5rem)';
+    return 'clamp(1.5rem, 5vw, 4.5rem)';
 });
 
 const remainingTime = computed(() => {
@@ -289,8 +289,11 @@ onUnmounted(() => {
     transform: scale(0.95);
 }
 .screen {
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: 100dvh;
+    overflow-y: auto;
     background: black;
 
     display: flex;
@@ -314,7 +317,7 @@ onUnmounted(() => {
     justify-content: center;
     color: white;
     text-align: center;
-    padding: 40px;
+    padding: clamp(24px, 4vw, 64px);
 }
 
 .title {
@@ -325,7 +328,7 @@ onUnmounted(() => {
 }
 
 .time {
-    font-size: 42px;
+    font-size: clamp(20px, 4vw, 42px);
     font-weight: 500;
     opacity: 0.9;
     margin-bottom: 16px;

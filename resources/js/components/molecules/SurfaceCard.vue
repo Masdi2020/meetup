@@ -3,9 +3,11 @@
 </template>
 <style scoped>
 .surface-card {
-    padding: 28px;
-    border-radius: 10px;
-    background: #cfe2ff;
-    box-shadow: 0 8px 30px rgb(0 0 0 / 8%);
+    min-width: 0;
+    padding: var(--ui-card-padding);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-card-radius);
+    background: var(--ui-surface);
+    box-shadow: var(--ui-shadow);
 }
 </style>

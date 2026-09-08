@@ -14,22 +14,33 @@ const props = defineProps<{
     year: number;
     date: string;
     view: 'month' | 'week' | 'day';
-    selectedRoomId: number;
+    selectedRoomIds: number[];
 }>();
 
 const rooms = props.rooms;
 
 useBookingPageUpdates(['events']);
 
-const selectedRoomId = ref<number | string>(props.selectedRoomId ?? 0);
+const selectedRoomIds = ref<number[]>([...props.selectedRoomIds]);
+const filteredRooms = computed(() =>
+    rooms.filter((room) => selectedRoomIds.value.includes(room.id)),
+);
+const allRoomsSelected = computed(
+    () => rooms.length > 0 && selectedRoomIds.value.length === rooms.length,
+);
+const roomFilter = computed(() =>
+    selectedRoomIds.value.length ? selectedRoomIds.value : [0],
+);
 
-const selectedRoom = computed(() => {
-    if (selectedRoomId.value === 0 || selectedRoomId.value === '0') {
-        return null;
-    }
+const selectedRoom = computed(() =>
+    filteredRooms.value.length === 1 ? filteredRooms.value[0] : null,
+);
 
-    return rooms.find((room) => room.id === Number(selectedRoomId.value));
-});
+function toggleAllRooms() {
+    selectedRoomIds.value = allRoomsSelected.value
+        ? []
+        : rooms.map((room) => room.id);
+}
 
 function booking(roomId: number) {
     localStorage.setItem('booking_room_id', String(roomId));
@@ -40,7 +51,7 @@ function booking(roomId: number) {
 function loadCalendar(date: string, view = props.view) {
     router.get(
         '/availability',
-        { room: selectedRoomId.value, date, view },
+        { room: roomFilter.value, date, view },
         {
             preserveScroll: true,
             preserveState: true,
@@ -52,44 +63,61 @@ function loadCalendar(date: string, view = props.view) {
 function changeView(view: 'month' | 'week' | 'day') {
     loadCalendar(props.date, view);
 }
-watch(selectedRoomId, (room) => {
+watch(selectedRoomIds, () => {
     router.get(
         '/availability',
         {
-            room,
+            room: roomFilter.value,
             date: props.date,
             view: props.view,
         },
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['events', 'selectedRoomId'],
+            only: ['events', 'selectedRoomIds'],
         },
     );
 });
 </script>
 
 <template>
-    <div class="availability">
-        <h2>Ketersediaan Ruangan</h2>
+    <div class="app-page availability">
+        <header class="page-header page-heading">
+            <h1 class="page-title">Ketersediaan Ruangan</h1>
+        </header>
 
-        <div class="page-card">
-            <div class="toolbar">
-                <label>Pilih Ruangan</label>
-
-                <select v-model="selectedRoomId">
-                    <option :value="0">Semua Ruangan</option>
-                    <option
+        <div class="page-card ui-card ui-card-body">
+            <fieldset class="toolbar">
+                <legend class="room-filter-heading">
+                    <span>Pilih Ruangan</span>
+                    <button
+                        type="button"
+                        class="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="!rooms.length"
+                        @click="toggleAllRooms"
+                    >
+                        {{
+                            allRoomsSelected ? 'Batalkan semua' : 'Pilih semua'
+                        }}
+                    </button>
+                </legend>
+                <div class="room-options">
+                    <label
                         v-for="room in rooms"
                         :key="room.id"
-                        :value="room.id"
+                        class="room-option"
                     >
+                        <input
+                            v-model="selectedRoomIds"
+                            type="checkbox"
+                            :value="room.id"
+                        />
                         {{ room.name }}
-                    </option>
-                </select>
-            </div>
+                    </label>
+                </div>
+            </fieldset>
 
-            <div class="room-card" v-if="selectedRoom && selectedRoomId !== 0">
+            <div class="room-card" v-if="selectedRoom">
                 <div class="room-image">
                     <img
                         v-if="selectedRoom.image"
@@ -125,19 +153,22 @@ watch(selectedRoomId, (room) => {
                         </span>
                     </div>
 
-                    <button class="booking" @click="booking(selectedRoom.id)">
+                    <button
+                        class="booking ui-button ui-button--primary"
+                        @click="booking(selectedRoom.id)"
+                    >
                         Booking
                     </button>
                 </div>
             </div>
 
-            <div class="room-legend" v-else-if="rooms.length">
+            <div class="room-legend" v-else-if="filteredRooms.length">
                 <span class="legend-title">Legenda Ruangan</span>
 
                 <div class="legend-items">
                     <div
                         class="legend-item"
-                        v-for="room in rooms"
+                        v-for="room in filteredRooms"
                         :key="room.id"
                     >
                         <span
@@ -168,56 +199,66 @@ watch(selectedRoomId, (room) => {
 </template>
 
 <style scoped>
-.availability {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    min-width: 0;
-}
-
 .page-card {
-    background: #cfe2ff;
-    border-radius: 10px;
-    padding: 12px;
-    width: 100%;
-    min-width: 0;
-    margin: 0; /* align left with heading */
-}
-
-h2 {
-    font-size: 24px;
-    margin-bottom: 15px;
-    color: #173b7a;
-    border-bottom: 2px solid #d9d9d9;
-    width: fit-content;
+    display: grid;
+    gap: var(--ui-gap);
 }
 
 .toolbar {
-    margin: 0 0 8px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.toolbar legend {
+    margin-bottom: 8px;
+}
+
+.room-filter-heading {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.room-options {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
     gap: 8px;
 }
 
-.toolbar select {
-    width: min(300px, 100%);
-    padding: 10px;
+.room-option {
+    border: 1px solid var(--ui-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 12px;
     border-radius: 8px;
-    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+}
+
+.room-option input {
+    width: 18px;
+    height: 18px;
+    accent-color: #2563eb;
 }
 
 .room-card {
     display: flex;
-    gap: 20px;
-    padding: 20px;
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    margin-bottom: 20px;
+    gap: var(--ui-gap);
+    padding: var(--ui-card-padding);
+    background: var(--ui-surface-soft);
+    border-radius: var(--ui-radius);
+    border: 1px solid var(--ui-border);
 }
 
 .room-image {
+    flex-shrink: 0;
+    overflow: hidden;
     width: 120px;
     height: 120px;
     background: #f5f5f5;
@@ -228,8 +269,16 @@ h2 {
     font-size: 42px;
 }
 
+.room-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .room-info {
     flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .room-info h3 {
@@ -244,25 +293,15 @@ h2 {
     margin-bottom: 20px;
 }
 
-.booking {
-    padding: 10px 20px;
-    background: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
 .room-legend {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 16px;
-    padding: 8px 10px;
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    margin-bottom: 20px;
+    gap: 12px;
+    padding: 12px;
+    background: var(--ui-surface-soft);
+    border-radius: var(--ui-radius);
+    border: 1px solid var(--ui-border);
 }
 
 .legend-title {
@@ -295,10 +334,6 @@ h2 {
 
 .calendar-card {
     min-width: 0;
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    padding: 8px;
-    background: white;
 }
 
 .calendar-frame {
@@ -308,26 +343,6 @@ h2 {
 }
 
 @media (max-width: 768px) {
-    .page-card {
-        padding: 6px;
-    }
-    .calendar-card {
-        padding: 4px;
-    }
-    .legend-items {
-        gap: 4px 10px;
-    }
-    .legend-item {
-        font-size: 11px;
-    }
-    .room-legend {
-        gap: 4px;
-        padding: 6px;
-    }
-    .toolbar select {
-        width: 100%;
-        min-height: 44px;
-    }
     .room-card {
         align-items: stretch;
         flex-direction: column;
@@ -339,10 +354,6 @@ h2 {
     .booking {
         width: 100%;
         min-height: 44px;
-    }
-    .room-legend {
-        align-items: flex-start;
-        flex-direction: column;
     }
 }
 </style>

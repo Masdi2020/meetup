@@ -198,9 +198,10 @@ const fallbackPlaceholder = computed(() =>
     position: relative;
     display: flex;
     width: 100%;
+    min-width: 0;
     align-items: center;
     overflow: hidden;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--ui-border);
     background: #fff;
     transition:
         border-color 0.2s,
@@ -208,13 +209,13 @@ const fallbackPlaceholder = computed(() =>
 }
 
 .calendar-input--default {
-    min-height: 48px;
-    border-radius: 8px;
+    min-height: var(--ui-control-height);
+    border-radius: var(--ui-radius);
 }
 
 .calendar-input--admin {
-    min-height: 42px;
-    border-radius: 8px;
+    min-height: var(--ui-control-height);
+    border-radius: var(--ui-radius);
 }
 
 .calendar-input--inline-time {
@@ -257,6 +258,7 @@ const fallbackPlaceholder = computed(() =>
 .calendar-input__control {
     width: 100%;
     min-width: 0;
+    min-width: 0;
     border: 0;
     outline: 0;
     background: transparent;
@@ -265,13 +267,13 @@ const fallbackPlaceholder = computed(() =>
 }
 
 .calendar-input--default .calendar-input__control {
-    min-height: 46px;
+    min-height: 42px;
     padding: 0 44px 0 14px;
     font-size: 14px;
 }
 
 .calendar-input--admin .calendar-input__control {
-    min-height: 40px;
+    min-height: 42px;
     padding: 8px 42px 8px 16px;
     font-size: 14px;
 }
@@ -285,5 +287,10 @@ const fallbackPlaceholder = computed(() =>
     right: 14px;
     color: #6b7280;
     pointer-events: none;
+}
+@media (max-width: 768px) {
+    .calendar-input .calendar-input__control {
+        font-size: 16px;
+    }
 }
 </style>

@@ -18,13 +18,13 @@ const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
 <template>
     <Teleport to="body">
         <div
-            class="fixed inset-y-0 right-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 transition-[left] duration-200 sm:items-center sm:p-4"
+            class="fixed inset-y-0 right-0 z-[1100] flex items-center justify-center bg-slate-950/40 p-4 transition-[left] duration-200"
             :style="{ left: sidebarOffset }"
             role="presentation"
             @click.self="emit('close')"
         >
             <section
-                class="max-h-[95dvh] w-full rounded-t-2xl bg-white p-4 shadow-xl sm:rounded-2xl sm:p-6"
+                class="ui-card-body flex max-h-[calc(100dvh-2rem)] w-full min-w-0 flex-col rounded-xl bg-white shadow-xl"
                 :class="{
                     'max-w-md': maxWidth === 'md',
                     'max-w-lg': maxWidth === 'lg',
@@ -36,13 +36,15 @@ const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
                 aria-modal="true"
                 :aria-label="title"
             >
-                <header class="mb-5 flex items-center justify-between gap-4">
+                <header
+                    class="mb-4 flex shrink-0 items-center justify-between gap-4"
+                >
                     <h2 class="text-xl font-bold text-slate-900">
                         {{ title }}
                     </h2>
                     <button
                         type="button"
-                        class="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                         aria-label="Tutup dialog"
                         @click="emit('close')"
                     >
@@ -50,12 +52,12 @@ const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
                     </button>
                 </header>
 
-                <div class="max-h-[calc(100vh-11rem)] overflow-y-auto">
+                <div class="min-h-0 min-w-0 overflow-y-auto overscroll-contain">
                     <slot />
                 </div>
                 <footer
                     v-if="$slots.actions"
-                    class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"
+                    class="mt-4 flex shrink-0 flex-col-reverse gap-3 sm:flex-row sm:justify-end"
                 >
                     <slot name="actions" />
                 </footer>

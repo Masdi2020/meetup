@@ -96,11 +96,11 @@ function formatValue(value: unknown) {
 </script>
 
 <template>
-    <div class="w-full max-w-7xl space-y-6">
+    <div class="app-page">
         <!-- Header -->
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold">Audit Log</h1>
+        <div class="page-header">
+            <div class="page-heading">
+                <h1 class="page-title">Audit Log</h1>
 
                 <p class="text-gray-500">
                     Riwayat seluruh aktivitas pada sistem.
@@ -109,7 +109,7 @@ function formatValue(value: unknown) {
         </div>
 
         <!-- Statistics -->
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="stats-grid">
             <StatCard label="Total Aktivitas" :value="props.stats.total" />
             <StatCard label="Hari Ini" :value="props.stats.today" tone="info" />
             <StatCard
@@ -154,7 +154,7 @@ function formatValue(value: unknown) {
         </AdminSearchPanel>
 
         <!-- Table -->
-        <div class="rounded-xl bg-white shadow">
+        <div class="ui-card">
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[900px]">
                     <thead class="bg-gray-100">

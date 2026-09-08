@@ -134,7 +134,8 @@ function openPicker() {
 .app-input {
     box-sizing: border-box;
     width: 100%;
-    border: 1px solid #d9d9d9;
+    min-width: 0;
+    border: 1px solid var(--ui-border);
     background: #fff;
     outline: 0;
     transition:
@@ -142,16 +143,16 @@ function openPicker() {
         box-shadow 0.2s;
 }
 .app-input--default {
-    min-height: 48px;
-    padding: 0 15px;
-    border-radius: 10px;
+    min-height: var(--ui-control-height);
+    padding: 10px 12px;
+    border-radius: var(--ui-radius);
     font-size: 15px;
 }
 .app-input--admin {
-    min-height: 42px;
-    padding: 8px 16px;
+    min-height: var(--ui-control-height);
+    padding: 10px 12px;
     border-color: #d1d5db;
-    border-radius: 8px;
+    border-radius: var(--ui-radius);
 }
 .app-input:focus {
     border-color: #3b82f6;
@@ -162,11 +163,12 @@ function openPicker() {
     display: flex;
     box-sizing: border-box;
     width: 100%;
+    min-width: 0;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     overflow: hidden;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--ui-border);
     background: #fff;
     color: #111827;
     cursor: pointer;
@@ -175,15 +177,15 @@ function openPicker() {
         box-shadow 0.2s;
 }
 .app-picker--default {
-    min-height: 48px;
-    padding: 0 15px;
-    border-radius: 10px;
+    min-height: var(--ui-control-height);
+    padding: 10px 12px;
+    border-radius: var(--ui-radius);
     font-size: 15px;
 }
 .app-picker--admin {
-    min-height: 42px;
-    padding: 8px 16px;
-    border-radius: 8px;
+    min-height: var(--ui-control-height);
+    padding: 10px 12px;
+    border-radius: var(--ui-radius);
     font-size: 14px;
 }
 .app-picker:focus-within {
@@ -216,6 +218,7 @@ function openPicker() {
     z-index: 1;
     inset: 0;
     width: 100%;
+    min-width: 0;
     height: 100%;
     margin: 0;
     padding: 0;
@@ -225,5 +228,11 @@ function openPicker() {
 }
 .app-picker__native:disabled {
     cursor: not-allowed;
+}
+@media (max-width: 768px) {
+    .app-input,
+    .app-picker {
+        font-size: 16px;
+    }
 }
 </style>

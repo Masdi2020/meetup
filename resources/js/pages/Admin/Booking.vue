@@ -712,12 +712,10 @@ function reject(id: number) {
 </script>
 
 <template>
-    <div class="w-full max-w-7xl space-y-6">
-        <div
-            class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
-        >
-            <div>
-                <h1 class="text-3xl font-bold">Booking</h1>
+    <div class="app-page">
+        <div class="page-header">
+            <div class="page-heading">
+                <h1 class="page-title">Booking</h1>
 
                 <p class="text-gray-500">Kelola seluruh peminjaman ruangan.</p>
             </div>
@@ -1657,7 +1655,7 @@ function reject(id: number) {
             </div>
         </AppModal>
 
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="stats-grid">
             <StatCard label="Total" :value="stats?.total" />
             <StatCard label="Pending" :value="stats?.pending" tone="warning" />
             <StatCard
@@ -1709,7 +1707,7 @@ function reject(id: number) {
 
         <!-- Table -->
 
-        <div class="overflow-x-auto rounded-xl bg-white shadow">
+        <div class="ui-card overflow-x-auto">
             <table class="w-full min-w-[1050px]">
                 <thead class="bg-gray-100">
                     <tr class="text-left text-sm">

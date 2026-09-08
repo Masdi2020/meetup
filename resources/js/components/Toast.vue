@@ -16,8 +16,10 @@ const { toast } = useToast();
 .toast {
     position: fixed;
     bottom: 24px;
-    right: 24px;
-    z-index: 50;
+    right: 16px;
+    z-index: 1200;
+    max-width: calc(100vw - 32px);
+    overflow-wrap: anywhere;
     padding: 14px 18px;
     border-radius: 12px;
     color: white;

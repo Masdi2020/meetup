@@ -120,7 +120,7 @@ const activeMenuTo = computed(() => {
 
         <ForceChangePasswordModal />
         <main class="content" :class="{ collapsed: !isOpen }">
-            <slot />
+            <div class="content-inner"><slot /></div>
         </main>
     </div>
 </template>
@@ -133,9 +133,16 @@ const activeMenuTo = computed(() => {
 .content {
     margin-left: 244px;
     min-height: 100vh;
-    background: #f5f5f5;
-    padding: clamp(16px, 2.5vw, 30px);
+    min-width: 0;
+    background: var(--ui-background);
+    padding: var(--ui-page-padding);
     transition: margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.content-inner {
+    width: 100%;
+    min-width: 0;
+    max-width: var(--ui-content-width);
+    margin-inline: auto;
 }
 
 .content.collapsed {
@@ -150,7 +157,7 @@ const activeMenuTo = computed(() => {
     .content,
     .content.collapsed {
         margin-left: 0;
-        padding-top: 72px;
+        padding-top: 14px;
     }
     .mobile-menu-button {
         position: fixed;

@@ -19,16 +19,16 @@ const emit = defineEmits<{
 const gridClass = computed(() => {
     return {
         'md:grid-cols-[minmax(0,1fr)_auto_auto]': props.filterColumns === 0,
-        'lg:grid-cols-[minmax(0,1fr)_220px_auto_auto]':
+        'xl:grid-cols-[minmax(0,1fr)_minmax(0,220px)_auto_auto]':
             props.filterColumns === 1,
-        'lg:grid-cols-[minmax(0,1fr)_180px_220px_auto_auto]':
+        'xl:grid-cols-[minmax(0,1fr)_minmax(0,180px)_minmax(0,220px)_auto_auto]':
             props.filterColumns === 2,
     };
 });
 </script>
 
 <template>
-    <section class="rounded-xl bg-white p-5 shadow" aria-label="Pencarian">
+    <section class="ui-card ui-card-body" aria-label="Pencarian">
         <form
             class="grid gap-4"
             :class="gridClass"

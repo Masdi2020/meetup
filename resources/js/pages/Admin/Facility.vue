@@ -132,11 +132,11 @@ function deleteFacility() {
 </script>
 
 <template>
-    <div class="w-full max-w-7xl space-y-6">
+    <div class="app-page">
         <!-- Header -->
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold">Fasilitas</h1>
+        <div class="page-header">
+            <div class="page-heading">
+                <h1 class="page-title">Fasilitas</h1>
 
                 <p class="text-gray-500">
                     Kelola fasilitas yang tersedia pada ruangan.
@@ -152,7 +152,7 @@ function deleteFacility() {
         </div>
 
         <!-- Statistik -->
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="stats-grid">
             <StatCard label="Total Fasilitas" :value="facilities.length" />
             <StatCard label="Digunakan di Ruangan" :value="totalUsage" />
         </div>
@@ -166,7 +166,7 @@ function deleteFacility() {
         />
 
         <!-- Table -->
-        <div class="overflow-x-auto rounded-xl bg-white shadow">
+        <div class="ui-card overflow-x-auto">
             <table class="w-full min-w-[600px]">
                 <thead class="bg-gray-100">
                     <tr class="text-left text-sm font-semibold">

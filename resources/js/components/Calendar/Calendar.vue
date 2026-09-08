@@ -273,6 +273,7 @@ const formattedSelectedDate = computed(() => {
     font-weight: 700;
 }
 .calendar {
+    container-type: inline-size;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -290,20 +291,20 @@ const formattedSelectedDate = computed(() => {
 }
 .detail-overlay {
     position: fixed;
-    z-index: 1000;
+    z-index: 1100;
     inset: 0;
     display: grid;
     place-items: center;
-    padding: 20px;
+    padding: 16px;
     background: rgba(15, 23, 42, 0.58);
 }
 .detail-modal {
     width: min(520px, 100%);
-    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 32px);
     overflow-y: auto;
-    border-radius: 16px;
+    border-radius: var(--ui-card-radius);
     background: #fff;
-    padding: 24px;
+    padding: var(--ui-card-padding);
     box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
 }
 .detail-header {
@@ -324,12 +325,12 @@ const formattedSelectedDate = computed(() => {
 .detail-header h3 {
     margin: 5px 0 0;
     color: #173b7a;
-    font-size: 21px;
+    font-size: 20px;
 }
 .detail-close {
     flex: 0 0 auto;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border: 0;
     border-radius: 50%;
     background: #f1f5f9;
@@ -374,6 +375,11 @@ const formattedSelectedDate = computed(() => {
     }
     .detail-notes {
         grid-column: auto;
+    }
+}
+@media (max-width: 768px) {
+    .calendar :deep(.number .today-label) {
+        display: none;
     }
 }
 </style>
