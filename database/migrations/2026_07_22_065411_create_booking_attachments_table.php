@@ -18,12 +18,19 @@ return new class extends Migration
                 ->constrained('bookings')
                 ->cascadeOnDelete();
 
+            $table->foreignId('created_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
             $table->string('original_filename');
             $table->string('filename');
             $table->string('path');
 
             $table->string('mime_type');
             $table->unsignedBigInteger('size');
+
+            $table->string('type', 30)->index();
 
             $table->timestamp('created_at')->useCurrent();
 
