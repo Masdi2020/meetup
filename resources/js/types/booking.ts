@@ -8,6 +8,19 @@ export interface BookingHistory {
     time: string;
     title: string;
     status: BookingHistoryStatus;
+    results_available: boolean;
+    documentations: BookingResultAttachment[];
+    meeting_minutes: BookingResultAttachment | null;
+}
+
+export interface BookingResultFile {
+    id: number;
+    original_filename: string;
+    path: string;
+}
+
+export interface BookingResultAttachment extends BookingResultFile {
+    mime_type: string;
 }
 
 export interface HistoryStatusOption {
