@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { computed } from 'vue';
+import { eventStatusLabels } from './eventStatusLabels';
 import { getRoomColor, getRoomTextColor } from './roomColors';
 import type { CalendarEvent } from '@/types/calendar';
 
@@ -13,7 +13,11 @@ interface PositionedEvent {
     columns: number;
 }
 
-const props = defineProps<{ date: Dayjs; events: CalendarEvent[] }>();
+const props = defineProps<{
+    date: Dayjs;
+    now: Dayjs;
+    events: CalendarEvent[];
+}>();
 const emit = defineEmits<{ select: [event: CalendarEvent] }>();
 
 const hourHeight = 64;
@@ -88,11 +92,11 @@ const positionedEvents = computed<PositionedEvent[]>(() => {
 });
 
 const currentTimePosition = computed(() => {
-    if (!props.date.isSame(dayjs(), 'day')) {
+    if (!props.date.isSame(props.now, 'day')) {
         return null;
     }
 
-    const now = dayjs();
+    const now = props.now;
 
     return ((now.hour() * 60 + now.minute()) / 60) * hourHeight;
 });
@@ -102,7 +106,7 @@ function eventStyle(entry: PositionedEvent) {
 
     return {
         top: `${(entry.start / 60) * hourHeight}px`,
-        height: `${Math.max(18, ((entry.end - entry.start) / 60) * hourHeight)}px`,
+        height: `${Math.max(1, ((entry.end - entry.start) / 60) * hourHeight)}px`,
         left: `calc(${entry.column * columnWidth}% + 5px)`,
         width: `calc(${columnWidth}% - 10px)`,
         backgroundColor: getRoomColor(entry.event.room),
@@ -114,13 +118,20 @@ function eventStyle(entry: PositionedEvent) {
 <template>
     <section class="day-view">
         <header class="day-summary">
-            <div class="date-badge">
+            <div
+                class="date-badge"
+                :class="{ today: date.isSame(now, 'day') }"
+                :aria-current="date.isSame(now, 'day') ? 'date' : undefined"
+            >
                 <span>{{ date.format('ddd') }}</span>
                 <strong>{{ date.date() }}</strong>
             </div>
             <div>
                 <p>Agenda harian</p>
                 <strong>{{ eventsForDay.length }} jadwal</strong>
+                <span v-if="date.isSame(now, 'day')" class="today-label"
+                    >Hari ini</span
+                >
             </div>
         </header>
 
@@ -150,12 +161,19 @@ function eventStyle(entry: PositionedEvent) {
                         :key="`${entry.event.id}-${entry.event.date}`"
                         type="button"
                         class="timeline-event"
-                        :class="{ compact: entry.end - entry.start < 45 }"
+                        :class="{
+                            compact: entry.end - entry.start < 45,
+                            'pending-event': entry.event.status === 'PENDING',
+                        }"
                         :style="eventStyle(entry)"
-                        :aria-label="`Lihat rincian ${entry.event.title}, ${entry.event.start_time} sampai ${entry.event.end_time}`"
+                        :aria-label="`Lihat rincian ${entry.event.title}, ${entry.event.start_time} sampai ${entry.event.end_time}, ${eventStatusLabels[entry.event.status]}`"
+                        :title="`${entry.event.title} | ${entry.event.start_time}-${entry.event.end_time} | ${entry.event.room} | ${eventStatusLabels[entry.event.status]}`"
                         @click="emit('select', entry.event)"
                     >
-                        <strong>{{ entry.event.title }}</strong>
+                        <strong
+                            >{{ eventStatusLabels[entry.event.status] }} ·
+                            {{ entry.event.title }}</strong
+                        >
                         <span>
                             {{ entry.event.start_time }}-{{
                                 entry.event.end_time
@@ -201,13 +219,17 @@ function eventStyle(entry: PositionedEvent) {
     width: 54px;
     height: 58px;
     border-radius: 10px;
-    background: #2563eb;
-    color: #fff;
+    background: #e2e8f0;
+    color: #334155;
     text-transform: uppercase;
 }
 .date-badge span {
     font-size: 11px;
     font-weight: 700;
+}
+.date-badge.today {
+    background: #2563eb;
+    color: #fff;
 }
 .date-badge strong {
     font-size: 24px;

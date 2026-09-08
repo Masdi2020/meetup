@@ -26,9 +26,9 @@ function save() {
 </script>
 
 <template>
-    <div class="w-full max-w-7xl space-y-6">
-        <div>
-            <h1 class="text-3xl font-bold">Pengaturan</h1>
+    <div class="app-page settings-page">
+        <div class="page-header page-heading">
+            <h1 class="page-title">Pengaturan</h1>
 
             <p class="text-gray-500">
                 Konfigurasi aplikasi peminjaman ruangan.
@@ -37,30 +37,30 @@ function save() {
 
         <!-- Informasi -->
 
-        <div class="rounded-xl bg-white shadow">
-            <div class="border-b px-6 py-4">
+        <div class="ui-card">
+            <div class="ui-card-header">
                 <h2 class="text-lg font-semibold">Informasi Sistem</h2>
             </div>
 
-            <div class="grid gap-5 p-6">
+            <div class="ui-card-body grid gap-4">
                 <FormField label="Nama Aplikasi" appearance="admin"
                     ><AppInput v-model="form.appName" appearance="admin"
                 /></FormField>
 
                 <FormField label="Logo" appearance="admin"
-                    ><input type="file" class="w-full rounded-lg border p-2"
+                    ><input type="file" class="ui-control"
                 /></FormField>
             </div>
         </div>
 
         <!-- Keamanan -->
 
-        <div class="rounded-xl bg-white shadow">
-            <div class="border-b px-6 py-4">
+        <div class="ui-card">
+            <div class="ui-card-header">
                 <h2 class="text-lg font-semibold">Keamanan</h2>
             </div>
 
-            <div class="p-6">
+            <div class="ui-card-body">
                 <FormField label="Session Timeout (Menit)" appearance="admin"
                     ><AppInput
                         v-model="form.sessionTimeout"
@@ -80,3 +80,11 @@ function save() {
         </div>
     </div>
 </template>
+
+<style scoped>
+.settings-page > .ui-card,
+.settings-page > .flex {
+    width: 100%;
+    max-width: var(--ui-form-width);
+}
+</style>

@@ -63,130 +63,135 @@ function changePassword() {
 </script>
 
 <template>
-    <div class="profile-page">
-        <div class="header">
-            <h1>Pengaturan Profil</h1>
+    <div class="app-page profile-page">
+        <div class="page-header page-heading">
+            <h1 class="page-title">Pengaturan Profil</h1>
             <p>Kelola nama, username, dan password Anda.</p>
         </div>
 
-        <div class="tabs">
-            <button
-                :class="{ active: activeTab === 'profile' }"
-                @click="activeTab = 'profile'"
-            >
-                Profil
-            </button>
-            <button
-                :class="{ active: activeTab === 'password' }"
-                @click="activeTab = 'password'"
-            >
-                Ganti Password
-            </button>
-        </div>
+        <div class="profile-card ui-card ui-card-body">
+            <div class="tabs">
+                <button
+                    :class="{ active: activeTab === 'profile' }"
+                    @click="activeTab = 'profile'"
+                >
+                    Profil
+                </button>
+                <button
+                    :class="{ active: activeTab === 'password' }"
+                    @click="activeTab = 'password'"
+                >
+                    Ganti Password
+                </button>
+            </div>
 
-        <div class="content">
-            <form v-if="activeTab === 'profile'" @submit.prevent="saveProfile">
-                <div class="field">
-                    <label>Nama</label>
-                    <input v-model="form.name" type="text" required />
-                    <p v-if="form.errors.name" class="error">
-                        {{ form.errors.name }}
-                    </p>
-                </div>
+            <div class="content">
+                <form
+                    v-if="activeTab === 'profile'"
+                    @submit.prevent="saveProfile"
+                >
+                    <div class="field">
+                        <label>Nama</label>
+                        <input v-model="form.name" type="text" required />
+                        <p v-if="form.errors.name" class="error">
+                            {{ form.errors.name }}
+                        </p>
+                    </div>
 
-                <div class="field">
-                    <label>Username</label>
-                    <input
-                        v-model="form.username"
-                        type="text"
-                        autocapitalize="none"
-                        autocorrect="off"
-                        autocomplete="username"
-                        :spellcheck="false"
-                        @keydown.space.prevent
-                        @input="removeUsernameWhitespace"
+                    <div class="field">
+                        <label>Username</label>
+                        <input
+                            v-model="form.username"
+                            type="text"
+                            autocapitalize="none"
+                            autocorrect="off"
+                            autocomplete="username"
+                            :spellcheck="false"
+                            @keydown.space.prevent
+                            @input="removeUsernameWhitespace"
+                            required
+                        />
+                        <p v-if="form.errors.username" class="error">
+                            {{ form.errors.username }}
+                        </p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        :disabled="!profileChanged || form.processing"
+                    >
+                        Simpan Profil
+                    </button>
+                </form>
+
+                <form
+                    v-if="activeTab === 'password'"
+                    @submit.prevent="changePassword"
+                >
+                    <PasswordField
+                        id="current-password"
+                        v-model="form.current_password"
+                        label="Password Lama"
+                        :error="form.errors.current_password"
+                        autocomplete="current-password"
                         required
                     />
-                    <p v-if="form.errors.username" class="error">
-                        {{ form.errors.username }}
-                    </p>
-                </div>
 
-                <button
-                    type="submit"
-                    :disabled="!profileChanged || form.processing"
-                >
-                    Simpan Profil
-                </button>
-            </form>
+                    <PasswordField
+                        id="new-password"
+                        v-model="form.password"
+                        label="Password Baru"
+                        :error="form.errors.password"
+                        autocomplete="new-password"
+                        required
+                    />
 
-            <form
-                v-if="activeTab === 'password'"
-                @submit.prevent="changePassword"
-            >
-                <PasswordField
-                    id="current-password"
-                    v-model="form.current_password"
-                    label="Password Lama"
-                    :error="form.errors.current_password"
-                    autocomplete="current-password"
-                    required
-                />
+                    <PasswordField
+                        id="confirm-password"
+                        v-model="form.password_confirmation"
+                        label="Ulangi Password Baru"
+                        :error="form.errors.password_confirmation"
+                        autocomplete="new-password"
+                        required
+                    />
 
-                <PasswordField
-                    id="new-password"
-                    v-model="form.password"
-                    label="Password Baru"
-                    :error="form.errors.password"
-                    autocomplete="new-password"
-                    required
-                />
-
-                <PasswordField
-                    id="confirm-password"
-                    v-model="form.password_confirmation"
-                    label="Ulangi Password Baru"
-                    :error="form.errors.password_confirmation"
-                    autocomplete="new-password"
-                    required
-                />
-
-                <button type="submit">Ubah Password</button>
-            </form>
+                    <button type="submit">Ubah Password</button>
+                </form>
+            </div>
         </div>
     </div>
 </template>
 
 <style scoped>
-.profile-page {
-    max-width: 760px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 18px;
-    padding: 28px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
-}
-
-.header h1 {
-    font-size: 28px;
-    margin-bottom: 8px;
-}
-
-.header p {
+.page-header p {
     color: #64748b;
+}
+
+.profile-card {
+    width: 100%;
+    max-width: var(--ui-form-width);
+}
+.content form {
+    display: grid;
+    gap: var(--ui-gap);
+}
+.content :deep(.form-field) {
+    margin-bottom: 0;
 }
 
 .tabs {
     display: flex;
     gap: 12px;
-    margin: 24px 0;
+    flex-wrap: wrap;
+    margin: 0 0 var(--ui-gap);
 }
 
 .tabs button {
-    padding: 12px 20px;
+    min-height: var(--ui-control-height);
+    padding: 10px 16px;
     border: 1px solid #d1d5db;
     background: white;
-    border-radius: 999px;
+    border-radius: var(--ui-radius);
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -214,8 +219,9 @@ function changePassword() {
 .field input {
     width: 100%;
     border: 1px solid #d1d5db;
-    border-radius: 10px;
-    padding: 12px 14px;
+    border-radius: var(--ui-radius);
+    min-height: var(--ui-control-height);
+    padding: 10px 12px;
 }
 
 .error {
@@ -225,9 +231,10 @@ function changePassword() {
 
 button[type='submit'] {
     width: fit-content;
-    padding: 12px 24px;
+    min-height: var(--ui-control-height);
+    padding: 10px 16px;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--ui-radius);
     background: #2563eb;
     color: white;
     cursor: pointer;

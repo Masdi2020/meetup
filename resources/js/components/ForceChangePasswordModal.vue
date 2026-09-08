@@ -23,13 +23,13 @@ function submit() {
 <template>
     <div
         v-if="isRequired"
-        class="fixed inset-y-0 right-0 z-50 flex items-center justify-center bg-black/50 p-4 transition-[left] duration-200"
+        class="fixed inset-y-0 right-0 z-[1150] flex items-center justify-center bg-slate-950/40 p-4 transition-[left] duration-200"
         :style="{ left: sidebarOffset }"
         role="dialog"
         aria-modal="true"
     >
         <form
-            class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            class="ui-card-body max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-xl bg-white shadow-xl"
             @submit.prevent="submit"
         >
             <h2 class="text-xl font-bold">Buat password baru</h2>

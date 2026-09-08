@@ -29,20 +29,22 @@ class AvailabilityService
             $date = now()->startOfDay();
         }
 
-        $roomId = $roomValue !== null
-            && $roomValue !== ''
-            && (string) $roomValue !== '0'
-                ? (int) $roomValue
-                : null;
+        $rooms = Room::with('facilities')->get();
+        $roomIds = $roomValue === null || $roomValue === '' || $roomValue === '0' || $roomValue === 0
+            ? $rooms->pluck('id')->all()
+            : array_values(array_intersect(
+                $rooms->pluck('id')->all(),
+                array_map('intval', (array) $roomValue),
+            ));
 
         // Include complete edge weeks so cross-month week views stay complete.
         $start = $date->copy()->startOfMonth()->startOfWeek(Carbon::MONDAY);
         $end = $date->copy()->endOfMonth()->endOfWeek(Carbon::SUNDAY);
 
         return [
-            'rooms' => Room::with('facilities')->get(),
-            'events' => $this->calendar->events($start, $end, $roomId),
-            'selectedRoomId' => $roomId ?? 0,
+            'rooms' => $rooms,
+            'events' => $this->calendar->events($start, $end, $roomIds),
+            'selectedRoomIds' => $roomIds,
             'month' => $date->month,
             'year' => $date->year,
             'date' => $date->toDateString(),

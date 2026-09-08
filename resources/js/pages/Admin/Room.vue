@@ -138,10 +138,10 @@ function toggleAvailability() {
 </script>
 
 <template>
-    <div class="w-full max-w-7xl space-y-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold">Ruangan</h1>
+    <div class="app-page">
+        <div class="page-header">
+            <div class="page-heading">
+                <h1 class="page-title">Ruangan</h1>
 
                 <p class="text-gray-500">
                     Kelola seluruh ruangan yang tersedia.
@@ -156,7 +156,7 @@ function toggleAvailability() {
             </button>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="stats-grid">
             <StatCard label="Total Ruangan" :value="rooms.length" />
             <StatCard label="Total Kapasitas" :value="totalCapacity" />
             <StatCard label="Total Fasilitas" :value="totalFacilities" />
@@ -168,7 +168,7 @@ function toggleAvailability() {
             @reset="resetFilters"
         />
 
-        <div class="overflow-x-auto rounded-xl bg-white shadow">
+        <div class="ui-card overflow-x-auto">
             <table class="w-full min-w-[900px]">
                 <thead class="bg-gray-100">
                     <tr class="text-left text-sm">
@@ -234,21 +234,14 @@ function toggleAvailability() {
                                     @click="openEditModal(room)"
                                 />
 
-                                <button
-                                    @click="openAvailabilityModal(room)"
-                                    :class="
+                                <ActionIconButton
+                                    :action="
                                         room.is_available
-                                            ? 'bg-gray-600 hover:bg-gray-700'
-                                            : 'bg-emerald-600 hover:bg-emerald-700'
+                                            ? 'deactivate'
+                                            : 'activate'
                                     "
-                                    class="rounded-lg px-3 py-2 text-white"
-                                >
-                                    {{
-                                        room.is_available
-                                            ? 'Nonaktifkan'
-                                            : 'Aktifkan'
-                                    }}
-                                </button>
+                                    @click="openAvailabilityModal(room)"
+                                />
                             </div>
                         </td>
                     </tr>

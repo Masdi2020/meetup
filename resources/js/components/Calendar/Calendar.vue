@@ -11,6 +11,7 @@ import {
 
 import CalendarToolbar from './CalendarToolbar.vue';
 import DayView from './DayView.vue';
+import EventStatus from './EventStatus.vue';
 import MonthView from './MonthView.vue';
 import WeekView from './WeekView.vue';
 import type { CalendarEvent } from '@/types/calendar';
@@ -26,10 +27,35 @@ const props = defineProps<{
 const emit = defineEmits<{
     navigate: [date: string];
     'change-view': [view: 'month' | 'week' | 'day'];
+    'open-day': [date: string];
 }>();
 
 const currentDate = ref(dayjs());
+const now = ref(dayjs());
+let clockTimer: ReturnType<typeof setInterval> | undefined;
+function updateClock() {
+    now.value = dayjs();
+}
+onMounted(() => {
+    clockTimer = setInterval(updateClock, 30_000);
+    document.addEventListener('visibilitychange', updateClock);
+});
+onBeforeUnmount(() => {
+    clearInterval(clockTimer);
+    document.removeEventListener('visibilitychange', updateClock);
+});
 const selectedEvent = ref<CalendarEvent | null>(null);
+
+watch(
+    () => props.events,
+    (events) => {
+        if (selectedEvent.value) {
+            selectedEvent.value =
+                events.find((event) => event.id === selectedEvent.value?.id) ??
+                null;
+        }
+    },
+);
 
 const startOfWeek = computed(() => {
     const weekday = currentDate.value.day();
@@ -121,22 +147,36 @@ const formattedSelectedDate = computed(() => {
             @update:view="emit('change-view', $event)"
         />
 
-        <div class="calendar-scroll">
+        <div class="calendar-legend" aria-label="Keterangan kalender">
+            <EventStatus status="PENDING" />
+            <span>Garis putus-putus: menunggu persetujuan</span>
+            <EventStatus status="APPROVED" />
+            <EventStatus status="FINISHED" />
+            <span class="today-label">Hari ini</span>
+        </div>
+        <div
+            class="calendar-scroll"
+            :class="{ 'month-scroll': props.view === 'month' }"
+        >
             <MonthView
                 v-if="props.view === 'month'"
                 :date="currentDate"
+                :now="now"
                 :events="props.events"
                 @select="selectedEvent = $event"
+                @open-day="emit('open-day', $event)"
             />
             <WeekView
                 v-else-if="props.view === 'week'"
                 :date="currentDate"
+                :now="now"
                 :events="props.events"
                 @select="selectedEvent = $event"
             />
             <DayView
                 v-else
                 :date="currentDate"
+                :now="now"
                 :events="props.events"
                 @select="selectedEvent = $event"
             />
@@ -173,6 +213,10 @@ const formattedSelectedDate = computed(() => {
                 </div>
                 <dl class="detail-list">
                     <div>
+                        <dt>Status</dt>
+                        <dd><EventStatus :status="selectedEvent.status" /></dd>
+                    </div>
+                    <div>
                         <dt>Peminjam</dt>
                         <dd>{{ selectedEvent.borrower }}</dd>
                     </div>
@@ -208,33 +252,59 @@ const formattedSelectedDate = computed(() => {
 </template>
 
 <style scoped>
+.calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+    font-size: 12px;
+}
+.calendar :deep(.pending-event) {
+    border: 2px dashed #92400e;
+}
+.calendar :deep(.today-label) {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 2px 5px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 10px;
+    font-weight: 700;
+}
 .calendar {
+    container-type: inline-size;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 8px;
 }
 
 .calendar-scroll {
+    min-width: 0;
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
+.month-scroll {
+    overflow: visible;
+}
 .detail-overlay {
     position: fixed;
-    z-index: 1000;
+    z-index: 1100;
     inset: 0;
     display: grid;
     place-items: center;
-    padding: 20px;
+    padding: 16px;
     background: rgba(15, 23, 42, 0.58);
 }
 .detail-modal {
     width: min(520px, 100%);
-    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 32px);
     overflow-y: auto;
-    border-radius: 16px;
+    border-radius: var(--ui-card-radius);
     background: #fff;
-    padding: 24px;
+    padding: var(--ui-card-padding);
     box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
 }
 .detail-header {
@@ -255,12 +325,12 @@ const formattedSelectedDate = computed(() => {
 .detail-header h3 {
     margin: 5px 0 0;
     color: #173b7a;
-    font-size: 21px;
+    font-size: 20px;
 }
 .detail-close {
     flex: 0 0 auto;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border: 0;
     border-radius: 50%;
     background: #f1f5f9;
@@ -305,6 +375,11 @@ const formattedSelectedDate = computed(() => {
     }
     .detail-notes {
         grid-column: auto;
+    }
+}
+@media (max-width: 768px) {
+    .calendar :deep(.number .today-label) {
+        display: none;
     }
 }
 </style>

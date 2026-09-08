@@ -25,10 +25,11 @@ withDefaults(
 
 <style scoped>
 .form-field {
+    min-width: 0;
     text-align: left;
 }
 .form-field--default {
-    margin-bottom: 18px;
+    margin-bottom: var(--ui-gap);
 }
 .form-field__label {
     display: block;

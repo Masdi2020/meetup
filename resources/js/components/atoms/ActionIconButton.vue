@@ -6,6 +6,8 @@ import {
     CircleStop,
     Eye,
     Pencil,
+    Power,
+    PowerOff,
     RotateCcwKey,
     Trash2,
 } from '@lucide/vue';
@@ -19,7 +21,9 @@ type Action =
     | 'reject'
     | 'delete'
     | 'finish'
-    | 'reset';
+    | 'reset'
+    | 'activate'
+    | 'deactivate';
 
 const props = defineProps<{
     action: Action;
@@ -70,6 +74,16 @@ const actions: Record<
         label: 'Reset Password',
         classes: 'bg-indigo-600 text-white hover:bg-indigo-700',
     },
+    activate: {
+        icon: Power,
+        label: 'Aktifkan',
+        classes: 'bg-emerald-600 text-white hover:bg-emerald-700',
+    },
+    deactivate: {
+        icon: PowerOff,
+        label: 'Nonaktifkan',
+        classes: 'bg-gray-600 text-white hover:bg-gray-700',
+    },
 };
 </script>
 
@@ -79,11 +93,11 @@ const actions: Record<
         :aria-label="props.label ?? actions[action].label"
         :title="props.label ?? actions[action].label"
         :class="actions[action].classes"
-        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
     >
         <component
             :is="actions[action].icon"
-            class="h-4.5 w-4.5"
+            class="h-3.5 w-3.5"
             aria-hidden="true"
         />
     </button>

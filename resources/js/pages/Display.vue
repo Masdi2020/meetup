@@ -15,16 +15,16 @@ const openRoomBanner = (room: DisplayRoom) => {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="app-page">
         <!-- Header -->
-        <div>
-            <h1 class="text-3xl font-bold">Ruangan</h1>
+        <div class="page-header page-heading">
+            <h1 class="page-title">Ruangan</h1>
 
             <p class="text-gray-500">Lihat daftar ruangan yang tersedia.</p>
         </div>
 
         <!-- Total Ruangan -->
-        <div class="rounded-xl bg-white p-5 shadow">
+        <div class="ui-card ui-card-body">
             <p class="text-sm text-gray-500">Total Ruangan</p>
 
             <h2 class="mt-2 text-3xl font-bold">
@@ -33,7 +33,7 @@ const openRoomBanner = (room: DisplayRoom) => {
         </div>
 
         <!-- Room List -->
-        <div class="overflow-hidden rounded-xl bg-white shadow">
+        <div class="ui-card overflow-hidden">
             <div v-if="props.rooms.length" class="divide-y">
                 <div
                     v-for="room in props.rooms"

@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { computed } from 'vue';
+import EventStatus from './EventStatus.vue';
 import { getRoomColor, getRoomTextColor } from './roomColors';
 import type { CalendarEvent } from '@/types/calendar';
 
-const props = defineProps<{ date: Dayjs; events: CalendarEvent[] }>();
+const props = defineProps<{
+    date: Dayjs;
+    now: Dayjs;
+    events: CalendarEvent[];
+}>();
 const emit = defineEmits<{ select: [event: CalendarEvent] }>();
 const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 const startOfWeek = computed(() => {
@@ -31,12 +35,16 @@ function getEventsForDate(date: Dayjs) {
             v-for="(day, index) in days"
             :key="day.format('YYYY-MM-DD')"
             class="day-column"
-            :class="{ today: day.isSame(dayjs(), 'day') }"
+            :class="{ today: day.isSame(now, 'day') }"
+            :aria-current="day.isSame(now, 'day') ? 'date' : undefined"
         >
             <header class="day-header">
                 <span>{{ dayNames[index] }}</span
                 ><strong>{{ day.date() }}</strong
                 ><small>{{ day.format('MMM') }}</small>
+                <span v-if="day.isSame(now, 'day')" class="today-label"
+                    >Hari ini</span
+                >
             </header>
             <div class="day-events">
                 <button
@@ -44,6 +52,7 @@ function getEventsForDate(date: Dayjs) {
                     :key="`${event.id}-${event.date}`"
                     type="button"
                     class="week-event"
+                    :class="{ 'pending-event': event.status === 'PENDING' }"
                     :style="{
                         backgroundColor: getRoomColor(event.room),
                         color: getRoomTextColor(),
@@ -55,6 +64,7 @@ function getEventsForDate(date: Dayjs) {
                         >{{ event.start_time }}-{{ event.end_time }}</span
                     >
                     <strong>{{ event.title }}</strong>
+                    <EventStatus :status="event.status" />
                     <span class="event-room">{{ event.room }}</span>
                 </button>
                 <p v-if="!getEventsForDate(day).length" class="empty-day">
@@ -82,6 +92,7 @@ function getEventsForDate(date: Dayjs) {
     background: #fff;
 }
 .day-header {
+    flex-wrap: wrap;
     display: flex;
     align-items: baseline;
     justify-content: center;
@@ -117,6 +128,7 @@ function getEventsForDate(date: Dayjs) {
     padding: 10px;
 }
 .week-event {
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 3px;

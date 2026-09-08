@@ -71,7 +71,11 @@ const password = computed({
 .password-field__toggle {
     position: absolute;
     top: 50%;
-    right: 12px;
+    right: 2px;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
     display: inline-flex;
     padding: 0;
     border: 0;

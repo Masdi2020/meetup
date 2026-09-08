@@ -20,9 +20,9 @@ withDefaults(
     align-items: center;
     justify-content: center;
     min-height: 44px;
-    padding: 0 24px;
+    padding: 10px 16px;
     border: 0;
-    border-radius: 999px;
+    border-radius: var(--ui-radius);
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
@@ -33,10 +33,10 @@ withDefaults(
 }
 .app-button--primary {
     color: #fff;
-    background: #4d8df7;
+    background: var(--ui-primary);
 }
 .app-button--primary:hover:not(:disabled) {
-    background: #397cf0;
+    background: var(--ui-primary-hover);
 }
 .app-button--secondary {
     color: #fff;

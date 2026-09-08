@@ -3,6 +3,7 @@ import { configureEcho } from '@laravel/echo-vue';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import type { DefineComponent } from 'vue';
+import 'v-calendar/style.css';
 
 import Toast from '@/components/Toast.vue';
 import { useToast } from '@/composables/useToast';

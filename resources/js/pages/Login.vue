@@ -83,15 +83,17 @@ function removeUsernameWhitespace(event: Event) {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: 20px;
-    background: #fff;
+    min-height: 100dvh;
+    padding: var(--ui-page-padding);
+    background: var(--ui-background);
 }
 .login-card {
-    width: 360px;
+    width: 100%;
+    max-width: 400px;
     text-align: center;
 }
 .title {
-    margin-bottom: 30px;
+    margin-bottom: var(--ui-gap);
     color: #1d3557;
     font-size: 2rem;
     font-weight: 700;

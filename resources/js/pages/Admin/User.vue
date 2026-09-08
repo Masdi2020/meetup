@@ -264,10 +264,10 @@ function deleteUser() {
 </script>
 
 <template>
-    <div class="w-full max-w-7xl space-y-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold">Pengguna</h1>
+    <div class="app-page">
+        <div class="page-header">
+            <div class="page-heading">
+                <h1 class="page-title">Pengguna</h1>
 
                 <p class="text-gray-500">Kelola akun pengguna sistem.</p>
             </div>
@@ -280,7 +280,7 @@ function deleteUser() {
             </button>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="stats-grid">
             <StatCard label="Total" :value="users.length" />
             <StatCard
                 label="Admin"
@@ -316,7 +316,7 @@ function deleteUser() {
             </template>
         </AdminSearchPanel>
 
-        <div class="overflow-x-auto rounded-xl bg-white shadow">
+        <div class="ui-card overflow-x-auto">
             <table class="w-full min-w-[720px]">
                 <thead class="bg-gray-100">
                     <tr class="text-left text-sm">

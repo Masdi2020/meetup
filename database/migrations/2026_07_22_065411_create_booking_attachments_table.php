@@ -25,6 +25,13 @@ return new class extends Migration
             $table->string('mime_type');
             $table->unsignedBigInteger('size');
 
+            $table->string('type', 30)->index();
+
+            $table->foreignId('uploaded_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
             $table->timestamp('created_at')->useCurrent();
 
             $table->softDeletes();

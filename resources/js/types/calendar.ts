@@ -1,6 +1,7 @@
 export interface CalendarEvent {
     id: number;
     title: string;
+    status: 'PENDING' | 'APPROVED' | 'FINISHED';
     room: string;
     date: string;
     start_time: string;

@@ -11,6 +11,7 @@ class CalendarService
      * @return array<int, array{
      *      id: int,
      *      title: string,
+     *      status: string,
      *      room: string,
      *      date: string,
      *      start_time: string,
@@ -23,7 +24,7 @@ class CalendarService
     public function events(
         CarbonInterface $start,
         CarbonInterface $end,
-        ?int $roomId = null
+        int|array|null $roomId = null
     ): array {
         return Booking::query()
             ->with(['room', 'status', 'user'])
@@ -31,11 +32,11 @@ class CalendarService
                 $start->toDateString(),
                 $end->toDateString(),
             ])
-            ->when($roomId, function ($query) use ($roomId) {
-                $query->where('room_id', $roomId);
+            ->when($roomId !== null, function ($query) use ($roomId) {
+                $query->whereIn('room_id', (array) $roomId);
             })
             ->whereHas('status', function ($query) {
-                $query->where('code', 'APPROVED');
+                $query->whereIn('code', ['PENDING', 'APPROVED', 'FINISHED']);
             })
             ->orderBy('date')
             ->orderBy('start_time')
@@ -44,6 +45,7 @@ class CalendarService
                 return [
                     'id' => $booking->id,
                     'title' => $booking->title,
+                    'status' => $booking->status->code,
                     'room' => $booking->room->name,
                     'date' => $booking->date->format('Y-m-d'),
                     'start_time' => $booking->start_time->format('H:i'),

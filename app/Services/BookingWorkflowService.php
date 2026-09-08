@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\BookingAttachmentType;
 use App\Events\BannerUpdated;
+use App\Events\BookingsUpdated;
 use App\Models\Booking;
 use App\Models\BookingAttachment;
 use App\Models\BookingStatus;
@@ -114,6 +116,7 @@ class BookingWorkflowService
                     'path' => $path,
                     'mime_type' => $file->getMimeType(),
                     'size' => $file->getSize(),
+                    'type' => BookingAttachmentType::Banner,
                     'uploaded_by' => $actorUserId,
                 ]);
 
@@ -135,6 +138,8 @@ class BookingWorkflowService
 
             return $booking;
         });
+
+        BookingsUpdated::dispatch();
 
         if ($statusCode === 'APPROVED') {
             broadcast(new BannerUpdated);
@@ -185,6 +190,8 @@ class BookingWorkflowService
             );
         });
 
+        BookingsUpdated::dispatch();
+
         if ($booking->status->code === 'APPROVED') {
             broadcast(new BannerUpdated);
         }
@@ -224,6 +231,8 @@ class BookingWorkflowService
                 $notes,
             );
         });
+
+        BookingsUpdated::dispatch();
 
         if (
             in_array($statusCode, ['APPROVED', 'FINISHED'], true)
@@ -282,6 +291,7 @@ class BookingWorkflowService
             });
 
         if ($finishedCount > 0) {
+            BookingsUpdated::dispatch();
             broadcast(new BannerUpdated);
         }
 
@@ -316,6 +326,7 @@ class BookingWorkflowService
             );
         });
 
+        BookingsUpdated::dispatch();
         broadcast(new BannerUpdated);
     }
 }

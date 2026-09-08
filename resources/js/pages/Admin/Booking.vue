@@ -1,18 +1,25 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
 import { X } from '@lucide/vue';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, toRef, watch } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import AppTextarea from '@/components/atoms/AppTextarea.vue';
+import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
 import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
+import BookingResults from '@/components/organisms/BookingResults.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useAdminFilters } from '@/composables/useAdminFilters';
+import {
+    localDateString,
+    useBookingAvailability,
+} from '@/composables/useBookingAvailability';
+import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import { useModalManager } from '@/composables/useModal';
 import { downloadBookingExport } from '@/lib/bookingExport';
 import type {
@@ -44,6 +51,8 @@ const props = defineProps<{
 }>();
 
 const search = ref(props.filters?.search ?? '');
+
+useBookingPageUpdates(['bookings', 'stats']);
 const statusFilter = ref(props.filters?.status ?? '');
 const roomFilter = ref(props.filters?.room ?? '');
 const { applyFilters, resetFilters, goToPage } = useAdminFilters(
@@ -63,7 +72,7 @@ const { applyFilters, resetFilters, goToPage } = useAdminFilters(
         },
     },
 );
-const today = new Date().toISOString().split('T')[0];
+const today = localDateString();
 
 const showAddBookingModal = computed(() => isModalOpen('add'));
 const showAddBookingSuccess = ref(false);
@@ -85,6 +94,7 @@ const rejectReason = ref('');
 const rejectValidationErrors = ref({ reason: '' });
 const addBookingPreview = ref<string | null>(null);
 const addBookingBannerInput = ref<HTMLInputElement | null>(null);
+const resultsBusy = ref(false);
 const addBookingSubmitted = ref(false);
 const exportFormat = ref<BookingExportFormat>('pdf');
 const exportPreview = ref<BookingExportPayload | null>(null);
@@ -233,6 +243,23 @@ const editBookingForm = useForm({
 });
 const editingBooking = ref<Booking | null>(null);
 
+const addAvailability = useBookingAvailability({
+    roomId: toRef(addBookingForm, 'room_id'),
+    date: toRef(addBookingForm, 'date'),
+    startTime: toRef(addBookingForm, 'start_time'),
+    endTime: toRef(addBookingForm, 'end_time'),
+});
+
+const editingRoomId = computed(() => editingBooking.value?.room_id ?? null);
+const editingBookingId = computed(() => editingBooking.value?.id ?? null);
+const editAvailability = useBookingAvailability({
+    roomId: editingRoomId,
+    date: toRef(editBookingForm, 'date'),
+    startTime: toRef(editBookingForm, 'start_time'),
+    endTime: toRef(editBookingForm, 'end_time'),
+    ignoreBookingId: editingBookingId,
+});
+
 function bookingDateForInput(value: string): string {
     const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
 
@@ -323,30 +350,6 @@ const addBookingHasWarning = (field: string): boolean => {
             return false;
     }
 };
-
-const addBookingMinStartTime = computed(() => {
-    if (addBookingForm.date !== today) {
-        return '07:00';
-    }
-
-    const now = new Date();
-
-    let hour = now.getHours();
-    let minute = now.getMinutes();
-
-    if (minute > 0 && minute <= 30) {
-        minute = 30;
-    } else if (minute > 30) {
-        hour++;
-        minute = 0;
-    }
-
-    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-});
-
-const addBookingMinEndTime = computed(() => {
-    return addBookingForm.start_time || addBookingMinStartTime.value;
-});
 
 function closeAddBookingModal() {
     closeModal();
@@ -536,12 +539,28 @@ function closeFinishModal() {
     selectedBookingId.value = null;
 }
 
+watch(
+    () => props.bookings.data,
+    (bookings) => {
+        if (detailBooking.value) {
+            detailBooking.value =
+                bookings.find(
+                    (booking) => booking.id === detailBooking.value?.id,
+                ) ?? null;
+        }
+    },
+);
+
 function openDetailModal(booking: Booking) {
     detailBooking.value = booking;
     openModal('detail');
 }
 
 function closeDetailModal() {
+    if (resultsBusy.value) {
+        return;
+    }
+
     closeModal();
     detailBooking.value = null;
 }
@@ -711,12 +730,10 @@ function reject(id: number) {
 </script>
 
 <template>
-    <div class="w-full max-w-7xl space-y-6">
-        <div
-            class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
-        >
-            <div>
-                <h1 class="text-3xl font-bold">Booking</h1>
+    <div class="app-page">
+        <div class="page-header">
+            <div class="page-heading">
+                <h1 class="page-title">Booking</h1>
 
                 <p class="text-gray-500">Kelola seluruh peminjaman ruangan.</p>
             </div>
@@ -1205,51 +1222,93 @@ function reject(id: number) {
                             : '')
                     "
                 >
-                    <AppInput
+                    <VCalendarInput
                         v-model="addBookingForm.date"
                         appearance="admin"
-                        type="date"
+                        mode="date"
                     />
                 </FormField>
-                <FormField
-                    label="Dari Jam"
-                    appearance="admin"
-                    required
-                    :error="
-                        addBookingForm.errors.start_time ||
-                        (addBookingHasWarning('start_time')
-                            ? 'Waktu mulai wajib diisi.'
-                            : '')
-                    "
-                >
-                    <AppInput
-                        v-model="addBookingForm.start_time"
+                <div class="grid min-w-0 grid-cols-2 gap-3 md:col-span-2">
+                    <FormField
+                        label="Dari Jam"
                         appearance="admin"
-                        type="time"
-                        :min="addBookingMinStartTime"
-                        max="23:59"
-                    />
-                </FormField>
-                <FormField
-                    label="Sampai Jam"
-                    appearance="admin"
-                    required
-                    :error="
-                        addBookingForm.errors.end_time ||
-                        (addBookingHasWarning('end_time')
-                            ? 'Waktu selesai wajib diisi.'
-                            : '')
-                    "
-                >
-                    <AppInput
-                        v-model="addBookingForm.end_time"
+                        required
+                        :error="
+                            addBookingForm.errors.start_time ||
+                            (addBookingHasWarning('start_time')
+                                ? 'Waktu mulai wajib diisi.'
+                                : '')
+                        "
+                    >
+                        <VCalendarInput
+                            v-model="addBookingForm.start_time"
+                            appearance="admin"
+                            mode="time"
+                            :rules="addAvailability.startRules.value"
+                            :disabled="
+                                !addBookingForm.room_id ||
+                                !addBookingForm.date ||
+                                addAvailability.isLoading.value ||
+                                Boolean(addAvailability.loadError.value) ||
+                                addAvailability.availableStartTimes.value
+                                    .length === 0
+                            "
+                        />
+                    </FormField>
+                    <FormField
+                        label="Sampai Jam"
                         appearance="admin"
-                        type="time"
-                        :min="addBookingMinEndTime"
-                        max="23:59"
-                        step="1800"
-                    />
-                </FormField>
+                        required
+                        :error="
+                            addBookingForm.errors.end_time ||
+                            (addBookingHasWarning('end_time')
+                                ? 'Waktu selesai wajib diisi.'
+                                : '')
+                        "
+                    >
+                        <VCalendarInput
+                            v-model="addBookingForm.end_time"
+                            appearance="admin"
+                            mode="time"
+                            :rules="addAvailability.endRules.value"
+                            :disabled="
+                                !addBookingForm.start_time ||
+                                addAvailability.isLoading.value ||
+                                Boolean(addAvailability.loadError.value) ||
+                                addAvailability.availableEndTimes.value
+                                    .length === 0
+                            "
+                        />
+                    </FormField>
+                </div>
+                <p
+                    v-if="addAvailability.isLoading.value"
+                    class="-mt-2 text-sm text-gray-500 md:col-span-2"
+                >
+                    Memuat jam yang tersedia...
+                </p>
+                <p
+                    v-else-if="addAvailability.loadError.value"
+                    class="-mt-2 text-sm text-red-600 md:col-span-2"
+                >
+                    {{ addAvailability.loadError.value }}
+                </p>
+                <p
+                    v-else-if="
+                        addBookingForm.room_id &&
+                        addBookingForm.date &&
+                        addAvailability.availableStartTimes.value.length === 0
+                    "
+                    class="-mt-2 text-sm text-red-600 md:col-span-2"
+                >
+                    Tidak ada jam yang tersedia pada tanggal ini.
+                </p>
+                <p
+                    v-else-if="addAvailability.bookedIntervals.value.length"
+                    class="-mt-2 text-sm text-gray-500 md:col-span-2"
+                >
+                    Jam yang sudah terbooking disembunyikan dari pilihan.
+                </p>
                 <FormField
                     label="Judul Kegiatan"
                     appearance="admin"
@@ -1369,38 +1428,73 @@ function reject(id: number) {
                     required
                     :error="editBookingForm.errors.date"
                 >
-                    <AppInput
+                    <VCalendarInput
                         v-model="editBookingForm.date"
                         appearance="admin"
-                        type="date"
-                        :min="today"
+                        mode="date"
+                        :min-date="today"
                     />
                 </FormField>
                 <div class="hidden md:block" />
-                <FormField
-                    label="Dari Jam"
-                    appearance="admin"
-                    required
-                    :error="editBookingForm.errors.start_time"
-                >
-                    <AppInput
-                        v-model="editBookingForm.start_time"
+                <div class="grid min-w-0 grid-cols-2 gap-3 md:col-span-2">
+                    <FormField
+                        label="Dari Jam"
                         appearance="admin"
-                        type="time"
-                    />
-                </FormField>
-                <FormField
-                    label="Sampai Jam"
-                    appearance="admin"
-                    required
-                    :error="editBookingForm.errors.end_time"
-                >
-                    <AppInput
-                        v-model="editBookingForm.end_time"
+                        required
+                        :error="editBookingForm.errors.start_time"
+                    >
+                        <VCalendarInput
+                            v-model="editBookingForm.start_time"
+                            appearance="admin"
+                            mode="time"
+                            :rules="editAvailability.startRules.value"
+                            :disabled="
+                                editAvailability.isLoading.value ||
+                                Boolean(editAvailability.loadError.value) ||
+                                editAvailability.availableStartTimes.value
+                                    .length === 0
+                            "
+                        />
+                    </FormField>
+                    <FormField
+                        label="Sampai Jam"
                         appearance="admin"
-                        type="time"
-                    />
-                </FormField>
+                        required
+                        :error="editBookingForm.errors.end_time"
+                    >
+                        <VCalendarInput
+                            v-model="editBookingForm.end_time"
+                            appearance="admin"
+                            mode="time"
+                            :rules="editAvailability.endRules.value"
+                            :disabled="
+                                !editBookingForm.start_time ||
+                                editAvailability.isLoading.value ||
+                                Boolean(editAvailability.loadError.value) ||
+                                editAvailability.availableEndTimes.value
+                                    .length === 0
+                            "
+                        />
+                    </FormField>
+                </div>
+                <p
+                    v-if="editAvailability.isLoading.value"
+                    class="-mt-2 text-sm text-gray-500 md:col-span-2"
+                >
+                    Memuat jam yang tersedia...
+                </p>
+                <p
+                    v-else-if="editAvailability.loadError.value"
+                    class="-mt-2 text-sm text-red-600 md:col-span-2"
+                >
+                    {{ editAvailability.loadError.value }}
+                </p>
+                <p
+                    v-else-if="editAvailability.bookedIntervals.value.length"
+                    class="-mt-2 text-sm text-gray-500 md:col-span-2"
+                >
+                    Jam booking lain disembunyikan dari pilihan.
+                </p>
                 <div class="flex justify-end gap-3 md:col-span-2">
                     <button
                         type="button"
@@ -1480,6 +1574,19 @@ function reject(id: number) {
                     <p class="mt-1 font-medium">
                         {{ detailBooking.processed_notes }}
                     </p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-500">Hasil Rapat</p>
+                    <BookingResults
+                        v-if="detailBooking"
+                        :key="detailBooking.id"
+                        class="mt-3"
+                        :base-url="`/admin/bookings/${detailBooking.id}`"
+                        :documentations="detailBooking.documentations"
+                        :meeting-minutes="detailBooking.meeting_minutes"
+                        :editable="detailBooking.status === 'finished'"
+                        @busy="resultsBusy = $event"
+                    />
                 </div>
             </div>
         </DetailModal>
@@ -1579,7 +1686,7 @@ function reject(id: number) {
             </div>
         </AppModal>
 
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="stats-grid">
             <StatCard label="Total" :value="stats?.total" />
             <StatCard label="Pending" :value="stats?.pending" tone="warning" />
             <StatCard
@@ -1631,7 +1738,7 @@ function reject(id: number) {
 
         <!-- Table -->
 
-        <div class="overflow-x-auto rounded-xl bg-white shadow">
+        <div class="ui-card overflow-x-auto">
             <table class="w-full min-w-[1050px]">
                 <thead class="bg-gray-100">
                     <tr class="text-left text-sm">
@@ -1733,21 +1840,32 @@ function reject(id: number) {
 
         <!-- Pagination -->
 
-        <div class="flex justify-end gap-2">
+        <div
+            v-if="bookings.last_page > 1"
+            class="flex flex-wrap items-center justify-center gap-2 border-t p-4"
+        >
             <button
-                class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                type="button"
+                class="rounded-lg border px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-50"
+                :class="bookings.current_page === 1 ? '' : 'hover:bg-gray-100'"
                 :disabled="bookings?.current_page === 1"
                 @click="goToPage(bookings.current_page - 1)"
             >
-                Previous
+                Sebelumnya
             </button>
 
             <button
-                class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                type="button"
+                class="rounded-lg border px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-50"
+                :class="
+                    bookings.current_page === bookings.last_page
+                        ? ''
+                        : 'hover:bg-gray-100'
+                "
                 :disabled="bookings.current_page === bookings.last_page"
                 @click="goToPage(bookings.current_page + 1)"
             >
-                Next
+                Berikutnya
             </button>
         </div>
         <ConfirmModal

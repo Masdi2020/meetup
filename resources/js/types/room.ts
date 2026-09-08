@@ -6,16 +6,19 @@ export interface NamedEntity {
 export type FacilitySummary = NamedEntity;
 export type RoomSummary = NamedEntity;
 
-export interface BookingRoom extends RoomSummary {
+export interface RoomDetails extends RoomSummary {
+    capacity: number;
+    location: string;
+    facilities: FacilitySummary[];
+    image_path: string | null;
+}
+
+export interface BookingRoom extends RoomDetails {
     has_display: boolean;
 }
 
-export interface AvailabilityRoom extends RoomSummary {
-    capacity: number;
-    location: string;
+export interface AvailabilityRoom extends RoomDetails {
     calendar_url: string;
-    facilities: FacilitySummary[];
-    image: string | null;
 }
 
 export interface DisplayRoom extends RoomSummary {
