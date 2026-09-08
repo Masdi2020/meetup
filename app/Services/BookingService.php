@@ -13,7 +13,7 @@ use Illuminate\Support\Collection;
 class BookingService
 {
     /**
-     * @return Collection<int, array{start_time: string, end_time: string}>
+     * @return Collection<int, array{start_time: non-falsy-string, end_time: non-falsy-string}>
      */
     public function activeIntervals(int $roomId, string $date, ?int $ignoreBookingId = null): Collection
     {
@@ -33,17 +33,7 @@ class BookingService
     /**
      * Summary of history
      *
-     * @return Collection<int, array{
-     *      id: int,
-     *      room: string,
-     *      date: non-falsy-string,
-     *      time: non-falsy-string,
-     *      title: string,
-     *      status: string,
-     *      results_available: bool,
-     *      documentations: array<int, array<string, mixed>>,
-     *      meeting_minutes: array<string, mixed>|null
-     * }>
+     * @return Collection<int, array<string, mixed>>
      */
     public function history(int $userId): Collection
     {
@@ -55,29 +45,35 @@ class BookingService
         ])->where('user_id', $userId)
             ->orderBy('created_at', 'asc')
             ->get()
-            ->map(function (Booking $booking): array {
-                return [
-                    'id' => (int) $booking->id,
-                    'room' => (string) $booking->room->name,
-                    'date' => (string) $booking->date->format('d/m/Y'),
-                    'time' => (string) $booking->start_time->format('H:i').' - '.$booking->end_time->format('H:i'),
-                    'title' => (string) $booking->title,
-                    'status' => ucfirst(strtolower((string) $booking->status->code)),
-                    'results_available' => $booking->status->code === 'FINISHED',
-                    'documentations' => $booking->documentations->map(fn ($attachment) => [
-                        'id' => (int) $attachment->id,
-                        'original_filename' => (string) $attachment->original_filename,
-                        'path' => (string) $attachment->path,
-                        'mime_type' => (string) $attachment->mime_type,
-                    ])->values()->all(),
-                    'meeting_minutes' => $booking->meetingMinutes ? [
-                        'id' => (int) $booking->meetingMinutes->id,
-                        'original_filename' => (string) $booking->meetingMinutes->original_filename,
-                        'path' => (string) $booking->meetingMinutes->path,
-                        'mime_type' => (string) $booking->meetingMinutes->mime_type,
-                    ] : null,
-                ];
-            });
+            ->map(fn (Booking $booking): array => $this->formatHistoryBooking($booking));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatHistoryBooking(Booking $booking): array
+    {
+        return [
+            'id' => (int) $booking->id,
+            'room' => (string) $booking->room->name,
+            'date' => (string) $booking->date->format('d/m/Y'),
+            'time' => (string) $booking->start_time->format('H:i').' - '.$booking->end_time->format('H:i'),
+            'title' => (string) $booking->title,
+            'status' => ucfirst(strtolower((string) $booking->status->code)),
+            'results_available' => $booking->status->code === 'FINISHED',
+            'documentations' => $booking->documentations->map(fn ($attachment) => [
+                'id' => (int) $attachment->id,
+                'original_filename' => (string) $attachment->original_filename,
+                'path' => (string) $attachment->path,
+                'mime_type' => (string) $attachment->mime_type,
+            ])->values()->all(),
+            'meeting_minutes' => $booking->meetingMinutes ? [
+                'id' => (int) $booking->meetingMinutes->id,
+                'original_filename' => (string) $booking->meetingMinutes->original_filename,
+                'path' => (string) $booking->meetingMinutes->path,
+                'mime_type' => (string) $booking->meetingMinutes->mime_type,
+            ] : null,
+        ];
     }
 
     /** @return Collection<int, array{value: string, label: string}> */

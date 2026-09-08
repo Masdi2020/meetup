@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/shutdown-check', function() {
+Route::get('/shutdown-check', function () {
     $now = now();
 
     $canShutdown = $now->format('H:i') >= '16:00';

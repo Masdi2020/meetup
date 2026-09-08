@@ -25,8 +25,8 @@ function resizeGrid() {
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(() => {
         if (!grid.value) {
-return;
-}
+            return;
+        }
 
         const top = grid.value.getBoundingClientRect().top + window.scrollY;
         gridHeight.value = Math.max(
@@ -43,8 +43,8 @@ onMounted(() => {
         const page = grid.value.closest('.availability');
 
         if (page) {
-observer.observe(page);
-}
+            observer.observe(page);
+        }
     }
 
     window.addEventListener('resize', resizeGrid);

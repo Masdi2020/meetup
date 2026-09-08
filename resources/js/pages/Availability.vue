@@ -172,5 +172,4 @@ watch(selectedRoomIds, () => {
     height: 100%;
     border: none;
 }
-
 </style>

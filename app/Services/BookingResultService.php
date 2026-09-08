@@ -8,6 +8,7 @@ use App\Models\BookingAttachment;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class BookingResultService
@@ -43,8 +44,8 @@ class BookingResultService
         abort_unless(
             $attachment->booking_id === $booking->id
                 && in_array($attachment->type, [
-                    BookingAttachmentType::Documentation,
-                    BookingAttachmentType::MeetingMinutes,
+                    BookingAttachmentType::Documentation->value,
+                    BookingAttachmentType::MeetingMinutes->value,
                 ], true),
             404,
             'Lampiran tidak ditemukan.',
@@ -78,6 +79,10 @@ class BookingResultService
             "booking-results/{$booking->id}/{$type->value}",
             'public',
         );
+
+        if ($path === false) {
+            throw new RuntimeException('Gagal menyimpan file hasil rapat.');
+        }
 
         $filename = basename($path);
 

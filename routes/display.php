@@ -10,4 +10,3 @@ Route::middleware(['auth', 'role:display'])
         Route::get('/', [Controllers\DisplayController::class, 'index'])->name('index');
         Route::get('/{room}', [Controllers\BannerController::class, 'index'])->name('banner');
     });
-
