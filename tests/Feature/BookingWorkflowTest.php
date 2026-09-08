@@ -1,11 +1,56 @@
 <?php
 
+use App\Enums\BookingAttachmentType;
 use App\Models\Audit;
 use App\Models\Booking;
 use App\Models\BookingStatus;
 use App\Models\Room;
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
+
+it('deletes meeting results only when the attachment is eligible', function (string $role, BookingAttachmentType $type, bool $differentBooking, int $expectedStatus) {
+    $this->withoutMiddleware(PreventRequestForgery::class);
+    Storage::fake('public');
+    $owner = bookingUser('owner');
+    $actor = $role === 'user' ? $owner : bookingUser('admin', 'admin');
+    $booking = bookingRecord($owner, bookingRoom(), 'FINISHED');
+    $attachmentBooking = $differentBooking
+        ? bookingRecord($owner, $booking->room, 'FINISHED')
+        : $booking;
+    $path = 'booking-results/result.pdf';
+    Storage::disk('public')->put($path, 'result content');
+    $attachment = $attachmentBooking->attachments()->create([
+        'original_filename' => 'result.pdf',
+        'filename' => 'result.pdf',
+        'path' => $path,
+        'mime_type' => 'application/pdf',
+        'size' => 14,
+        'type' => $type,
+        'uploaded_by' => $owner->id,
+    ]);
+    $baseUrl = $role === 'admin' ? '/admin/bookings' : '/booking';
+
+    $this->actingAs($actor)
+        ->delete("{$baseUrl}/{$booking->id}/attachments/{$attachment->id}")
+        ->assertStatus($expectedStatus);
+
+    if ($expectedStatus === 302) {
+        $this->assertSoftDeleted($attachment);
+        Storage::disk('public')->assertMissing($path);
+    } else {
+        $this->assertNotSoftDeleted($attachment);
+        Storage::disk('public')->assertExists($path);
+    }
+})->with([
+    'owner documentation' => ['user', BookingAttachmentType::Documentation, false, 302],
+    'owner minutes' => ['user', BookingAttachmentType::MeetingMinutes, false, 302],
+    'admin documentation' => ['admin', BookingAttachmentType::Documentation, false, 302],
+    'admin minutes' => ['admin', BookingAttachmentType::MeetingMinutes, false, 302],
+    'another booking' => ['user', BookingAttachmentType::Documentation, true, 404],
+    'banner' => ['admin', BookingAttachmentType::Banner, false, 404],
+]);
 
 function bookingStatus(string $code): BookingStatus
 {

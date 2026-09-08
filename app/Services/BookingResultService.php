@@ -44,8 +44,8 @@ class BookingResultService
         abort_unless(
             $attachment->booking_id === $booking->id
                 && in_array($attachment->type, [
-                    BookingAttachmentType::Documentation->value,
-                    BookingAttachmentType::MeetingMinutes->value,
+                    BookingAttachmentType::Documentation,
+                    BookingAttachmentType::MeetingMinutes,
                 ], true),
             404,
             'Lampiran tidak ditemukan.',
