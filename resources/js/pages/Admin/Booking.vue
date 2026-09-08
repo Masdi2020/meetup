@@ -1809,21 +1809,32 @@ function reject(id: number) {
 
         <!-- Pagination -->
 
-        <div class="flex justify-end gap-2">
+        <div
+            v-if="bookings.last_page > 1"
+            class="flex flex-wrap items-center justify-center gap-2 border-t p-4"
+        >
             <button
-                class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                type="button"
+                class="rounded-lg border px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-50"
+                :class="bookings.current_page === 1 ? '' : 'hover:bg-gray-100'"
                 :disabled="bookings?.current_page === 1"
                 @click="goToPage(bookings.current_page - 1)"
             >
-                Previous
+                Sebelumnya
             </button>
 
             <button
-                class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                type="button"
+                class="rounded-lg border px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-50"
+                :class="
+                    bookings.current_page === bookings.last_page
+                        ? ''
+                        : 'hover:bg-gray-100'
+                "
                 :disabled="bookings.current_page === bookings.last_page"
                 @click="goToPage(bookings.current_page + 1)"
             >
-                Next
+                Berikutnya
             </button>
         </div>
         <ConfirmModal

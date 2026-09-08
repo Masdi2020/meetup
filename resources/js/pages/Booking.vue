@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/vue3';
 import { X } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue';
 import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
+import RoomSummaryCard from '@/components/molecules/RoomSummaryCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import {
     localDateString,
@@ -238,9 +239,22 @@ onBeforeUnmount(() => {
                                         : undefined
                                 "
                             />
-                            {{ room.name }}
+                            <span>
+                                <span class="block">{{ room.name }}</span>
+                                <span
+                                    class="block text-xs font-normal text-slate-500"
+                                >
+                                    {{ room.capacity }} orang ·
+                                    {{ room.location }}
+                                </span>
+                            </span>
                         </label>
                     </div>
+                    <RoomSummaryCard
+                        v-if="selectedRoom"
+                        class="mt-4"
+                        :room="selectedRoom"
+                    />
                     <p
                         v-if="form.errors.room_id"
                         id="room-error"

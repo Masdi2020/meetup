@@ -3,9 +3,11 @@ import { router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import Calendar from '@/components/Calendar/Calendar.vue';
 import { getRoomColor } from '@/components/Calendar/roomColors';
+import RoomSelector from '@/components/molecules/RoomSelector.vue';
+import RoomDetailModal from '@/components/organisms/RoomDetailModal.vue';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import type { CalendarEvent } from '@/types/calendar';
-import type { AvailabilityRoom } from '@/types/room';
+import type { AvailabilityRoom, RoomDetails } from '@/types/room';
 
 const props = defineProps<{
     rooms: AvailabilityRoom[];
@@ -22,31 +24,13 @@ const rooms = props.rooms;
 useBookingPageUpdates(['events']);
 
 const selectedRoomIds = ref<number[]>([...props.selectedRoomIds]);
+const selectedDetailRoom = ref<RoomDetails | null>(null);
 const filteredRooms = computed(() =>
     rooms.filter((room) => selectedRoomIds.value.includes(room.id)),
-);
-const allRoomsSelected = computed(
-    () => rooms.length > 0 && selectedRoomIds.value.length === rooms.length,
 );
 const roomFilter = computed(() =>
     selectedRoomIds.value.length ? selectedRoomIds.value : [0],
 );
-
-const selectedRoom = computed(() =>
-    filteredRooms.value.length === 1 ? filteredRooms.value[0] : null,
-);
-
-function toggleAllRooms() {
-    selectedRoomIds.value = allRoomsSelected.value
-        ? []
-        : rooms.map((room) => room.id);
-}
-
-function booking(roomId: number) {
-    localStorage.setItem('booking_room_id', String(roomId));
-
-    router.get('/booking');
-}
 
 function loadCalendar(date: string, view = props.view) {
     router.get(
@@ -87,82 +71,13 @@ watch(selectedRoomIds, () => {
         </header>
 
         <div class="page-card ui-card ui-card-body">
-            <fieldset class="toolbar">
-                <legend class="room-filter-heading">
-                    <span>Pilih Ruangan</span>
-                    <button
-                        type="button"
-                        class="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                        :disabled="!rooms.length"
-                        @click="toggleAllRooms"
-                    >
-                        {{
-                            allRoomsSelected ? 'Batalkan semua' : 'Pilih semua'
-                        }}
-                    </button>
-                </legend>
-                <div class="room-options">
-                    <label
-                        v-for="room in rooms"
-                        :key="room.id"
-                        class="room-option"
-                    >
-                        <input
-                            v-model="selectedRoomIds"
-                            type="checkbox"
-                            :value="room.id"
-                        />
-                        {{ room.name }}
-                    </label>
-                </div>
-            </fieldset>
+            <RoomSelector
+                v-model="selectedRoomIds"
+                :rooms="rooms"
+                @detail="selectedDetailRoom = $event"
+            />
 
-            <div class="room-card" v-if="selectedRoom">
-                <div class="room-image">
-                    <img
-                        v-if="selectedRoom.image"
-                        :src="`/storage/${selectedRoom.image}`"
-                        :alt="selectedRoom.name"
-                    />
-                    <span v-else>🖼️</span>
-                </div>
-
-                <div class="room-info">
-                    <h3>{{ selectedRoom.name }}</h3>
-
-                    <div class="meta">
-                        <span>👥 {{ selectedRoom.capacity }} orang</span>
-                        <span>📍 {{ selectedRoom.location }}</span>
-                        <span>
-                            🎥
-                            <template
-                                v-for="(
-                                    facility, index
-                                ) in selectedRoom.facilities"
-                                :key="facility.id"
-                            >
-                                {{ facility.name
-                                }}<span
-                                    v-if="
-                                        index <
-                                        selectedRoom.facilities.length - 1
-                                    "
-                                    >,
-                                </span>
-                            </template>
-                        </span>
-                    </div>
-
-                    <button
-                        class="booking ui-button ui-button--primary"
-                        @click="booking(selectedRoom.id)"
-                    >
-                        Booking
-                    </button>
-                </div>
-            </div>
-
-            <div class="room-legend" v-else-if="filteredRooms.length">
+            <div class="room-legend" v-if="filteredRooms.length">
                 <span class="legend-title">Legenda Ruangan</span>
 
                 <div class="legend-items">
@@ -196,101 +111,17 @@ watch(selectedRoomIds, () => {
             </div>
         </div>
     </div>
+    <RoomDetailModal
+        v-if="selectedDetailRoom"
+        :room="selectedDetailRoom"
+        @close="selectedDetailRoom = null"
+    />
 </template>
 
 <style scoped>
 .page-card {
     display: grid;
     gap: var(--ui-gap);
-}
-
-.toolbar {
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-}
-
-.toolbar legend {
-    margin-bottom: 8px;
-}
-
-.room-filter-heading {
-    display: flex;
-    width: 100%;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.room-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.room-option {
-    border: 1px solid var(--ui-border);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    background: white;
-    cursor: pointer;
-}
-
-.room-option input {
-    width: 18px;
-    height: 18px;
-    accent-color: #2563eb;
-}
-
-.room-card {
-    display: flex;
-    gap: var(--ui-gap);
-    padding: var(--ui-card-padding);
-    background: var(--ui-surface-soft);
-    border-radius: var(--ui-radius);
-    border: 1px solid var(--ui-border);
-}
-
-.room-image {
-    flex-shrink: 0;
-    overflow: hidden;
-    width: 120px;
-    height: 120px;
-    background: #f5f5f5;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 10px;
-    font-size: 42px;
-}
-
-.room-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.room-info {
-    flex: 1;
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-.room-info h3 {
-    margin-bottom: 10px;
-}
-
-.meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    color: #666;
-    margin-bottom: 20px;
 }
 
 .room-legend {
@@ -342,18 +173,4 @@ watch(selectedRoomIds, () => {
     border: none;
 }
 
-@media (max-width: 768px) {
-    .room-card {
-        align-items: stretch;
-        flex-direction: column;
-    }
-    .room-image {
-        width: 100%;
-        height: 160px;
-    }
-    .booking {
-        width: 100%;
-        min-height: 44px;
-    }
-}
 </style>
