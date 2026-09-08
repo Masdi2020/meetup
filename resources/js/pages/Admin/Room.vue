@@ -234,21 +234,14 @@ function toggleAvailability() {
                                     @click="openEditModal(room)"
                                 />
 
-                                <button
-                                    @click="openAvailabilityModal(room)"
-                                    :class="
+                                <ActionIconButton
+                                    :action="
                                         room.is_available
-                                            ? 'bg-gray-600 hover:bg-gray-700'
-                                            : 'bg-emerald-600 hover:bg-emerald-700'
+                                            ? 'deactivate'
+                                            : 'activate'
                                     "
-                                    class="rounded-lg px-3 py-2 text-white"
-                                >
-                                    {{
-                                        room.is_available
-                                            ? 'Nonaktifkan'
-                                            : 'Aktifkan'
-                                    }}
-                                </button>
+                                    @click="openAvailabilityModal(room)"
+                                />
                             </div>
                         </td>
                     </tr>

@@ -6,6 +6,8 @@ import {
     CircleStop,
     Eye,
     Pencil,
+    Power,
+    PowerOff,
     RotateCcwKey,
     Trash2,
 } from '@lucide/vue';
@@ -19,7 +21,9 @@ type Action =
     | 'reject'
     | 'delete'
     | 'finish'
-    | 'reset';
+    | 'reset'
+    | 'activate'
+    | 'deactivate';
 
 const props = defineProps<{
     action: Action;
@@ -69,6 +73,16 @@ const actions: Record<
         icon: RotateCcwKey,
         label: 'Reset Password',
         classes: 'bg-indigo-600 text-white hover:bg-indigo-700',
+    },
+    activate: {
+        icon: Power,
+        label: 'Aktifkan',
+        classes: 'bg-emerald-600 text-white hover:bg-emerald-700',
+    },
+    deactivate: {
+        icon: PowerOff,
+        label: 'Nonaktifkan',
+        classes: 'bg-gray-600 text-white hover:bg-gray-700',
     },
 };
 </script>
