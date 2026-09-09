@@ -8,6 +8,7 @@ use App\Models\BookingAttachment;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -75,16 +76,37 @@ class BookingResultService
         UploadedFile $file,
         BookingAttachmentType $type,
     ): void {
-        $path = $file->store(
-            "booking-results/{$booking->id}/{$type->value}",
-            'public',
-        );
-
-        if ($path === false) {
-            throw new RuntimeException('Gagal menyimpan file hasil rapat.');
+        if (! $file->isValid()) {
+            throw ValidationException::withMessages([
+                $this->uploadField($type) => 'File unggahan tidak valid.',
+            ]);
         }
 
-        $filename = basename($path);
+        $sourcePath = $file->getPathname();
+
+        if ($sourcePath === '' || ! is_file($sourcePath) || ! is_readable($sourcePath)) {
+            throw ValidationException::withMessages([
+                $this->uploadField($type) => 'File sementara unggahan tidak ditemukan.',
+            ]);
+        }
+
+        $filename = $file->hashName();
+        $path = "booking-results/{$booking->id}/{$type->value}/{$filename}";
+        $stream = fopen($sourcePath, 'rb');
+
+        if ($stream === false) {
+            throw new RuntimeException('Gagal membuka file hasil rapat.');
+        }
+
+        try {
+            if (! Storage::disk('public')->writeStream($path, $stream)) {
+                throw new RuntimeException('Gagal menyimpan file hasil rapat.');
+            }
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
 
         BookingAttachment::create([
             'booking_id' => $booking->id,
@@ -96,6 +118,13 @@ class BookingResultService
             'type' => $type,
             'uploaded_by' => $actor->id,
         ]);
+    }
+
+    private function uploadField(BookingAttachmentType $type): string
+    {
+        return $type === BookingAttachmentType::Documentation
+            ? 'documentation'
+            : 'meeting_minutes';
     }
 
     private function remove(BookingAttachment $attachment): void
