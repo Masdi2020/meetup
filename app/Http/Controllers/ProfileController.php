@@ -15,7 +15,7 @@ class ProfileController extends Controller
 
     public function edit(): Response
     {
-        return inertia('Profile', [
+        return inertia('Shared/Profile', [
             'user' => request()->user(),
         ]);
     }
