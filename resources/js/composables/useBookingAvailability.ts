@@ -18,6 +18,7 @@ interface BookingAvailabilityOptions {
     startTime: Ref<string>;
     endTime: Ref<string>;
     ignoreBookingId?: Ref<number | null>;
+    allowPast?: boolean;
 }
 
 const SLOT_INTERVAL = 15;
@@ -67,6 +68,10 @@ export function useBookingAvailability(options: BookingAvailabilityOptions) {
     let requestController: AbortController | null = null;
 
     const minimumStartMinute = computed(() => {
+        if (options.allowPast) {
+            return FIRST_SLOT;
+        }
+
         if (options.date.value !== localDateString()) {
             return FIRST_SLOT;
         }

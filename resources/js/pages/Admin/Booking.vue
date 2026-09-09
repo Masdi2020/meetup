@@ -248,6 +248,7 @@ const addAvailability = useBookingAvailability({
     date: toRef(addBookingForm, 'date'),
     startTime: toRef(addBookingForm, 'start_time'),
     endTime: toRef(addBookingForm, 'end_time'),
+    allowPast: true,
 });
 
 const editingRoomId = computed(() => editingBooking.value?.room_id ?? null);

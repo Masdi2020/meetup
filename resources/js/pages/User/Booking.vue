@@ -617,9 +617,6 @@ button:hover {
     textarea {
         font-size: 16px;
     }
-    .booking-time-row {
-        grid-template-columns: minmax(0, 1fr);
-    }
 }
 
 .banner-preview {
