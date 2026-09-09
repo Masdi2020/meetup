@@ -8,6 +8,7 @@ import type { BannerPageProps } from '@/types/booking';
 const props = defineProps<BannerPageProps>();
 
 const isFullscreen = ref(false);
+const isFullscreenChanging = ref(false);
 const currentTime = ref(new Date(props.now));
 
 let timer: number | undefined;
@@ -135,14 +136,22 @@ function refreshWhenVisible() {
 }
 
 async function toggleFullscreen() {
+    if (isFullscreenChanging.value) {
+        return;
+    }
+
+    isFullscreenChanging.value = true;
+
     try {
         if (!document.fullscreenElement) {
             await document.documentElement.requestFullscreen();
         } else {
             await document.exitFullscreen();
         }
-    } catch (e) {
-        console.error(e);
+    } catch (error) {
+        console.error('Failed to toggle fullscreen:', error);
+    } finally {
+        isFullscreenChanging.value = false;
     }
 }
 
@@ -161,6 +170,7 @@ onMounted(() => {
         currentTime.value = new Date(getServerNow());
     }, 1000);
 
+    onFullscreenChange();
     document.addEventListener('fullscreenchange', onFullscreenChange);
     document.addEventListener('visibilitychange', refreshWhenVisible);
 });
@@ -219,6 +229,7 @@ onUnmounted(() => {
         :title="
             isFullscreen ? 'Keluar dari layar penuh' : 'Tampilkan layar penuh'
         "
+        :aria-busy="isFullscreenChanging"
         @click="toggleFullscreen"
     >
         <Minimize v-if="isFullscreen" :size="24" aria-hidden="true" />
@@ -338,6 +349,7 @@ onUnmounted(() => {
     position: fixed;
     right: 24px;
     bottom: 24px;
+    z-index: 20;
 
     display: flex;
     width: 48px;
