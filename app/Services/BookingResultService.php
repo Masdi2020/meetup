@@ -43,7 +43,7 @@ class BookingResultService
 
         abort_unless(
             $attachment->booking_id === $booking->id
-                && in_array($attachment->type, [
+                && in_array($attachment->getRawOriginal('type'), [
                     BookingAttachmentType::Documentation->value,
                     BookingAttachmentType::MeetingMinutes->value,
                 ], true),
