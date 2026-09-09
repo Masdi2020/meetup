@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\SaveFacilityRequest;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\SaveFacilityRequest;
 use App\Models\Facility;
-use App\Services\FacilityService;
+use App\Services\Admin\FacilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

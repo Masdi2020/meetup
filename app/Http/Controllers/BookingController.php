@@ -24,7 +24,7 @@ class BookingController extends Controller
 
     public function index(): Response
     {
-        return Inertia::render('Booking', ['rooms' => $this->roomService->list()]);
+        return Inertia::render('User/Booking', ['rooms' => $this->roomService->list()]);
     }
 
     public function availability(Request $request): JsonResponse

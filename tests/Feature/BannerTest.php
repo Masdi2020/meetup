@@ -72,7 +72,7 @@ it('shows the active booking for the selected display room', function () {
         ->get(route('display.banner', ['room' => $secondRoom]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Banner')
+            ->component('Display/Banner')
             ->where('booking.id', $selectedBooking->id)
             ->where('booking.room_id', $secondRoom->id)
             ->where('booking.title', 'Rapat ruang kedua'));

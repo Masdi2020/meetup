@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Admin;
 
 use App\Models\Setting;
+use App\Services\AuditService;
 use Illuminate\Support\Facades\DB;
 
 class SettingService

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\User;
 
+use App\Http\Controllers\Controller;
 use App\Services\BookingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,7 +14,7 @@ class HistoryController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('History', [
+        return Inertia::render('User/History', [
             'histories' => $this->bookingService->history($request->user()->id),
             'statuses' => $this->bookingService->historyStatuses(),
         ]);

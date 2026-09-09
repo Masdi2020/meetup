@@ -14,7 +14,7 @@ class RoomController extends Controller
 
     public function index(): Response
     {
-        return Inertia::render('Availability', [
+        return Inertia::render('User/Availability', [
             'rooms' => $this->roomService->calendar(),
         ]);
     }

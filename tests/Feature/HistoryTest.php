@@ -25,7 +25,7 @@ it('provides booking status options from the database', function () {
         ->get('/riwayat')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('History')
+            ->component('User/History')
             ->has('statuses', 2)
             ->where('statuses.0.value', 'Rejected')
             ->where('statuses.0.label', 'Ditolak')

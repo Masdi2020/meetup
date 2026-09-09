@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\SaveRoomRequest;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\SaveRoomRequest;
 use App\Models\Facility;
 use App\Models\Room;
 use App\Services\RoomService;

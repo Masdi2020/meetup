@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
-use App\Services\DashboardService;
+use App\Http\Controllers\Controller;
+use App\Services\Admin\DashboardService;
 use Inertia\Inertia;
 use Inertia\Response;
 

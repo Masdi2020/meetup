@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\SaveUserRequest;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\SaveUserRequest;
 use App\Models\User;
-use App\Services\UserService;
+use App\Services\Admin\UserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

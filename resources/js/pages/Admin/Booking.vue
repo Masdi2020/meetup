@@ -2,6 +2,7 @@
 import { router, useForm } from '@inertiajs/vue3';
 import { X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, toRef, watch } from 'vue';
+import AdminSearchPanel from '@/components/admin/AdminSearchPanel.vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
@@ -9,12 +10,11 @@ import AppTextarea from '@/components/atoms/AppTextarea.vue';
 import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
-import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import BookingResults from '@/components/organisms/BookingResults.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
-import { useAdminFilters } from '@/composables/useAdminFilters';
+import { useAdminFilters } from '@/composables/admin/useAdminFilters';
 import {
     localDateString,
     useBookingAvailability,

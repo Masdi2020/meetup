@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\UpdateSettingRequest;
-use App\Services\SettingService;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateSettingRequest;
+use App\Services\Admin\SettingService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;

@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\ExportBookingRequest;
-use App\Http\Requests\RejectBookingRequest;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ExportBookingRequest;
+use App\Http\Requests\Admin\RejectBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
-use App\Services\AdminBookingQueryService;
+use App\Services\Admin\AdminBookingQueryService;
 use App\Services\BookingWorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;

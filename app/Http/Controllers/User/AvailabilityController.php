@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\User;
 
+use App\Http\Controllers\Controller;
 use App\Services\AvailabilityService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,7 +14,7 @@ class AvailabilityController extends Controller
         Request $request,
         AvailabilityService $availability,
     ): Response {
-        return Inertia::render('Availability', $availability->data(
+        return Inertia::render('User/Availability', $availability->data(
             $request->integer('month', now()->month),
             $request->integer('year', now()->year),
             $request->string('view')->toString(),
