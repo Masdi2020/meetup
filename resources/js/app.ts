@@ -21,7 +21,7 @@ createInertiaApp({
             import.meta.glob<DefineComponent>('./pages/**/*.vue'),
         );
 
-        const withoutLayout = ['Login', 'Register', 'Banner'];
+        const withoutLayout = ['Auth/Login', 'Register', 'Display/Banner'];
 
         if (!withoutLayout.includes(name)) {
             page.default.layout ??= Layout;

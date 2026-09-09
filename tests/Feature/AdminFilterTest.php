@@ -55,7 +55,7 @@ it('filters availability by multiple rooms and supports clearing the selection',
         $this->actingAs($user)->get('/availability?'.$query)
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Availability')
+                ->component('User/Availability')
                 ->where('selectedRoomIds', [$rooms[0]->id, $rooms[2]->id])
                 ->has('events', 2)
                 ->where('events', fn ($events) => collect($events)->pluck('room')->sort()->values()->all() === ['Anggrek', 'Mawar']));
