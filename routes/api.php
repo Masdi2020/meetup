@@ -16,7 +16,9 @@ Route::get('/shutdown-check', function () {
 });
 
 Route::get('/csrf-token', function (Request $request) {
+    $request->session()->regenerateToken();
+
     return response()->json([
-        'csrf_token' => $request->session()->regenerateToken(),
+        'token' => csrf_token(),
     ]);
 });
