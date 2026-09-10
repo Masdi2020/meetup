@@ -11,15 +11,34 @@ const form = useForm({ username: '', password: '' });
 const showUsernameWarning = ref(false);
 const showPasswordWarning = ref(false);
 
-function login() {
+const submit = async () => {
     form.clearErrors();
     showUsernameWarning.value = form.username.trim() === '';
     showPasswordWarning.value = form.password.trim() === '';
 
-    if (!showUsernameWarning.value && !showPasswordWarning.value) {
-        form.post('/login');
+    if (showUsernameWarning.value || showPasswordWarning.value) {
+        return;
     }
-}
+
+    const response = await fetch('/csrf-token', {
+        credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+        window.location.reload();
+
+        return;
+    }
+
+    const { token } = await response.json();
+
+    document
+        .querySelector('meta[name="csrf-token"]')
+        ?.setAttribute('content', token);
+
+    form.post('/login');
+};
+
 function removeUsernameWhitespace(event: Event) {
     const input = event.target as HTMLInputElement;
     form.username = input.value.replace(/\s/g, '');
@@ -31,7 +50,7 @@ function removeUsernameWhitespace(event: Event) {
         <SurfaceCard class="login-card">
             <h1 class="title">Masuk</h1>
 
-            <form @submit.prevent="login">
+            <form @submit.prevent="submit">
                 <FormField
                     label="Username"
                     :error="
