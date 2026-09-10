@@ -21,7 +21,7 @@ const submit = async () => {
     }
 
     const response = await fetch('/csrf-token', {
-        method: 'POST',
+        method: 'GET',
         credentials: 'same-origin',
     });
 
