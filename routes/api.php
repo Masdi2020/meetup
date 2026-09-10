@@ -15,10 +15,10 @@ Route::get('/shutdown-check', function () {
     ]);
 });
 
-Route::get('/csrf-token', function (Request $request) {
+Route::post('/csrf-token', function (Request $request) {
     $request->session()->regenerateToken();
 
     return response()->json([
         'token' => csrf_token(),
     ]);
-});
+})->middleware(['web', 'guest', 'throttle:10,1']);
