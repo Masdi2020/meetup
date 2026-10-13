@@ -53,7 +53,7 @@ class RoomService
 
     /**
      * @return SupportCollection<int, array{
-     *     id: int,
+     *     id: int<0, max>,
      *     name: string,
      *     location: string,
      *     capacity: int,
