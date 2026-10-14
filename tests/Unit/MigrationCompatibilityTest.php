@@ -41,12 +41,14 @@ it('compiles all migrations and rollbacks for supported database drivers', funct
 
         $sql = implode("\n", array_column($queries, 'query'));
 
-        expect($sql)->toContain('create table', 'users', 'bookings', 'drop table')
-            ->not->toContain('active_username');
+        expect($sql)->toContain('create table', 'users', 'bookings', 'drop table', 'active_username', 'users_active_username_unique');
 
         if ($driver === 'sqlsrv') {
             expect($sql)->not->toContain('on delete restrict')
-                ->toContain('foreign key ("processed_by") references "users" ("id") on delete no action');
+                ->toContain('foreign key ("processed_by") references "users" ("id") on delete no action')
+                ->toContain('WHERE deleted_at IS NULL');
+        } elseif ($driver === 'pgsql') {
+            expect($sql)->toContain('generated always as (CASE WHEN deleted_at IS NULL THEN username ELSE NULL END) stored');
         }
     } finally {
         Schema::swap($schema);
