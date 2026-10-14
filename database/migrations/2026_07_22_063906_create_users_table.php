@@ -24,13 +24,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->softDeletes();
-
-            $table->string('active_username')
-                ->nullable()
-                ->storedAs(
-                    'case when `deleted_at` is null then `username` else null end'
-                )
-                ->unique();
         });
     }
 

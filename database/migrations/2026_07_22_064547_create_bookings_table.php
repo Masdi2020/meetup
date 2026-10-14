@@ -16,11 +16,11 @@ return new class extends Migration
 
             $table->foreignId('room_id')
                 ->constrained('rooms')
-                ->restrictOnDelete();
+                ->noActionOnDelete();
 
             $table->foreignId('user_id')
                 ->constrained('users')
-                ->restrictOnDelete();
+                ->noActionOnDelete();
 
             $table->date('date');
             $table->time('start_time');
@@ -32,12 +32,19 @@ return new class extends Migration
 
             $table->foreignId('status_id')
                 ->constrained('booking_statuses')
-                ->restrictOnDelete();
+                ->noActionOnDelete();
 
-            $table->foreignId('processed_by')
+            $processedBy = $table->foreignId('processed_by')
                 ->nullable()
-                ->constrained('users')
-                ->nullOnDelete();
+                ->constrained('users');
+
+            // SQL Server rejects the cascade paths users -> bookings ->
+            // booking_attachments and users -> booking_attachments.
+            if (Schema::getConnection()->getDriverName() === 'sqlsrv') {
+                $processedBy->noActionOnDelete();
+            } else {
+                $processedBy->nullOnDelete();
+            }
 
             $table->timestamp('processed_at')->nullable();
             $table->text('processed_notes')->nullable();

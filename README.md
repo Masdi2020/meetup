@@ -120,6 +120,21 @@ Ganti nilai contoh key dan secret untuk lingkungan selain pengembangan lokal. Ji
 
 ### 4. Buat database dan data awal
 
+Migrasi menggunakan Schema Builder untuk MySQL, MariaDB, SQLite, PostgreSQL
+(`pgsql`), dan SQL Server (`sqlsrv`). Pilih `DB_CONNECTION` di `.env` dan
+sesuaikan `DB_DATABASE`, host, port, serta kredensial dengan database tujuan.
+Driver PDO untuk database tersebut harus tersedia. Kompatibilitas SQL migrasi
+dan rollback diuji tanpa koneksi melalui `tests/Unit/MigrationCompatibilityTest.php`;
+pengujian ini tidak menggantikan pengujian pada server database sebenarnya.
+
+Username tetap unik termasuk untuk pengguna yang dihapus secara soft delete.
+Kolom turunan `active_username` yang redundan tidak dibuat pada instalasi baru.
+Khusus SQL Server, foreign key `bookings.processed_by` menggunakan `NO ACTION`
+untuk menghindari beberapa jalur cascade: pengguna yang masih dirujuk sebagai
+pemroses tidak dapat dihapus permanen sebelum referensinya dikosongkan.
+Database yang sudah menjalankan migrasi lama tidak berubah otomatis;
+perubahan ini berlaku saat migrasi dijalankan pada database baru.
+
 Buat file SQLite jika belum tersedia. Pada PowerShell:
 
 ```powershell
