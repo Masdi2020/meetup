@@ -21,6 +21,12 @@ class SettingServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // These settings configure HTTP pages and sessions. Console tooling
+        // must be able to boot before the database and cache are available.
+        if ($this->app->runningInConsole()) {
+            return;
+        }
+
         try {
             $appName = Setting::get('app_name', config('app.name'));
             $sessionLifetime = Setting::get('session_timeout', 60);
