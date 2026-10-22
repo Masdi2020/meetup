@@ -14,6 +14,14 @@ configureEcho({
     broadcaster: 'reverb',
 });
 
+configureEcho({
+    broadcaster: 'reverb',
+});
+
+configureEcho({
+    broadcaster: 'reverb',
+});
+
 createInertiaApp({
     resolve: async (name) => {
         const page = await resolvePageComponent(

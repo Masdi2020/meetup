@@ -1,0 +1,86 @@
+
+name: laravel-production
+
+x-laravel: &laravel
+  image: laravel-vue-app:production
+  env_file:
+    - .env
+  restart: unless-stopped
+  networks:
+    - backend
+    - pgsql_net
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - laravel_storage:/var/www/html/storage
+
+services:
+  # Laravel PHP-FPM
+  app:
+    <<: *laravel
+    build:
+      context: .
+      target: production
+      args:
+        VITE_REVERB_APP_KEY: ${VITE_REVERB_APP_KEY}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT:-443}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME:-https}
+
+  # Nginx
+  nginx:
+    image: laravel-vue-web:production
+    build:
+      context: .
+      target: web
+      args:
+        VITE_REVERB_APP_KEY: ${VITE_REVERB_APP_KEY}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT:-443}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME:-https}
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    networks:
+      - backend
+    volumes:
+      - laravel_storage:/var/www/html/storage:ro
+    depends_on:
+      - app
+      - reverb
+
+  # Laravel Reverb
+  reverb:
+    <<: *laravel
+    command: >
+      php artisan reverb:start
+      --host=0.0.0.0
+      --port=8080
+
+  # Queue Worker
+  queue:
+    <<: *laravel
+    command: >
+      php artisan queue:work redis
+      --sleep=3
+      --tries=3
+      --timeout=90
+      --max-time=3600
+
+  # Scheduler
+  scheduler:
+    <<: *laravel
+    command: php artisan schedule:work
+
+  # Network Laravel sendiri
+  # PostgreSQL existing tetap memakai aam_default
+networks:
+  backend:
+    driver: bridge
+
+  pgsql_net:
+    external: true
+    name: aam_default
+
+volumes:
+  laravel_storage:
