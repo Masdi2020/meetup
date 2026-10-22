@@ -4,11 +4,13 @@ import { FileText } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
+import BookingStatusBadge from '@/components/atoms/BookingStatusBadge.vue';
 import PageHeader from '@/components/molecules/PageHeader.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import BookingResults from '@/components/organisms/BookingResults.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
+import { localDateString, bookingDateForInput } from '@/lib/dates';
 import { update, cancel, finish } from '@/routes/booking';
 import {
     documentation,
@@ -30,7 +32,7 @@ const isFinishing = ref(false);
 const resultsBusy = ref(false);
 const selectedResultsBooking = ref<BookingHistory | null>(null);
 const showResultsModal = ref(false);
-const today = new Date().toISOString().split('T')[0];
+const today = localDateString();
 
 const editForm = ref({
     id: 0,
@@ -40,37 +42,13 @@ const editForm = ref({
     end_time: '',
 });
 
-const formatBookingDate = (value: string) => {
-    if (!value) {
-        return '';
-    }
-
-    const formattedDate = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
-
-    if (formattedDate) {
-        return `${formattedDate[3]}-${formattedDate[2]}-${formattedDate[1]}`;
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return '';
-    }
-
-    return [
-        date.getFullYear(),
-        String(date.getMonth() + 1).padStart(2, '0'),
-        String(date.getDate()).padStart(2, '0'),
-    ].join('-');
-};
-
 const openEditModal = (booking: BookingHistory) => {
     const [start, end] = booking.time.split(' - ');
 
     editForm.value = {
         id: booking.id,
         title: booking.title,
-        date: formatBookingDate(booking.date),
+        date: bookingDateForInput(booking.date),
         start_time: start,
         end_time: end,
     };
@@ -284,12 +262,10 @@ const finishBooking = () => {
                             <td>{{ item.title }}</td>
 
                             <td>
-                                <span
-                                    class="badge"
-                                    :class="item.status.toLowerCase()"
-                                >
-                                    {{ item.status }}
-                                </span>
+                                <BookingStatusBadge
+                                    :status="item.status"
+                                    class="min-w-[85px]"
+                                />
                             </td>
 
                             <td class="results-cell">
@@ -517,37 +493,6 @@ tbody tr:hover {
     background: #f6f8fc;
 }
 
-.badge {
-    display: inline-block;
-    min-width: 85px;
-    text-align: center;
-    padding: 4px 12px;
-    border-radius: 999px;
-    color: white;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.approved {
-    background: #dcfce7;
-    color: #15803d;
-}
-
-.pending {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.rejected {
-    background: #fee2e2;
-    color: #b91c1c;
-}
-
-.cancelled {
-    background: #f1f5f9;
-    color: #475569;
-}
-
 .empty {
     text-align: center;
     color: gray;
@@ -563,11 +508,6 @@ tbody tr:hover {
 .action-buttons {
     display: flex;
     gap: 8px;
-}
-
-.finished {
-    background: #dbeafe;
-    color: #1d4ed8;
 }
 
 .form-group {

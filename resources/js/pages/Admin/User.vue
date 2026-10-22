@@ -3,6 +3,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { Check, Copy } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
+import AppButton from '@/components/atoms/AppButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import FormField from '@/components/molecules/FormField.vue';
@@ -295,13 +296,14 @@ function deleteUser() {
                     : 'Lihat akun dan reset password pengguna.'
             "
         >
-            <button
+            <AppButton
                 v-if="canManageUsers"
                 @click="openCreate"
-                class="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+                variant="primary"
+                size="lg"
             >
                 + Tambah Pengguna
-            </button>
+            </AppButton>
         </PageHeader>
 
         <div class="stats-grid">
@@ -522,20 +524,18 @@ function deleteUser() {
                 </FormField>
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <button
+                    <AppButton
                         type="button"
                         @click="closeEdit"
-                        class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                        variant="neutral"
+                        size="sm"
                     >
                         Batal
-                    </button>
+                    </AppButton>
 
-                    <button
-                        type="submit"
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                    >
+                    <AppButton type="submit" variant="primary" size="sm">
                         Simpan Perubahan
-                    </button>
+                    </AppButton>
                 </div>
             </form>
         </AppModal>
@@ -604,20 +604,18 @@ function deleteUser() {
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <button
+                    <AppButton
                         type="button"
                         @click="closeCreate"
-                        class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                        variant="neutral"
+                        size="sm"
                     >
                         Batal
-                    </button>
+                    </AppButton>
 
-                    <button
-                        type="submit"
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                    >
+                    <AppButton type="submit" variant="primary" size="sm">
                         Buat Pengguna
-                    </button>
+                    </AppButton>
                 </div>
             </form>
         </AppModal>

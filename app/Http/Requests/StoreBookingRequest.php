@@ -46,8 +46,7 @@ class StoreBookingRequest extends FormRequest
         return [
             'room_id' => ['required', 'exists:rooms,id'],
             'date' => $dateRules,
-            'start_time' => ['required', 'date_format:H:i', 'regex:/^\d{2}:(00|15|30|45)$/'],
-            'end_time' => ['required', 'date_format:H:i', 'regex:/^\d{2}:(00|15|30|45)$/', 'after:start_time'],
+            ...BookingTimeRules::RULES,
             'title' => ['required', 'string', 'max:255'],
             'participants' => ['required', 'integer', 'min:1'],
             'request' => ['nullable', 'string'],
@@ -70,9 +69,6 @@ class StoreBookingRequest extends FormRequest
     /** @return array<string, string> */
     public function messages(): array
     {
-        return [
-            'start_time.regex' => 'Waktu mulai harus menggunakan interval 15 menit.',
-            'end_time.regex' => 'Waktu selesai harus menggunakan interval 15 menit.',
-        ];
+        return BookingTimeRules::MESSAGES;
     }
 }

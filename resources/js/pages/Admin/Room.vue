@@ -2,6 +2,7 @@
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
+import AppButton from '@/components/atoms/AppButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import CheckboxField from '@/components/molecules/CheckboxField.vue';
 import CheckboxGroup from '@/components/molecules/CheckboxGroup.vue';
@@ -150,12 +151,9 @@ function toggleAvailability() {
             title="Ruangan"
             description="Kelola seluruh ruangan yang tersedia."
         >
-            <button
-                @click="openCreateModal"
-                class="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
-            >
+            <AppButton @click="openCreateModal" variant="primary" size="lg">
                 + Tambah Ruangan
-            </button>
+            </AppButton>
         </PageHeader>
 
         <div class="stats-grid">
@@ -350,21 +348,23 @@ function toggleAvailability() {
                 />
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <button
+                    <AppButton
                         type="button"
                         @click="closeFormModal"
-                        class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                        variant="neutral"
+                        size="sm"
                     >
                         Batal
-                    </button>
+                    </AppButton>
 
-                    <button
+                    <AppButton
                         type="submit"
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                        variant="primary"
+                        size="sm"
                         :disabled="roomForm.processing"
                     >
                         {{ isEditing ? 'Simpan Perubahan' : 'Tambah Ruangan' }}
-                    </button>
+                    </AppButton>
                 </div>
             </form>
         </AppModal>

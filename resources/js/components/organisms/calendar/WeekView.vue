@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Dayjs } from 'dayjs';
 import { computed } from 'vue';
-import EventStatus from '@/components/atoms/EventStatus.vue';
+import BookingStatusBadge from '@/components/atoms/BookingStatusBadge.vue';
 import { getRoomColor, getRoomTextColor } from '@/lib/roomColors';
 import type { CalendarEvent } from '@/types/calendar';
 
@@ -64,7 +64,10 @@ function getEventsForDate(date: Dayjs) {
                         >{{ event.start_time }}-{{ event.end_time }}</span
                     >
                     <strong>{{ event.title }}</strong>
-                    <EventStatus :status="event.status" />
+                    <BookingStatusBadge
+                        appearance="calendar"
+                        :status="event.status"
+                    />
                     <span class="event-room">{{ event.room }}</span>
                 </button>
                 <p v-if="!getEventsForDate(day).length" class="empty-day">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import AppButton from '@/components/atoms/AppButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 
 const props = withDefaults(
@@ -45,20 +46,18 @@ const gridClass = computed(() => {
 
             <slot name="filters" />
 
-            <button
-                type="submit"
-                class="rounded-lg bg-blue-600 px-5 py-2 text-white transition hover:bg-blue-700"
-            >
+            <AppButton type="submit" variant="primary" size="sm">
                 Cari
-            </button>
+            </AppButton>
 
-            <button
+            <AppButton
                 type="button"
-                class="rounded-lg border px-5 py-2 transition hover:bg-gray-100"
+                variant="neutral"
+                size="sm"
                 @click="emit('reset')"
             >
                 Reset
-            </button>
+            </AppButton>
         </form>
 
         <div v-if="$slots.footer" class="mt-3">

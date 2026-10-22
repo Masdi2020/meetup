@@ -127,6 +127,7 @@ it('filters bookings by search status and room on the server', function () {
     $owner = filterUser('Pemilik Booking', 'booking-owner', 'user');
     $firstRoom = filterRoom('Ruang Utama');
     $secondRoom = filterRoom('Ruang Cadangan');
+    $secondRoom->update(['has_display' => true]);
     $approved = BookingStatus::create([
         'code' => 'APPROVED',
         'label' => 'Approved',
@@ -161,6 +162,10 @@ it('filters bookings by search status and room on the server', function () {
             ->has('bookings.data', 1)
             ->where('bookings.data.0.room', 'Ruang Cadangan')
             ->where('bookings.data.0.status', 'approved')
+            ->where('rooms', fn ($rooms) => collect($rooms)->pluck('has_display', 'id')->sortKeys()->all() === [
+                $firstRoom->id => false,
+                $secondRoom->id => true,
+            ])
             ->where('statuses.0.code', 'approved')
             ->where('statuses.0.label', 'Approved')
             ->where('stats', ['total' => 3, 'pending' => 1, 'approved' => 2, 'finished' => 0])

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { X } from '@lucide/vue';
-import { computed, onBeforeUnmount, ref, toRef, watch } from 'vue';
+import { computed, ref, toRef, watch } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
+import AppButton from '@/components/atoms/AppButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import AppTextarea from '@/components/atoms/AppTextarea.vue';
+import BookingStatusBadge from '@/components/atoms/BookingStatusBadge.vue';
 import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
+import BannerUploadField from '@/components/molecules/BannerUploadField.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import PageHeader from '@/components/molecules/PageHeader.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
@@ -16,10 +18,7 @@ import BookingResults from '@/components/organisms/BookingResults.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useAdminFilters } from '@/composables/admin/useAdminFilters';
-import {
-    localDateString,
-    useBookingAvailability,
-} from '@/composables/useBookingAvailability';
+import { useBookingAvailability } from '@/composables/useBookingAvailability';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import { useModalManager } from '@/composables/useModal';
 import { downloadBookingExport } from '@/lib/bookingExport';
@@ -28,6 +27,7 @@ import type {
     BookingExportFormat,
     BookingExportPayload,
 } from '@/lib/bookingExport';
+import { localDateString, bookingDateForInput } from '@/lib/dates';
 import {
     index,
     store,
@@ -51,7 +51,7 @@ import type {
     BookingStats as Stats,
     BorrowerOption,
     Pagination,
-    RoomOption as Room,
+    BookingRoomOption as Room,
 } from '@/types/admin';
 
 const props = defineProps<{
@@ -107,8 +107,6 @@ const bookingToCancel = ref<Booking | null>(null);
 const isCancellingBooking = ref(false);
 const rejectReason = ref('');
 const rejectValidationErrors = ref({ reason: '' });
-const addBookingPreview = ref<string | null>(null);
-const addBookingBannerInput = ref<HTMLInputElement | null>(null);
 const resultsBusy = ref(false);
 const addBookingSubmitted = ref(false);
 const exportFormat = ref<BookingExportFormat>('pdf');
@@ -276,12 +274,6 @@ const editAvailability = useBookingAvailability({
     ignoreBookingId: editingBookingId,
 });
 
-function bookingDateForInput(value: string): string {
-    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
-
-    return match ? `${match[3]}-${match[2]}-${match[1]}` : value;
-}
-
 function openEditBookingModal(booking: Booking) {
     editingBooking.value = booking;
     editBookingForm.clearErrors();
@@ -371,7 +363,6 @@ function closeAddBookingModal() {
     closeModal();
     showAddBookingSuccess.value = false;
     addBookingForm.reset();
-    clearAddBookingBanner();
     addBookingSubmitted.value = false;
 }
 
@@ -595,37 +586,6 @@ function deleteBooking() {
         onSuccess: () => closeDeleteModal(),
     });
 }
-function handleAddBookingFile(event: Event) {
-    const target = event.target as HTMLInputElement;
-
-    if (!target.files?.length) {
-        return;
-    }
-
-    const file = target.files[0];
-
-    if (addBookingPreview.value) {
-        URL.revokeObjectURL(addBookingPreview.value);
-    }
-
-    addBookingForm.banner = file;
-    addBookingPreview.value = URL.createObjectURL(file);
-}
-
-function clearAddBookingBanner() {
-    if (addBookingPreview.value) {
-        URL.revokeObjectURL(addBookingPreview.value);
-    }
-
-    addBookingForm.banner = null;
-    addBookingPreview.value = null;
-    addBookingForm.clearErrors('banner');
-
-    if (addBookingBannerInput.value) {
-        addBookingBannerInput.value.value = '';
-    }
-}
-
 function submitAddBooking() {
     addBookingSubmitted.value = true;
 
@@ -646,36 +606,23 @@ function submitAddBooking() {
         onSuccess: () => {
             showAddBookingSuccess.value = true;
             addBookingForm.reset();
-            clearAddBookingBanner();
             addBookingSubmitted.value = false;
         },
     });
 }
 
-watch(
-    () => addBookingForm.room_id,
-    (roomId) => {
-        if (roomId !== 1 && addBookingForm.banner) {
-            clearAddBookingBanner();
-        }
-    },
+const selectedRoomHasDisplay = computed(
+    () =>
+        props.rooms?.find((room) => room.id === addBookingForm.room_id)
+            ?.has_display ?? false,
 );
 
-onBeforeUnmount(() => {
-    if (addBookingPreview.value) {
-        URL.revokeObjectURL(addBookingPreview.value);
+watch(selectedRoomHasDisplay, (hasDisplay) => {
+    if (!hasDisplay) {
+        addBookingForm.banner = null;
+        addBookingForm.clearErrors('banner');
     }
 });
-
-function badgeClass(status: BookingStatus) {
-    return {
-        pending: 'bg-yellow-100 text-yellow-700',
-        approved: 'bg-green-100 text-green-700',
-        rejected: 'bg-red-100 text-red-700',
-        cancelled: 'bg-gray-200 text-gray-700',
-        finished: 'bg-blue-100 text-blue-700',
-    }[status];
-}
 
 function confirmApprove() {
     if (!selectedBookingId.value) {
@@ -750,19 +697,21 @@ function reject(id: number) {
             description="Kelola seluruh peminjaman ruangan."
         >
             <div class="flex flex-wrap gap-3">
-                <button
+                <AppButton
                     type="button"
-                    class="rounded-lg border border-blue-600 bg-white px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+                    variant="outline"
+                    size="sm"
                     @click="openExportModal"
                 >
                     Export Data
-                </button>
-                <button
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                </AppButton>
+                <AppButton
+                    variant="primary"
+                    size="sm"
                     @click="openModal('add')"
                 >
                     Tambah Peminjaman
-                </button>
+                </AppButton>
             </div>
         </PageHeader>
 
@@ -1095,28 +1044,31 @@ function reject(id: number) {
                 </p>
 
                 <div class="flex justify-end gap-3">
-                    <button
+                    <AppButton
                         type="button"
-                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
+                        variant="neutral"
+                        size="sm"
                         :disabled="exportBusy"
                         @click="closeExportModal"
                     >
                         Batal
-                    </button>
-                    <button
+                    </AppButton>
+                    <AppButton
                         v-if="exportPreview"
                         type="button"
-                        class="rounded-lg border border-blue-600 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+                        variant="outline"
+                        size="sm"
                         :disabled="exportBusy"
                         @click="loadExportPreview"
                     >
                         {{
                             previewLoading ? 'Memuat...' : 'Muat Ulang Preview'
                         }}
-                    </button>
-                    <button
+                    </AppButton>
+                    <AppButton
                         type="button"
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        variant="primary"
+                        size="sm"
                         :disabled="
                             exportBusy ||
                             selectedExportColumns.length === 0 ||
@@ -1138,7 +1090,7 @@ function reject(id: number) {
                                     ? `Download ${exportFormat.toUpperCase()}`
                                     : 'Tampilkan Preview'
                         }}
-                    </button>
+                    </AppButton>
                 </div>
             </div>
         </AppModal>
@@ -1368,45 +1320,28 @@ function reject(id: number) {
                 >
                     <AppTextarea v-model="addBookingForm.request" rows="3" />
                 </FormField>
-                <FormField
-                    v-if="addBookingForm.room_id === 1"
-                    class="md:col-span-2"
-                    label="Unggah Banner Rapat"
+                <BannerUploadField
+                    v-if="selectedRoomHasDisplay"
+                    v-model="addBookingForm.banner"
                     appearance="admin"
-                    hint="Format yang didukung: JPG, JPEG, PNG"
+                    class="md:col-span-2"
                     :error="addBookingForm.errors.banner"
-                >
-                    <input
-                        ref="addBookingBannerInput"
-                        type="file"
-                        accept=".jpg,.jpeg,.png"
-                        class="w-full"
-                        @change="handleAddBookingFile"
-                    />
-                    <div v-if="addBookingPreview" class="banner-preview mt-3">
-                        <img :src="addBookingPreview" alt="Preview Banner" />
-                        <button
-                            type="button"
-                            class="banner-remove"
-                            aria-label="Batalkan unggahan banner"
-                            title="Batalkan unggahan"
-                            @click="clearAddBookingBanner"
-                        >
-                            <X :size="18" :stroke-width="2.5" />
-                        </button>
-                    </div>
-                </FormField>
+                    :disabled="addBookingForm.processing"
+                    @change="addBookingForm.clearErrors('banner')"
+                />
                 <div class="flex justify-end gap-3 md:col-span-2">
-                    <button
+                    <AppButton
                         type="button"
-                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        variant="neutral"
+                        size="sm"
                         @click="closeAddBookingModal"
                     >
                         Batal
-                    </button>
-                    <button
+                    </AppButton>
+                    <AppButton
                         type="button"
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        variant="primary"
+                        size="sm"
                         :disabled="addBookingForm.processing"
                         @click="submitAddBooking"
                     >
@@ -1415,7 +1350,7 @@ function reject(id: number) {
                                 ? 'Menyimpan...'
                                 : 'Simpan'
                         }}
-                    </button>
+                    </AppButton>
                 </div>
             </div>
         </AppModal>
@@ -1513,17 +1448,19 @@ function reject(id: number) {
                     Jam booking lain disembunyikan dari pilihan.
                 </p>
                 <div class="flex justify-end gap-3 md:col-span-2">
-                    <button
+                    <AppButton
                         type="button"
-                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        variant="neutral"
+                        size="sm"
                         :disabled="editBookingForm.processing"
                         @click="closeEditBookingModal"
                     >
                         Batal
-                    </button>
-                    <button
+                    </AppButton>
+                    <AppButton
                         type="button"
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                        variant="primary"
+                        size="sm"
                         :disabled="editBookingForm.processing"
                         @click="submitEditBooking"
                     >
@@ -1532,7 +1469,7 @@ function reject(id: number) {
                                 ? 'Menyimpan...'
                                 : 'Simpan Perubahan'
                         }}
-                    </button>
+                    </AppButton>
                 </div>
             </div>
         </AppModal>
@@ -1626,20 +1563,22 @@ function reject(id: number) {
                     tercatat sebagai diproses.
                 </p>
                 <div class="flex justify-end gap-3">
-                    <button
+                    <AppButton
                         type="button"
-                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        variant="neutral"
+                        size="sm"
                         @click="closeApproveModal"
                     >
                         Batal
-                    </button>
-                    <button
+                    </AppButton>
+                    <AppButton
                         type="button"
-                        class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                        variant="success"
+                        size="sm"
                         @click="confirmApprove"
                     >
                         Setujui
-                    </button>
+                    </AppButton>
                 </div>
             </div>
         </AppModal>
@@ -1660,20 +1599,22 @@ function reject(id: number) {
                 /></FormField>
 
                 <div class="flex justify-end gap-3">
-                    <button
+                    <AppButton
                         type="button"
-                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        variant="neutral"
+                        size="sm"
                         @click="closeRejectModal"
                     >
                         Batal
-                    </button>
-                    <button
+                    </AppButton>
+                    <AppButton
                         type="button"
-                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                        variant="danger"
+                        size="sm"
                         @click="confirmReject"
                     >
                         Tolak
-                    </button>
+                    </AppButton>
                 </div>
             </div>
         </AppModal>
@@ -1690,20 +1631,22 @@ function reject(id: number) {
                     langsung ditandai sebagai <strong>Finished</strong>.
                 </p>
                 <div class="flex justify-end gap-3">
-                    <button
+                    <AppButton
                         type="button"
-                        class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                        variant="neutral"
+                        size="sm"
                         @click="closeFinishModal"
                     >
                         Batal
-                    </button>
-                    <button
+                    </AppButton>
+                    <AppButton
                         type="button"
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        variant="primary"
+                        size="sm"
                         @click="confirmFinish"
                     >
                         Akhiri Sekarang
-                    </button>
+                    </AppButton>
                 </div>
             </div>
         </AppModal>
@@ -1805,12 +1748,7 @@ function reject(id: number) {
                         </td>
 
                         <td class="px-5 py-4">
-                            <span
-                                :class="badgeClass(booking.status)"
-                                class="rounded-full px-3 py-1 text-xs font-semibold capitalize"
-                            >
-                                {{ booking.status }}
-                            </span>
+                            <BookingStatusBadge :status="booking.status" />
                         </td>
 
                         <td class="px-5 py-4">
@@ -1910,45 +1848,3 @@ function reject(id: number) {
         />
     </div>
 </template>
-
-<style scoped>
-.banner-preview {
-    position: relative;
-    width: fit-content;
-    max-width: 350px;
-}
-
-.banner-preview img {
-    display: block;
-    width: 100%;
-    max-width: 350px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    object-fit: cover;
-}
-
-.banner-remove {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: grid;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    place-items: center;
-    border: 0;
-    border-radius: 9999px;
-    color: white;
-    background: rgba(17, 24, 39, 0.82);
-    cursor: pointer;
-}
-
-.banner-remove:hover {
-    background: #dc2626;
-}
-
-.banner-remove:focus-visible {
-    outline: 2px solid #2563eb;
-    outline-offset: 2px;
-}
-</style>

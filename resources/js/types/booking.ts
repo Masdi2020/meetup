@@ -1,5 +1,8 @@
-export type BookingHistoryStatus =
-    'Approved' | 'Pending' | 'Rejected' | 'Cancelled' | 'Finished';
+export type BookingStatus =
+    'pending' | 'approved' | 'rejected' | 'cancelled' | 'finished';
+
+export type BookingHistoryStatus = Capitalize<BookingStatus>;
+export type BookingStatusCode = Uppercase<BookingStatus>;
 
 export interface BookingHistory {
     id: number;

@@ -9,7 +9,7 @@ import {
     watch,
 } from 'vue';
 
-import EventStatus from '@/components/atoms/EventStatus.vue';
+import BookingStatusBadge from '@/components/atoms/BookingStatusBadge.vue';
 import CalendarToolbar from '@/components/molecules/CalendarToolbar.vue';
 import DayView from '@/components/organisms/calendar/DayView.vue';
 import MonthView from '@/components/organisms/calendar/MonthView.vue';
@@ -148,10 +148,10 @@ const formattedSelectedDate = computed(() => {
         />
 
         <div class="calendar-legend" aria-label="Keterangan kalender">
-            <EventStatus status="PENDING" />
+            <BookingStatusBadge appearance="calendar" status="PENDING" />
             <span>Garis putus-putus: menunggu persetujuan</span>
-            <EventStatus status="APPROVED" />
-            <EventStatus status="FINISHED" />
+            <BookingStatusBadge appearance="calendar" status="APPROVED" />
+            <BookingStatusBadge appearance="calendar" status="FINISHED" />
             <span class="today-label">Hari ini</span>
         </div>
         <div
@@ -216,7 +216,10 @@ const formattedSelectedDate = computed(() => {
                         <div>
                             <dt>Status</dt>
                             <dd>
-                                <EventStatus :status="selectedEvent.status" />
+                                <BookingStatusBadge
+                                    appearance="calendar"
+                                    :status="selectedEvent.status"
+                                />
                             </dd>
                         </div>
                         <div>

@@ -76,7 +76,7 @@ class AdminBookingQueryService
 
         return [
             'bookings' => $bookings,
-            'rooms' => Room::select('id', 'name')->orderBy('name')->get(),
+            'rooms' => Room::select('id', 'name', 'has_display')->orderBy('name')->get(),
             'users' => User::query()
                 ->select('id', 'name', 'role_id')
                 ->whereHas('assignedRole', fn ($query) => $query->whereIn('code', ['user', 'admin', 'super_admin']))
