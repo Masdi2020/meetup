@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
 import type {
     AuditLog as Activity,
@@ -32,17 +33,16 @@ function formatDateTime(date: string) {
 defineProps<{
     stats: Stats;
     todayBookings: TodayBooking[];
-    activities: Activity[];
+    activities: Activity[] | null;
 }>();
 </script>
 
 <template>
     <div class="app-page">
-        <div class="page-header page-heading">
-            <h1 class="page-title">Dashboard Admin</h1>
-
-            <p class="text-gray-500">Selamat datang kembali.</p>
-        </div>
+        <PageHeader
+            title="Dashboard Admin"
+            description="Selamat datang kembali."
+        />
 
         <div class="stats-grid">
             <StatCard label="Total Ruangan" :value="stats.rooms" size="large" />
@@ -64,7 +64,10 @@ defineProps<{
                 accent
             />
         </div>
-        <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div
+            class="grid grid-cols-1 gap-6"
+            :class="{ 'xl:grid-cols-2': activities }"
+        >
             <div class="ui-card ui-card-body">
                 <h2 class="mb-4 text-lg font-semibold">Booking Hari Ini</h2>
 
@@ -94,7 +97,7 @@ defineProps<{
                 </div>
             </div>
 
-            <div class="ui-card ui-card-body">
+            <div v-if="activities" class="ui-card ui-card-body">
                 <h2 class="mb-4 text-lg font-semibold">Aktivitas Terbaru</h2>
 
                 <div class="space-y-4">

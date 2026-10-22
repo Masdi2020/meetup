@@ -21,7 +21,7 @@ class BookingService
             ->where('room_id', $roomId)
             ->whereDate('date', $date)
             ->when($ignoreBookingId, fn ($query) => $query->whereKeyNot($ignoreBookingId))
-            ->whereHas('status', fn ($query) => $query->whereIn('code', ['PENDING', 'APPROVED']))
+            ->active()
             ->orderBy('start_time')
             ->get(['start_time', 'end_time'])
             ->map(fn (Booking $booking) => [

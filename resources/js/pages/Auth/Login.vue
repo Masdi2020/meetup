@@ -6,6 +6,8 @@ import AppInput from '@/components/atoms/AppInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
 import PasswordField from '@/components/molecules/PasswordField.vue';
 import SurfaceCard from '@/components/molecules/SurfaceCard.vue';
+import { csrfToken } from '@/routes';
+import { store } from '@/routes/login';
 
 const form = useForm({ username: '', password: '' });
 const showUsernameWarning = ref(false);
@@ -20,7 +22,7 @@ const submit = async () => {
         return;
     }
 
-    const response = await fetch('/csrf-token', {
+    const response = await fetch(csrfToken.url(), {
         method: 'GET',
         credentials: 'same-origin',
     });
@@ -37,7 +39,7 @@ const submit = async () => {
         .querySelector('meta[name="csrf-token"]')
         ?.setAttribute('content', token);
 
-    form.post('/login');
+    form.post(store.url());
 };
 
 function removeUsernameWhitespace(event: Event) {

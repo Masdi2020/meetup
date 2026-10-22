@@ -4,17 +4,21 @@ use App\Enums\BookingAttachmentType;
 use App\Models\Audit;
 use App\Models\Booking;
 use App\Models\BookingStatus;
+use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 it('deletes meeting results only when the attachment is eligible', function (string $role, BookingAttachmentType $type, bool $differentBooking, int $expectedStatus) {
     $this->withoutMiddleware(PreventRequestForgery::class);
     Storage::fake('public');
     $owner = bookingUser('owner');
-    $actor = $role === 'user' ? $owner : bookingUser('admin', 'admin');
+    $actor = $role === 'user' ? $owner : bookingUser('admin', $role);
     $booking = bookingRecord($owner, bookingRoom(), 'FINISHED');
     $attachmentBooking = $differentBooking
         ? bookingRecord($owner, $booking->room, 'FINISHED')
@@ -30,7 +34,7 @@ it('deletes meeting results only when the attachment is eligible', function (str
         'type' => $type,
         'uploaded_by' => $owner->id,
     ]);
-    $baseUrl = $role === 'admin' ? '/admin/bookings' : '/booking';
+    $baseUrl = $actor->isAdmin() ? '/admin/bookings' : '/booking';
 
     $this->actingAs($actor)
         ->delete("{$baseUrl}/{$booking->id}/attachments/{$attachment->id}")
@@ -48,6 +52,9 @@ it('deletes meeting results only when the attachment is eligible', function (str
     'owner minutes' => ['user', BookingAttachmentType::MeetingMinutes, false, 302],
     'admin documentation' => ['admin', BookingAttachmentType::Documentation, false, 302],
     'admin minutes' => ['admin', BookingAttachmentType::MeetingMinutes, false, 302],
+    'super admin documentation' => ['super_admin', BookingAttachmentType::Documentation, false, 302],
+    'super admin minutes' => ['super_admin', BookingAttachmentType::MeetingMinutes, false, 302],
+    'super admin another booking' => ['super_admin', BookingAttachmentType::Documentation, true, 404],
     'another booking' => ['user', BookingAttachmentType::Documentation, true, 404],
     'banner' => ['admin', BookingAttachmentType::Banner, false, 404],
 ]);
@@ -66,7 +73,7 @@ function bookingUser(string $username = 'user', string $role = 'user'): User
         'name' => ucfirst($username),
         'username' => $username,
         'password' => 'password',
-        'role' => $role,
+        'role_id' => Role::where('code', $role)->firstOrFail()->id,
     ]);
 }
 
@@ -105,6 +112,29 @@ beforeEach(function () {
 
 afterEach(function () {
     Carbon::setTestNow();
+});
+
+it('returns only active intervals for the requested room and date', function () {
+    $user = bookingUser();
+    $room = bookingRoom();
+    bookingRecord($user, $room, 'APPROVED', ['start_time' => '11:00', 'end_time' => '12:00']);
+    bookingRecord($user, $room, 'PENDING');
+
+    foreach (['REJECTED', 'CANCELLED', 'FINISHED'] as $status) {
+        bookingRecord($user, $room, $status);
+    }
+
+    bookingRecord($user, $room, 'APPROVED')->delete();
+    bookingRecord($user, $room, 'APPROVED', ['date' => '2026-09-03']);
+    bookingRecord($user, bookingRoom(), 'APPROVED');
+
+    $this->actingAs($user)
+        ->getJson(route('booking.availability', ['room_id' => $room->id, 'date' => '2026-09-02']))
+        ->assertOk()
+        ->assertExactJson(['booked_intervals' => [
+            ['start_time' => '09:00', 'end_time' => '10:00'],
+            ['start_time' => '11:00', 'end_time' => '12:00'],
+        ]]);
 });
 
 it('allows an owner to edit an approved booking', function () {
@@ -400,4 +430,161 @@ it('automatically finishes only expired approved bookings', function () {
         ->and($future->refresh()->status->code)->toBe('APPROVED')
         ->and($pending->refresh()->status->code)->toBe('PENDING')
         ->and(Audit::where('comment', 'booking otomatis diakhiri oleh sistem')->count())->toBe(2);
+});
+
+it('uses the same overlap boundaries when creating and updating bookings', function (bool $editing, string $start, string $end, string $existingStatus, bool $conflict) {
+    $user = bookingUser();
+    $room = bookingRoom();
+    bookingRecord($user, $room, $existingStatus);
+    $booking = $editing ? bookingRecord($user, $room, 'APPROVED', ['start_time' => '13:00', 'end_time' => '14:00']) : null;
+    $data = [
+        'room_id' => $room->id, 'date' => '2026-09-02',
+        'start_time' => $start, 'end_time' => $end,
+        'title' => 'Boundary booking', 'participants' => 3,
+    ];
+
+    $this->actingAs($user);
+    $response = $booking
+        ? $this->put(route('booking.update', $booking), $data)
+        : $this->post(route('booking.store'), $data);
+
+    if ($conflict) {
+        $response->assertSessionHasErrors($editing ? 'date' : 'room_id');
+        $this->assertDatabaseMissing('bookings', ['title' => 'Boundary booking']);
+    } else {
+        $response->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('bookings', ['title' => 'Boundary booking']);
+    }
+})->with([false, true])->with([
+    'pending overlap' => ['09:15', '10:15', 'PENDING', true],
+    'approved overlap' => ['08:45', '09:15', 'APPROVED', true],
+    'ends at next start' => ['08:00', '09:00', 'APPROVED', false],
+    'starts at previous end' => ['10:00', '11:00', 'APPROVED', false],
+    'same booking time during edit' => ['13:00', '14:00', 'APPROVED', false],
+    'cancelled overlap' => ['09:00', '10:00', 'CANCELLED', false],
+]);
+
+it('rejects invalid time intervals in both booking forms', function (bool $editing, string $start, string $end, string $field) {
+    $user = bookingUser();
+    $room = bookingRoom();
+    $booking = $editing ? bookingRecord($user, $room, 'APPROVED') : null;
+    $data = [
+        'room_id' => $room->id, 'date' => '2026-09-03', 'start_time' => $start,
+        'end_time' => $end, 'title' => 'Invalid time', 'participants' => 3,
+    ];
+
+    $this->actingAs($user);
+    $response = $booking
+        ? $this->put(route('booking.update', $booking), $data)
+        : $this->post(route('booking.store'), $data);
+
+    $response->assertSessionHasErrors($field);
+    $this->assertDatabaseMissing('bookings', ['title' => 'Invalid time']);
+})->with([false, true])->with([
+    ['09:10', '10:00', 'start_time'],
+    ['09:00', '10:10', 'end_time'],
+    ['10:00', '09:00', 'end_time'],
+]);
+
+it('validates new passwords consistently for normal and forced changes', function (bool $forced, string $password, string $confirmation, bool $valid) {
+    $user = bookingUser();
+    $user->update(['force_change_password' => $forced]);
+    $originalPassword = $user->password;
+
+    $response = $this->actingAs($user)->put(route($forced ? 'profile.forced-password' : 'profile.password'), [
+        'current_password' => 'password', 'password' => $password,
+        'password_confirmation' => $confirmation,
+    ]);
+
+    if ($valid) {
+        $response->assertRedirect()->assertSessionHasNoErrors();
+        expect(Hash::check($password, $user->refresh()->password))->toBeTrue();
+        expect($user->force_change_password)->toBeFalse();
+    } else {
+        $response->assertSessionHasErrors('password');
+        expect($user->refresh()->password)->toBe($originalPassword);
+    }
+})->with([false, true])->with([
+    ['new-password', 'new-password', true],
+    ['short', 'short', false],
+    ['new password', 'new password', false],
+    ['new-password', 'different-password', false],
+]);
+
+it('stores banner and documentation metadata through the shared attachment storage', function (bool $banner) {
+    Storage::fake('public');
+    $user = bookingUser();
+    $room = bookingRoom();
+    $room->update(['has_display' => true]);
+    $file = UploadedFile::fake()->createWithContent('meeting.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a7xoAAAAASUVORK5CYII='));
+    $this->actingAs($user);
+
+    if ($banner) {
+        $this->post(route('booking.store'), [
+            'room_id' => $room->id, 'date' => '2026-09-02', 'start_time' => '09:00',
+            'end_time' => '10:00', 'title' => 'Banner booking', 'participants' => 3, 'banner' => $file,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+        $booking = Booking::where('title', 'Banner booking')->firstOrFail();
+    } else {
+        $booking = bookingRecord($user, $room, 'FINISHED');
+        $this->post(route('booking.results.documentation', $booking), ['documentation' => [$file]])
+            ->assertRedirect()->assertSessionHasNoErrors();
+    }
+
+    $attachment = $booking->attachments()->sole();
+    expect($attachment->type)->toBe($banner ? BookingAttachmentType::Banner : BookingAttachmentType::Documentation);
+    expect($attachment->original_filename)->toBe('meeting.png');
+    expect($attachment->uploaded_by)->toBe($user->id);
+    Storage::disk('public')->assertExists($attachment->path);
+
+    if ($banner) {
+        $this->assertDatabaseHas('audits', ['entity_type' => 'BookingAttachment', 'entity_id' => $attachment->id, 'action' => 'created']);
+    }
+})->with([false, true]);
+
+it('keeps the previous minutes when storing the replacement fails', function () {
+    $disk = Storage::fake('public');
+    $user = bookingUser();
+    $booking = bookingRecord($user, bookingRoom(), 'FINISHED');
+    $path = 'booking-results/previous.pdf';
+    $disk->put($path, 'previous minutes');
+    $previous = $booking->attachments()->create([
+        'filename' => 'previous.pdf', 'original_filename' => 'previous.pdf', 'path' => $path,
+        'mime_type' => 'application/pdf', 'size' => 16, 'type' => BookingAttachmentType::MeetingMinutes,
+        'uploaded_by' => $user->id,
+    ]);
+    $failedDisk = Mockery::mock(Filesystem::class);
+    $failedDisk->shouldReceive('writeStream')->once()->andReturn(false);
+    Storage::shouldReceive('disk')->with('public')->once()->andReturn($failedDisk);
+
+    $this->actingAs($user)->post(route('booking.results.meeting-minutes', $booking), [
+        'meeting_minutes' => UploadedFile::fake()->create('new.pdf', 1, 'application/pdf'),
+    ])->assertStatus(500);
+
+    $this->assertNotSoftDeleted($previous);
+    $disk->assertExists($path);
+    expect($booking->attachments()->count())->toBe(1);
+});
+
+it('replaces minutes after the new file is stored', function () {
+    Storage::fake('public');
+    $user = bookingUser();
+    $booking = bookingRecord($user, bookingRoom(), 'FINISHED');
+    $path = 'booking-results/previous.pdf';
+    Storage::disk('public')->put($path, 'previous minutes');
+    $previous = $booking->attachments()->create([
+        'filename' => 'previous.pdf', 'original_filename' => 'previous.pdf', 'path' => $path,
+        'mime_type' => 'application/pdf', 'size' => 16, 'type' => BookingAttachmentType::MeetingMinutes,
+        'uploaded_by' => $user->id,
+    ]);
+
+    $this->actingAs($user)->post(route('booking.results.meeting-minutes', $booking), [
+        'meeting_minutes' => UploadedFile::fake()->create('new.pdf', 1, 'application/pdf'),
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    $this->assertSoftDeleted($previous);
+    Storage::disk('public')->assertMissing($path);
+    $current = $booking->attachments()->sole();
+    expect($current->original_filename)->toBe('new.pdf');
+    Storage::disk('public')->assertExists($current->path);
 });

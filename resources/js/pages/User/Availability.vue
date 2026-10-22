@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
-import Calendar from '@/components/Calendar/Calendar.vue';
-import { getRoomColor } from '@/components/Calendar/roomColors';
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import RoomSelector from '@/components/molecules/RoomSelector.vue';
+import Calendar from '@/components/organisms/calendar/Calendar.vue';
 import RoomDetailModal from '@/components/organisms/RoomDetailModal.vue';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
+import { getRoomColor } from '@/lib/roomColors';
+import { index } from '@/routes/availability';
 import type { CalendarEvent } from '@/types/calendar';
 import type { AvailabilityRoom, RoomDetails } from '@/types/room';
 
@@ -34,7 +36,7 @@ const roomFilter = computed(() =>
 
 function loadCalendar(date: string, view = props.view) {
     router.get(
-        '/availability',
+        index.url(),
         { room: roomFilter.value, date, view },
         {
             preserveScroll: true,
@@ -49,7 +51,7 @@ function changeView(view: 'month' | 'week' | 'day') {
 }
 watch(selectedRoomIds, () => {
     router.get(
-        '/availability',
+        index.url(),
         {
             room: roomFilter.value,
             date: props.date,
@@ -66,9 +68,7 @@ watch(selectedRoomIds, () => {
 
 <template>
     <div class="app-page availability">
-        <header class="page-header page-heading">
-            <h1 class="page-title">Ketersediaan Ruangan</h1>
-        </header>
+        <PageHeader title="Ketersediaan Ruangan" />
 
         <div class="page-card ui-card ui-card-body">
             <RoomSelector

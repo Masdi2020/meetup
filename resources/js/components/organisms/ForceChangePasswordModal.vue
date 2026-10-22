@@ -3,6 +3,7 @@ import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, inject, ref } from 'vue';
 import type { Ref } from 'vue';
 import PasswordField from '@/components/molecules/PasswordField.vue';
+import { forcedPassword } from '@/routes/profile';
 import type { Auth } from '@/types';
 
 const page = usePage<{ auth: Auth }>();
@@ -13,7 +14,7 @@ const form = useForm({ password: '', password_confirmation: '' });
 const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
 
 function submit() {
-    form.put('/profile/forced-password', {
+    form.put(forcedPassword.url(), {
         preserveScroll: true,
         onSuccess: () => form.reset(),
     });

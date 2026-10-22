@@ -2,6 +2,8 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { Ref } from 'vue';
 import type { VCalendarTimeRules } from '@/components/atoms/VCalendarInput.vue';
 import { useBookingUpdates } from '@/composables/useBookingUpdates';
+import { localDateString } from '@/lib/dates';
+import { availability } from '@/routes/booking';
 
 export interface BookedInterval {
     start_time: string;
@@ -33,14 +35,6 @@ function timeToMinutes(time: string): number {
 
 function minutesToTime(minutes: number): string {
     return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-}
-
-export function localDateString(date = new Date()): string {
-    return [
-        date.getFullYear(),
-        String(date.getMonth() + 1).padStart(2, '0'),
-        String(date.getDate()).padStart(2, '0'),
-    ].join('-');
 }
 
 function createTimeRules(slots: Ref<string[]>): Ref<VCalendarTimeRules> {
@@ -159,21 +153,21 @@ export function useBookingAvailability(options: BookingAvailabilityOptions) {
         requestController = controller;
         isLoading.value = true;
 
-        const query = new URLSearchParams({
-            room_id: String(options.roomId.value),
-            date: options.date.value,
-        });
-
-        if (ignoreBookingId.value) {
-            query.set('ignore_booking_id', String(ignoreBookingId.value));
-        }
-
         try {
-            const response = await fetch(`/booking/availability?${query}`, {
-                headers: { Accept: 'application/json' },
-                cache: 'no-store',
-                signal: controller.signal,
-            });
+            const response = await fetch(
+                availability.url({
+                    query: {
+                        room_id: options.roomId.value,
+                        date: options.date.value,
+                        ignore_booking_id: ignoreBookingId.value || undefined,
+                    },
+                }),
+                {
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store',
+                    signal: controller.signal,
+                },
+            );
 
             if (!response.ok) {
                 throw new Error('Availability request failed');

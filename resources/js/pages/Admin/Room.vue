@@ -1,18 +1,26 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import AdminSearchPanel from '@/components/admin/AdminSearchPanel.vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
+import AppButton from '@/components/atoms/AppButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import CheckboxField from '@/components/molecules/CheckboxField.vue';
 import CheckboxGroup from '@/components/molecules/CheckboxGroup.vue';
 import FormField from '@/components/molecules/FormField.vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
+import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useAdminFilters } from '@/composables/admin/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
+import {
+    index,
+    store,
+    update,
+    toggleAvailability as toggleRoomAvailability,
+} from '@/routes/admin/rooms';
 import type { AdminRoom as Room, FacilityOption } from '@/types/admin';
 const props = defineProps<{
     rooms: Room[];
@@ -41,7 +49,7 @@ const roomForm = useForm({
 });
 
 const rooms = computed(() => props.rooms);
-const { applyFilters, resetFilters } = useAdminFilters('/admin/rooms', {
+const { applyFilters, resetFilters } = useAdminFilters(index.url(), {
     debouncedSources: [search],
     query: () => ({ search: search.value }),
     reset: () => {
@@ -99,7 +107,7 @@ function closeDetailModal() {
 
 function submitRoomForm() {
     if (isEditing.value && selectedRoom.value) {
-        roomForm.put(`/admin/rooms/${selectedRoom.value.id}`, {
+        roomForm.put(update.url(selectedRoom.value.id), {
             preserveScroll: true,
             onSuccess: () => closeFormModal(),
         });
@@ -107,7 +115,7 @@ function submitRoomForm() {
         return;
     }
 
-    roomForm.post('/admin/rooms', {
+    roomForm.post(store.url(), {
         preserveScroll: true,
         onSuccess: () => closeFormModal(),
     });
@@ -127,7 +135,7 @@ function toggleAvailability() {
     }
 
     router.patch(
-        `/admin/rooms/${roomToToggle.value.id}/toggle-availability`,
+        toggleRoomAvailability.url(roomToToggle.value.id),
         {},
         {
             preserveScroll: true,
@@ -139,22 +147,14 @@ function toggleAvailability() {
 
 <template>
     <div class="app-page">
-        <div class="page-header">
-            <div class="page-heading">
-                <h1 class="page-title">Ruangan</h1>
-
-                <p class="text-gray-500">
-                    Kelola seluruh ruangan yang tersedia.
-                </p>
-            </div>
-
-            <button
-                @click="openCreateModal"
-                class="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
-            >
+        <PageHeader
+            title="Ruangan"
+            description="Kelola seluruh ruangan yang tersedia."
+        >
+            <AppButton @click="openCreateModal" variant="primary" size="lg">
                 + Tambah Ruangan
-            </button>
-        </div>
+            </AppButton>
+        </PageHeader>
 
         <div class="stats-grid">
             <StatCard label="Total Ruangan" :value="rooms.length" />
@@ -348,21 +348,23 @@ function toggleAvailability() {
                 />
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <button
+                    <AppButton
                         type="button"
                         @click="closeFormModal"
-                        class="rounded-lg border px-4 py-2 hover:bg-gray-100"
+                        variant="neutral"
+                        size="sm"
                     >
                         Batal
-                    </button>
+                    </AppButton>
 
-                    <button
+                    <AppButton
                         type="submit"
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                        variant="primary"
+                        size="sm"
                         :disabled="roomForm.processing"
                     >
                         {{ isEditing ? 'Simpan Perubahan' : 'Tambah Ruangan' }}
-                    </button>
+                    </AppButton>
                 </div>
             </form>
         </AppModal>

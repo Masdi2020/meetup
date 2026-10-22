@@ -1,7 +1,9 @@
+import type { BookingStatusCode } from './booking';
+
 export interface CalendarEvent {
     id: number;
     title: string;
-    status: 'PENDING' | 'APPROVED' | 'FINISHED';
+    status: Extract<BookingStatusCode, 'PENDING' | 'APPROVED' | 'FINISHED'>;
     room: string;
     date: string;
     start_time: string;

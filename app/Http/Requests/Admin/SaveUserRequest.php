@@ -23,7 +23,7 @@ class SaveUserRequest extends FormRequest
                 'required', 'string', 'max:255', 'regex:/^\S+$/u',
                 Rule::unique('users', 'username')->withoutTrashed()->ignore($this->route('user')),
             ],
-            'role' => ['required', 'in:admin,user,display'],
+            'role_id' => ['required', 'integer', Rule::exists('roles', 'id')],
         ];
     }
 

@@ -1,6 +1,12 @@
 import type { FlashMessages } from './shared';
 
-export type UserRole = 'admin' | 'display' | 'user';
+export type UserRole = 'super_admin' | 'admin' | 'display' | 'user';
+
+export interface RoleOption {
+    id: number;
+    code: UserRole;
+    name: string;
+}
 
 export type User = {
     id: number;
@@ -9,6 +15,7 @@ export type User = {
     created_at: string;
     updated_at: string;
     force_change_password: boolean;
+    role_id: number;
     role: UserRole;
 };
 

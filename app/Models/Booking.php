@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\BookingAttachmentType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -41,6 +43,15 @@ use Illuminate\Support\Carbon;
 class Booking extends Model
 {
     use SoftDeletes;
+
+    public const ACTIVE_STATUSES = ['PENDING', 'APPROVED'];
+
+    /** @param Builder<Booking> $query */
+    #[Scope]
+    protected function active(Builder $query): void
+    {
+        $query->whereHas('status', fn (Builder $query) => $query->whereIn('code', self::ACTIVE_STATUSES));
+    }
 
     /**
      * Summary of casts

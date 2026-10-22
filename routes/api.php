@@ -58,4 +58,4 @@ Route::get('/csrf-token', function (Request $request) {
     return response()->json([
         'token' => csrf_token(),
     ])->header('Cache-Control', 'no-store, private');
-})->middleware(['web', 'guest', 'throttle:10,1']);
+})->middleware(['web', 'guest', 'throttle:10,1'])->name('csrf-token');

@@ -35,7 +35,7 @@ class BookingController extends Controller
             'ignore_booking_id' => ['nullable', 'integer', 'exists:bookings,id'],
         ]);
 
-        $ignoreBookingId = $request->user()->role === 'admin'
+        $ignoreBookingId = $request->user()->isAdmin()
             ? ($validated['ignore_booking_id'] ?? null)
             : null;
 
@@ -51,7 +51,7 @@ class BookingController extends Controller
     public function store(StoreBookingRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $this->bookingWorkflow->create($request->validated(), $user->id, $user->role === 'admin');
+        $this->bookingWorkflow->create($request->validated(), $user->id, $request->isAdminBooking());
 
         return back()->with('success', 'Booking berhasil dibuat.');
     }

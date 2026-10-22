@@ -3,6 +3,7 @@ import { router } from '@inertiajs/vue3';
 import { useEchoPublic } from '@laravel/echo-vue';
 import { ArrowLeft, Maximize, Minimize } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { index } from '@/routes/display';
 import type { BannerPageProps } from '@/types/booking';
 
 const props = defineProps<BannerPageProps>();
@@ -95,7 +96,7 @@ function reloadBanner() {
 }
 
 function backToDisplay() {
-    router.visit('/display');
+    router.visit(index.url());
 }
 
 function scheduleReload() {

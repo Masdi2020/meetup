@@ -4,6 +4,7 @@ use App\Models\Audit;
 use App\Models\Booking;
 use App\Models\BookingStatus;
 use App\Models\Facility;
+use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -12,13 +13,13 @@ beforeEach(function () {
     $this->withoutMiddleware(PreventRequestForgery::class);
 });
 
-function auditAdmin(string $username = 'audit-admin'): User
+function auditAdmin(string $username = 'audit-admin', string $role = 'admin'): User
 {
     return User::create([
         'name' => 'Audit Admin',
         'username' => $username,
         'password' => 'password',
-        'role' => 'admin',
+        'role_id' => Role::where('code', $role)->firstOrFail()->id,
     ]);
 }
 
@@ -76,12 +77,12 @@ it('audits room data facilities and availability changes', function () {
 });
 
 it('audits user management without storing passwords', function () {
-    $admin = auditAdmin();
+    $admin = auditAdmin('audit-super', 'super_admin');
 
     $this->actingAs($admin)->post('/admin/users', [
         'name' => 'Pengguna Audit',
         'username' => 'pengguna-audit',
-        'role' => 'user',
+        'role_id' => Role::where('code', 'user')->firstOrFail()->id,
     ])->assertRedirect();
 
     $user = User::where('username', 'pengguna-audit')->firstOrFail();
@@ -112,7 +113,7 @@ it('audits user management without storing passwords', function () {
 });
 
 it('audits booking deletion with its previous values', function () {
-    $admin = auditAdmin();
+    $admin = auditAdmin('audit-super', 'super_admin');
     $room = Room::create([
         'name' => 'Ruang Booking Audit',
         'capacity' => 10,
@@ -147,7 +148,7 @@ it('audits booking deletion with its previous values', function () {
 });
 
 it('audits login profile settings and logout actions', function () {
-    $admin = auditAdmin();
+    $admin = auditAdmin('audit-super', 'super_admin');
 
     $this->post('/login', [
         'username' => $admin->username,

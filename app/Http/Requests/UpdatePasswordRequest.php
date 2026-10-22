@@ -18,8 +18,7 @@ class UpdatePasswordRequest extends FormRequest
     {
         return [
             'current_password' => ['required', 'string', 'current_password', 'regex:/^\S+$/u'],
-            'password' => ['required', 'string', 'confirmed', 'min:8', 'regex:/^\S+$/u'],
-            'password_confirmation' => ['required', 'string', 'regex:/^\S+$/u'],
+            ...NewPasswordRules::RULES,
         ];
     }
 
@@ -28,8 +27,7 @@ class UpdatePasswordRequest extends FormRequest
         return [
             'current_password.current_password' => 'Password lama tidak sesuai.',
             'current_password.regex' => 'Password lama tidak boleh mengandung spasi.',
-            'password.regex' => 'Password baru tidak boleh mengandung spasi.',
-            'password_confirmation.regex' => 'Konfirmasi password tidak boleh mengandung spasi.',
+            ...NewPasswordRules::MESSAGES,
         ];
     }
 }

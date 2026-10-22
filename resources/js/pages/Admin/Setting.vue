@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
+import AppButton from '@/components/atoms/AppButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
+import { update } from '@/routes/admin/settings';
 const props = defineProps<{
     settings: {
         appName: string;
@@ -16,7 +19,7 @@ const form = useForm({
 const page = usePage<{ name: string }>();
 
 function save() {
-    form.put('/admin/settings', {
+    form.put(update.url(), {
         onSuccess: () => {
             page.props.name = form.appName;
             document.title = form.appName;
@@ -27,13 +30,10 @@ function save() {
 
 <template>
     <div class="app-page settings-page">
-        <div class="page-header page-heading">
-            <h1 class="page-title">Pengaturan</h1>
-
-            <p class="text-gray-500">
-                Konfigurasi aplikasi peminjaman ruangan.
-            </p>
-        </div>
+        <PageHeader
+            title="Pengaturan"
+            description="Konfigurasi aplikasi peminjaman ruangan."
+        />
 
         <!-- Informasi -->
 
@@ -71,12 +71,9 @@ function save() {
         </div>
 
         <div class="flex justify-end">
-            <button
-                @click="save"
-                class="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
-            >
+            <AppButton @click="save" variant="primary" size="lg">
                 Simpan Perubahan
-            </button>
+            </AppButton>
         </div>
     </div>
 </template>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
+import { banner } from '@/routes/display';
 import type { DisplayRoom } from '@/types/room';
 
 const props = defineProps<{
@@ -9,7 +11,7 @@ const props = defineProps<{
 
 const openRoomBanner = (room: DisplayRoom) => {
     if (room.has_display) {
-        router.visit(`/display/${room.id}`);
+        router.visit(banner.url(room.id));
     }
 };
 </script>
@@ -17,11 +19,10 @@ const openRoomBanner = (room: DisplayRoom) => {
 <template>
     <div class="app-page">
         <!-- Header -->
-        <div class="page-header page-heading">
-            <h1 class="page-title">Ruangan</h1>
-
-            <p class="text-gray-500">Lihat daftar ruangan yang tersedia.</p>
-        </div>
+        <PageHeader
+            title="Ruangan"
+            description="Lihat daftar ruangan yang tersedia."
+        />
 
         <!-- Total Ruangan -->
         <div class="ui-card ui-card-body">

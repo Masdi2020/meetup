@@ -1,8 +1,14 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { Menu } from '@lucide/vue';
 import { computed } from 'vue';
 import type { NavigationItem } from '@/config/navigation';
+import { edit as editProfile } from '@/routes/profile';
+
+const page = usePage();
+const isProfilePage = computed(
+    () => page.url.split(/[?#]/)[0] === editProfile.url(),
+);
 
 const props = withDefaults(
     defineProps<{
@@ -39,6 +45,7 @@ const userInitials = computed(() =>
 const roleLabel = computed(
     () =>
         ({
+            super_admin: 'Super Admin',
             admin: 'Admin',
             display: 'Display',
             user: 'Pengguna',
@@ -113,13 +120,23 @@ const roleLabel = computed(
         </nav>
 
         <footer class="sidebar__footer">
-            <div v-if="isOpen" class="user-card">
+            <Link
+                :href="editProfile()"
+                class="user-card"
+                :class="{
+                    'user-card--collapsed': !isOpen,
+                    'user-card--active': isProfilePage,
+                }"
+                title="Buka profil"
+                :aria-label="`Buka profil ${userName}`"
+                :aria-current="isProfilePage ? 'page' : undefined"
+            >
                 <span class="user-card__avatar">{{ userInitials }}</span>
-                <span class="user-card__identity">
+                <span v-if="isOpen" class="user-card__identity">
                     <strong>{{ userName }}</strong>
                     <small>{{ roleLabel }}</small>
                 </span>
-            </div>
+            </Link>
             <slot name="sidebar-footer" />
         </footer>
     </aside>
@@ -414,9 +431,30 @@ const roleLabel = computed(
 .user-card {
     display: flex;
     min-width: 0;
-    align-items: flex-start;
+    min-height: 48px;
+    align-items: center;
     gap: 11px;
     padding: 5px 4px;
+    border-radius: 11px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.user-card:hover,
+.user-card--active {
+    background: rgb(255 255 255 / 8%);
+}
+
+.user-card:focus-visible {
+    outline: 2px solid #93c5fd;
+    outline-offset: 2px;
+}
+
+.user-card--collapsed {
+    width: 52px;
+    justify-content: center;
+    margin: 0 auto;
+    padding: 5px 0;
 }
 
 .user-card__avatar {
@@ -448,6 +486,7 @@ const roleLabel = computed(
     line-height: 1.3;
     overflow-wrap: anywhere;
     -webkit-box-orient: vertical;
+    line-clamp: 2;
     -webkit-line-clamp: 2;
 }
 

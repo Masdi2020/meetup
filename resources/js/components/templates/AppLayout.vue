@@ -2,9 +2,9 @@
 import { router, usePage } from '@inertiajs/vue3';
 import { Menu } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
-import ForceChangePasswordModal from '@/components/ForceChangePasswordModal.vue';
-import LogoutButton from '@/components/LogoutButton.vue';
-import Sidebar from '@/components/Sidebar.vue';
+import LogoutButton from '@/components/molecules/LogoutButton.vue';
+import ForceChangePasswordModal from '@/components/organisms/ForceChangePasswordModal.vue';
+import Sidebar from '@/components/organisms/Sidebar.vue';
 import { navigationByRole } from '@/config/navigation';
 import type { UserRole } from '@/config/navigation';
 import type { Auth } from '@/types/auth';

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SaveUserRequest;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\Admin\UserService;
 use Illuminate\Http\RedirectResponse;
@@ -22,6 +23,8 @@ class AdminUserController extends Controller
 
         return Inertia::render('Admin/User', [
             'users' => $this->users->search($search, $role),
+            'roles' => Role::orderBy('id')->get(['id', 'code', 'name']),
+            'canManageUsers' => $request->user()->isSuperAdmin(),
             'filters' => [
                 'search' => $search,
                 'role' => $role,

@@ -1,22 +1,26 @@
 import type { UserRole } from './auth';
-import type { BookingResultFile } from './booking';
+import type { BookingResultFile, BookingStatus } from './booking';
 import type { NamedEntity } from './room';
 
-export type BookingStatus =
-    'pending' | 'approved' | 'rejected' | 'cancelled' | 'finished';
+export type { BookingStatus } from './booking';
 
 export interface AdminUser {
     id: number;
     name: string;
     username: string;
+    role_id: number;
     role: UserRole;
 }
 
 export type RoomOption = NamedEntity;
+
+export interface BookingRoomOption extends RoomOption {
+    has_display: boolean;
+}
 export type FacilityOption = NamedEntity;
 
 export interface BorrowerOption extends NamedEntity {
-    role: Extract<UserRole, 'user' | 'admin'>;
+    role: Extract<UserRole, 'user' | 'admin' | 'super_admin'>;
 }
 
 export interface AdminBookingStatusOption {

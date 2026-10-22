@@ -67,32 +67,30 @@ class AdminBookingQueryService
                 ] : null,
             ]);
 
-        $count = fn (string $code) => Booking::whereHas(
-            'status',
-            fn ($query) => $query->where('code', $code)
-        )->count();
+        $statuses = BookingStatus::query()
+            ->select('id', 'code', 'label')
+            ->withCount('bookings')
+            ->orderBy('id')
+            ->get();
+        $counts = $statuses->pluck('bookings_count', 'code');
 
         return [
             'bookings' => $bookings,
-            'rooms' => Room::select('id', 'name')->orderBy('name')->get(),
+            'rooms' => Room::select('id', 'name', 'has_display')->orderBy('name')->get(),
             'users' => User::query()
-                ->select('id', 'name', 'role')
-                ->whereIn('role', ['user', 'admin'])
+                ->select('id', 'name', 'role_id')
+                ->whereHas('assignedRole', fn ($query) => $query->whereIn('code', ['user', 'admin', 'super_admin']))
                 ->orderBy('name')
                 ->get(),
-            'statuses' => BookingStatus::query()
-                ->select('code', 'label')
-                ->orderBy('id')
-                ->get()
-                ->map(fn (BookingStatus $bookingStatus) => [
-                    'code' => strtolower($bookingStatus->code),
-                    'label' => ucfirst(strtolower($bookingStatus->label)),
-                ]),
+            'statuses' => $statuses->map(fn (BookingStatus $bookingStatus) => [
+                'code' => strtolower($bookingStatus->code),
+                'label' => ucfirst(strtolower($bookingStatus->label)),
+            ]),
             'stats' => [
                 'total' => Booking::count(),
-                'pending' => $count('PENDING'),
-                'approved' => $count('APPROVED'),
-                'finished' => $count('FINISHED'),
+                'pending' => $counts->get('PENDING', 0),
+                'approved' => $counts->get('APPROVED', 0),
+                'finished' => $counts->get('FINISHED', 0),
             ],
             'filters' => [
                 'search' => $search,

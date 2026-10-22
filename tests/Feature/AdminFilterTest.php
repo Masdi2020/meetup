@@ -3,8 +3,11 @@
 use App\Models\Booking;
 use App\Models\BookingStatus;
 use App\Models\Facility;
+use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
 function filterUser(string $name, string $username, string $role): User
@@ -13,7 +16,7 @@ function filterUser(string $name, string $username, string $role): User
         'name' => $name,
         'username' => $username,
         'password' => 'password',
-        'role' => $role,
+        'role_id' => Role::where('code', $role)->firstOrFail()->id,
     ]);
 }
 
@@ -124,6 +127,7 @@ it('filters bookings by search status and room on the server', function () {
     $owner = filterUser('Pemilik Booking', 'booking-owner', 'user');
     $firstRoom = filterRoom('Ruang Utama');
     $secondRoom = filterRoom('Ruang Cadangan');
+    $secondRoom->update(['has_display' => true]);
     $approved = BookingStatus::create([
         'code' => 'APPROVED',
         'label' => 'Approved',
@@ -158,12 +162,61 @@ it('filters bookings by search status and room on the server', function () {
             ->has('bookings.data', 1)
             ->where('bookings.data.0.room', 'Ruang Cadangan')
             ->where('bookings.data.0.status', 'approved')
+            ->where('rooms', fn ($rooms) => collect($rooms)->pluck('has_display', 'id')->sortKeys()->all() === [
+                $firstRoom->id => false,
+                $secondRoom->id => true,
+            ])
             ->where('statuses.0.code', 'approved')
             ->where('statuses.0.label', 'Approved')
+            ->where('stats', ['total' => 3, 'pending' => 1, 'approved' => 2, 'finished' => 0])
             ->where('filters.search', 'Mingguan')
             ->where('filters.status', 'approved')
             ->where('filters.room', (string) $secondRoom->id));
 });
+
+it('loads booking statuses and their counts in a fixed number of queries', function (int $bookingCount) {
+    $admin = filterUser('Admin', 'status-admin', 'admin');
+    $room = filterRoom('Ruang Status');
+    $approved = BookingStatus::create(['code' => 'APPROVED', 'label' => 'Approved']);
+    $cancelled = BookingStatus::create(['code' => 'CANCELLED', 'label' => 'Cancelled']);
+    BookingStatus::create(['code' => 'PENDING', 'label' => 'Pending']);
+    $attributes = [
+        'room_id' => $room->id,
+        'user_id' => $admin->id,
+        'date' => '2026-09-03',
+        'start_time' => '09:00',
+        'end_time' => '10:00',
+        'title' => 'Rapat Status',
+        'participants_count' => 5,
+        'status_id' => $approved->id,
+    ];
+
+    for ($index = 0; $index < $bookingCount; $index++) {
+        Booking::create($attributes);
+    }
+
+    Booking::create($attributes)->delete();
+    Booking::create([...$attributes, 'status_id' => $cancelled->id]);
+    $statusQueries = 0;
+    DB::listen(function (QueryExecuted $query) use (&$statusQueries) {
+        if (str_contains($query->sql, 'booking_statuses')) {
+            $statusQueries++;
+        }
+    });
+
+    $this->actingAs($admin)->get('/admin/bookings')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('stats', [
+                'total' => $bookingCount + 1,
+                'pending' => 0,
+                'approved' => $bookingCount,
+                'finished' => 0,
+            ])
+            ->has('statuses', 3));
+
+    expect($statusQueries)->toBe(2);
+})->with([1, 10]);
 
 it('exports an automatic number column followed by the selected ID column', function () {
     $admin = filterUser('Admin', 'export-admin', 'admin');

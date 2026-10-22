@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import AdminSearchPanel from '@/components/admin/AdminSearchPanel.vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
+import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useAdminFilters } from '@/composables/admin/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
+import { index } from '@/routes/admin/audits';
 import type {
     AuditLog as Audit,
     AuditStats as Stats,
@@ -25,7 +27,7 @@ const props = defineProps<{
 
 const search = ref(props.filters.search);
 const roleFilter = ref(props.filters.role);
-const { applyFilters, resetFilters } = useAdminFilters('/admin/audits', {
+const { applyFilters, resetFilters } = useAdminFilters(index.url(), {
     debouncedSources: [search],
     instantSources: [roleFilter],
     query: () => ({ search: search.value, role: roleFilter.value }),
@@ -63,11 +65,15 @@ function formatRole(role?: string | null) {
         return '-';
     }
 
+    if (role === 'super_admin') {
+        return 'Super Admin';
+    }
+
     return role.charAt(0).toUpperCase() + role.slice(1);
 }
 
 function badge(role?: string | null) {
-    return role === 'admin'
+    return role === 'admin' || role === 'super_admin'
         ? 'bg-indigo-100 text-indigo-700'
         : 'bg-green-100 text-green-700';
 }
@@ -98,15 +104,10 @@ function formatValue(value: unknown) {
 <template>
     <div class="app-page">
         <!-- Header -->
-        <div class="page-header">
-            <div class="page-heading">
-                <h1 class="page-title">Audit Log</h1>
-
-                <p class="text-gray-500">
-                    Riwayat seluruh aktivitas pada sistem.
-                </p>
-            </div>
-        </div>
+        <PageHeader
+            title="Audit Log"
+            description="Riwayat seluruh aktivitas pada sistem."
+        />
 
         <!-- Statistics -->
         <div class="stats-grid">
@@ -139,6 +140,7 @@ function formatValue(value: unknown) {
                 >
                     <option value="">Semua Role</option>
 
+                    <option value="super_admin">Super Admin</option>
                     <option value="admin">Admin</option>
 
                     <option value="user">User</option>

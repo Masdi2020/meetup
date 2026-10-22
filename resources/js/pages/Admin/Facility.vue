@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import AdminSearchPanel from '@/components/admin/AdminSearchPanel.vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
+import AppButton from '@/components/atoms/AppButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
+import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useAdminFilters } from '@/composables/admin/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
+import { index, store, update, destroy } from '@/routes/admin/facilities';
 import type { Facility } from '@/types/admin';
 const props = defineProps<{
     facilities: Facility[];
@@ -32,7 +35,7 @@ const facilityToDelete = ref<Facility | null>(null);
 const addFacilityForm = useForm({ name: '' });
 const editFacilityForm = useForm({ name: '' });
 
-const { applyFilters, resetFilters } = useAdminFilters('/admin/facilities', {
+const { applyFilters, resetFilters } = useAdminFilters(index.url(), {
     debouncedSources: [search],
     query: () => ({ search: search.value }),
     reset: () => {
@@ -62,7 +65,7 @@ function submitAddFacility() {
         return;
     }
 
-    addFacilityForm.post('/admin/facilities', {
+    addFacilityForm.post(store.url(), {
         preserveScroll: true,
         onSuccess: () => {
             closeAddModal();
@@ -103,7 +106,7 @@ function submitEditFacility() {
         return;
     }
 
-    editFacilityForm.put(`/admin/facilities/${selectedFacility.value.id}`, {
+    editFacilityForm.put(update.url(selectedFacility.value.id), {
         preserveScroll: true,
         onSuccess: () => {
             closeEditModal();
@@ -124,7 +127,7 @@ function deleteFacility() {
         return;
     }
 
-    router.delete(`/admin/facilities/${facilityToDelete.value.id}`, {
+    router.delete(destroy.url(facilityToDelete.value.id), {
         preserveScroll: true,
         onSuccess: () => closeDeleteModal(),
     });
@@ -134,22 +137,14 @@ function deleteFacility() {
 <template>
     <div class="app-page">
         <!-- Header -->
-        <div class="page-header">
-            <div class="page-heading">
-                <h1 class="page-title">Fasilitas</h1>
-
-                <p class="text-gray-500">
-                    Kelola fasilitas yang tersedia pada ruangan.
-                </p>
-            </div>
-
-            <button
-                class="rounded-lg bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700"
-                @click="openAddModal"
-            >
+        <PageHeader
+            title="Fasilitas"
+            description="Kelola fasilitas yang tersedia pada ruangan."
+        >
+            <AppButton variant="primary" size="lg" @click="openAddModal">
                 + Tambah Fasilitas
-            </button>
-        </div>
+            </AppButton>
+        </PageHeader>
 
         <!-- Statistik -->
         <div class="stats-grid">
@@ -237,18 +232,20 @@ function deleteFacility() {
                         @keyup.enter="submitAddFacility"
                 /></FormField>
                 <div class="flex justify-end gap-3 pt-2">
-                    <button
-                        class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    <AppButton
+                        variant="neutral"
+                        size="sm"
                         @click="closeAddModal"
                     >
                         Batal
-                    </button>
-                    <button
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                    </AppButton>
+                    <AppButton
+                        variant="primary"
+                        size="sm"
                         @click="submitAddFacility"
                     >
                         Simpan
-                    </button>
+                    </AppButton>
                 </div>
             </div>
         </AppModal>
@@ -301,18 +298,20 @@ function deleteFacility() {
                         @keyup.enter="submitEditFacility"
                 /></FormField>
                 <div class="flex justify-end gap-3 pt-2">
-                    <button
-                        class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    <AppButton
+                        variant="neutral"
+                        size="sm"
                         @click="closeEditModal"
                     >
                         Batal
-                    </button>
-                    <button
-                        class="rounded-lg bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
+                    </AppButton>
+                    <AppButton
+                        variant="warning"
+                        size="sm"
                         @click="submitEditFacility"
                     >
                         Simpan Perubahan
-                    </button>
+                    </AppButton>
                 </div>
             </div>
         </AppModal>

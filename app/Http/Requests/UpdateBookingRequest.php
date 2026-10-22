@@ -36,17 +36,13 @@ class UpdateBookingRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'date' => ['required', 'date', 'after_or_equal:today'],
-            'start_time' => ['required', 'date_format:H:i', 'regex:/^\d{2}:(00|15|30|45)$/'],
-            'end_time' => ['required', 'date_format:H:i', 'regex:/^\d{2}:(00|15|30|45)$/', 'after:start_time'],
+            ...BookingTimeRules::RULES,
         ];
     }
 
     /** @return array<string, string> */
     public function messages(): array
     {
-        return [
-            'start_time.regex' => 'Waktu mulai harus menggunakan interval 15 menit.',
-            'end_time.regex' => 'Waktu selesai harus menggunakan interval 15 menit.',
-        ];
+        return BookingTimeRules::MESSAGES;
     }
 }

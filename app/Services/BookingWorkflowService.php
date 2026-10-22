@@ -6,19 +6,19 @@ use App\Enums\BookingAttachmentType;
 use App\Events\BannerUpdated;
 use App\Events\BookingsUpdated;
 use App\Models\Booking;
-use App\Models\BookingAttachment;
 use App\Models\BookingStatus;
 use App\Models\Room;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use RuntimeException;
 
 class BookingWorkflowService
 {
-    public function __construct(private AuditService $audits) {}
+    public function __construct(
+        private AuditService $audits,
+        private BookingAttachmentService $attachments,
+    ) {}
 
     /** @param array<string, mixed> $data */
     public function create(array $data, int $actorUserId, bool $isAdmin): Booking
@@ -29,14 +29,10 @@ class BookingWorkflowService
 
         $statusCode = $isAdmin ? (string) $data['status'] : 'PENDING';
         $borrowerId = $isAdmin ? (int) $data['user_id'] : $actorUserId;
-        $activeStatus = in_array($statusCode, ['PENDING', 'APPROVED'], true);
-        $overlaps = $activeStatus && Booking::query()
-            ->where('room_id', $data['room_id'])
-            ->whereDate('date', $data['date'])
-            ->whereHas('status', fn ($query) => $query->whereIn('code', ['PENDING', 'APPROVED']))
-            ->whereTime('start_time', '<', $data['end_time'])
-            ->whereTime('end_time', '>', $data['start_time'])
-            ->exists();
+        $activeStatus = in_array($statusCode, Booking::ACTIVE_STATUSES, true);
+        $overlaps = $activeStatus && $this->hasOverlap(
+            (int) $data['room_id'], $data['date'], $data['start_time'], $data['end_time'],
+        );
 
         if ($overlaps) {
             throw ValidationException::withMessages(['room_id' => 'Ruangan sudah dibooking pada waktu tersebut.']);
@@ -74,51 +70,9 @@ class BookingWorkflowService
             );
 
             if (($data['banner'] ?? null) instanceof UploadedFile) {
-                $file = $data['banner'];
-
-                if (! $file->isValid()) {
-                    throw ValidationException::withMessages([
-                        'banner' => 'File banner tidak valid.',
-                    ]);
-                }
-
-                $sourcePath = $file->getPathname();
-
-                if ($sourcePath === '' || ! is_file($sourcePath)) {
-                    throw ValidationException::withMessages([
-                        'banner' => 'File sementara banner tidak ditemukan.',
-                    ]);
-                }
-
-                $filename = $file->hashName();
-                $path = "banners/{$filename}";
-
-                $stream = fopen($sourcePath, 'rb');
-
-                if ($stream === false) {
-                    throw new RuntimeException('Gagal membuka file banner.');
-                }
-
-                try {
-                    if (! Storage::disk('public')->writeStream($path, $stream)) {
-                        throw new RuntimeException('Gagal menyimpan file banner');
-                    }
-                } finally {
-                    if (is_resource($stream)) {
-                        fclose($stream);
-                    }
-                }
-
-                $attachment = BookingAttachment::create([
-                    'booking_id' => $booking->id,
-                    'original_filename' => $file->getClientOriginalName(),
-                    'filename' => $filename,
-                    'path' => $path,
-                    'mime_type' => $file->getMimeType(),
-                    'size' => $file->getSize(),
-                    'type' => BookingAttachmentType::Banner,
-                    'uploaded_by' => $actorUserId,
-                ]);
+                $attachment = $this->attachments->store(
+                    $booking, $actorUserId, $data['banner'], BookingAttachmentType::Banner,
+                );
 
                 $this->audits->record(
                     'BookingAttachment',
@@ -155,14 +109,9 @@ class BookingWorkflowService
         int $userId,
         string $auditComment = 'booking diperbarui oleh peminjam',
     ): void {
-        $overlaps = Booking::query()
-            ->whereKeyNot($booking->id)
-            ->where('room_id', $booking->room_id)
-            ->whereDate('date', $data['date'])
-            ->whereHas('status', fn ($query) => $query->whereIn('code', ['PENDING', 'APPROVED']))
-            ->whereTime('start_time', '<', $data['end_time'])
-            ->whereTime('end_time', '>', $data['start_time'])
-            ->exists();
+        $overlaps = $this->hasOverlap(
+            $booking->room_id, $data['date'], $data['start_time'], $data['end_time'], $booking->id,
+        );
 
         if ($overlaps) {
             throw ValidationException::withMessages([
@@ -328,5 +277,17 @@ class BookingWorkflowService
 
         BookingsUpdated::dispatch();
         broadcast(new BannerUpdated);
+    }
+
+    private function hasOverlap(int $roomId, string $date, string $startTime, string $endTime, ?int $ignoreBookingId = null): bool
+    {
+        return Booking::query()
+            ->where('room_id', $roomId)
+            ->whereDate('date', $date)
+            ->active()
+            ->when($ignoreBookingId !== null, fn ($query) => $query->whereKeyNot($ignoreBookingId))
+            ->whereTime('start_time', '<', Carbon::parse($endTime))
+            ->whereTime('end_time', '>', Carbon::parse($startTime))
+            ->exists();
     }
 }

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { Dayjs } from 'dayjs';
 import { computed } from 'vue';
-import { eventStatusLabels } from './eventStatusLabels';
-import { getRoomColor, getRoomTextColor } from './roomColors';
+import { eventStatusLabels } from '@/lib/eventStatusLabels';
+import { getRoomColor, getRoomTextColor } from '@/lib/roomColors';
 import type { CalendarEvent } from '@/types/calendar';
 
 interface PositionedEvent {

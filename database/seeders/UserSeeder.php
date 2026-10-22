@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -22,9 +23,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'admin',
                 'username' => 'admin',
-                'password' => bcrypt('admin123'),
-                'role' => 'admin',
-                'force_change_password' => false,
+                'role' => 'super_admin',
             ],
             [
                 'name' => 'display',
@@ -72,9 +71,12 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $user) {
+            $roleId = Role::where('code', $user['role'] ?? 'user')->firstOrFail()->id;
+            unset($user['role']);
+
             User::create([
                 ...$user,
-                'role' => $user['role'] ?? 'user',
+                'role_id' => $roleId,
                 'force_change_password' => $user['force_change_password'] ?? true,
                 'password' => $user['password'] ?? bcrypt(config('auth.default_password')),
             ]);

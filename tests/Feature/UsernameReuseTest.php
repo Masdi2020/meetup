@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
@@ -10,7 +11,7 @@ function usernameReuseUser(string $username): User
         'name' => 'Username test',
         'username' => $username,
         'password' => 'password',
-        'role' => 'user',
+        'role_id' => Role::where('code', 'user')->firstOrFail()->id,
     ]);
 }
 

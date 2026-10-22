@@ -25,7 +25,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/bookings/{booking}/approve', [AdminBookingController::class, 'approve'])->middleware('booking.action:approve')->name('bookings.approve');
         Route::patch('/bookings/{booking}/reject', [AdminBookingController::class, 'reject'])->middleware('booking.action:reject')->name('bookings.reject');
         Route::patch('/bookings/{booking}/finish', [AdminBookingController::class, 'finish'])->middleware('booking.action:finish')->name('bookings.finish');
-        Route::delete('/bookings/{booking}', [AdminBookingController::class, 'destroy'])->middleware('booking.action:destroy')->name('bookings.destroy');
         Route::post('/bookings/{booking}/results/documentation', [BookingResultController::class, 'storeDocumentation'])->name('bookings.results.documentation');
         Route::post('/bookings/{booking}/results/meeting-minutes', [BookingResultController::class, 'storeMeetingMinutes'])->name('bookings.results.meeting-minutes');
         Route::delete('/bookings/{booking}/attachments/{attachment}', [BookingResultController::class, 'destroy'])->name('bookings.results.destroy');
@@ -41,13 +40,15 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/rooms/{room}/toggle-availability', [AdminRoomController::class, 'toggleAvailability'])->name('rooms.toggle-availability');
 
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
-        Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
-        Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
         Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
-        Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 
-        Route::get('/audits', [AdminAuditController::class, 'index'])->name('audits.index');
-
-        Route::get('/settings', [AdminSettingController::class, 'edit'])->name('settings');
-        Route::put('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
+        Route::middleware('role:super_admin')->group(function () {
+            Route::delete('/bookings/{booking}', [AdminBookingController::class, 'destroy'])->name('bookings.destroy');
+            Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
+            Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+            Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+            Route::get('/audits', [AdminAuditController::class, 'index'])->name('audits.index');
+            Route::get('/settings', [AdminSettingController::class, 'edit'])->name('settings');
+            Route::put('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
+        });
     });

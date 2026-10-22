@@ -7,7 +7,12 @@ import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import type { BookingResultFile } from '@/types/booking';
 
 const props = defineProps<{
-    baseUrl: string;
+    bookingId: number;
+    routes: {
+        documentation: (booking: number) => string;
+        meetingMinutes: (booking: number) => string;
+        destroy: (params: { booking: number; attachment: number }) => string;
+    };
     documentations: BookingResultFile[];
     meetingMinutes: BookingResultFile | null;
     editable: boolean;
@@ -119,7 +124,7 @@ function saveDocumentation() {
     }
 
     feedback.value = '';
-    documentationForm.post(`${props.baseUrl}/results/documentation`, {
+    documentationForm.post(props.routes.documentation(props.bookingId), {
         forceFormData: true,
         preserveScroll: true,
         onSuccess: () => {
@@ -134,7 +139,7 @@ function saveMinutes() {
     }
 
     feedback.value = '';
-    minutesForm.post(`${props.baseUrl}/results/meeting-minutes`, {
+    minutesForm.post(props.routes.meetingMinutes(props.bookingId), {
         forceFormData: true,
         preserveScroll: true,
         onSuccess: () => {
@@ -152,7 +157,10 @@ function deleteAttachment() {
     feedback.value = '';
     deleteError.value = '';
     router.delete(
-        `${props.baseUrl}/attachments/${attachmentToDelete.value.id}`,
+        props.routes.destroy({
+            booking: props.bookingId,
+            attachment: attachmentToDelete.value.id,
+        }),
         {
             preserveScroll: true,
             onSuccess: () => {

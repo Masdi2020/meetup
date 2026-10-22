@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import PasswordField from '@/components/molecules/PasswordField.vue';
+import { update, password } from '@/routes/profile';
 import type { ProfilePageProps } from '@/types/auth';
 
 const page = usePage();
@@ -30,7 +32,7 @@ const profileChanged = computed(() => {
 });
 
 function saveProfile() {
-    form.post('/profile', {
+    form.post(update.url(), {
         preserveState: true,
         preserveScroll: true,
         only: ['errors', 'flash'],
@@ -49,7 +51,7 @@ function removeUsernameWhitespace(event: Event) {
 }
 
 function changePassword() {
-    form.put('/profile/password', {
+    form.put(password.url(), {
         preserveState: true,
         preserveScroll: true,
         only: ['errors', 'flash'],
@@ -64,10 +66,10 @@ function changePassword() {
 
 <template>
     <div class="app-page profile-page">
-        <div class="page-header page-heading">
-            <h1 class="page-title">Pengaturan Profil</h1>
-            <p>Kelola nama, username, dan password Anda.</p>
-        </div>
+        <PageHeader
+            title="Pengaturan Profil"
+            description="Kelola nama, username, dan password Anda."
+        />
 
         <div class="profile-card ui-card ui-card-body">
             <div class="tabs">
@@ -163,10 +165,6 @@ function changePassword() {
 </template>
 
 <style scoped>
-.page-header p {
-    color: #64748b;
-}
-
 .profile-card {
     width: 100%;
     max-width: var(--ui-form-width);

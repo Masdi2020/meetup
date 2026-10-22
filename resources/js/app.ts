@@ -5,9 +5,9 @@ import { createApp, h } from 'vue';
 import type { DefineComponent } from 'vue';
 import 'v-calendar/style.css';
 
-import Toast from '@/components/Toast.vue';
+import Toast from '@/components/organisms/Toast.vue';
+import AppLayout from '@/components/templates/AppLayout.vue';
 import { useToast } from '@/composables/useToast';
-import Layout from '@/layouts/Layout.vue';
 import type { FlashMessages } from '@/types/shared';
 
 configureEcho({
@@ -32,7 +32,7 @@ createInertiaApp({
         const withoutLayout = ['Auth/Login', 'Register', 'Display/Banner'];
 
         if (!withoutLayout.includes(name)) {
-            page.default.layout ??= Layout;
+            page.default.layout ??= AppLayout;
         }
 
         return page;

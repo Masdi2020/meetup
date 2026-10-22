@@ -1,20 +1,18 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { Check, X } from '@lucide/vue';
-import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue';
+import { Check } from '@lucide/vue';
+import { computed, onMounted, ref, toRef, watch } from 'vue';
 import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
+import BannerUploadField from '@/components/molecules/BannerUploadField.vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import RoomSummaryCard from '@/components/molecules/RoomSummaryCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
-import {
-    localDateString,
-    useBookingAvailability,
-} from '@/composables/useBookingAvailability';
+import { useBookingAvailability } from '@/composables/useBookingAvailability';
+import { localDateString } from '@/lib/dates';
+import { store } from '@/routes/booking';
 import type { BookingRoom } from '@/types/room';
 
 const today = localDateString();
-
-const preview = ref<string | null>(null);
-const bannerInput = ref<HTMLInputElement | null>(null);
 
 const showSuccessDialog = ref(false);
 
@@ -77,37 +75,6 @@ const {
     endTime: toRef(form, 'end_time'),
 });
 
-const handleFile = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-
-    if (!target.files?.length) {
-        return;
-    }
-
-    const file = target.files[0];
-
-    if (preview.value) {
-        URL.revokeObjectURL(preview.value);
-    }
-
-    form.banner = file;
-    preview.value = URL.createObjectURL(file);
-};
-
-const clearBanner = () => {
-    if (preview.value) {
-        URL.revokeObjectURL(preview.value);
-    }
-
-    form.banner = null;
-    preview.value = null;
-    form.clearErrors('banner');
-
-    if (bannerInput.value) {
-        bannerInput.value.value = '';
-    }
-};
-
 const submitBooking = () => {
     submitted.value = true;
 
@@ -123,13 +90,12 @@ const submitBooking = () => {
         return;
     }
 
-    form.post('/booking', {
+    form.post(store.url(), {
         forceFormData: true,
         onSuccess: () => {
             showSuccessDialog.value = true;
 
             form.reset();
-            clearBanner();
             submitted.value = false;
         },
     });
@@ -193,22 +159,15 @@ watch(
 
 watch(hasDisplay, (roomHasDisplay) => {
     if (!roomHasDisplay && form.banner) {
-        clearBanner();
-    }
-});
-
-onBeforeUnmount(() => {
-    if (preview.value) {
-        URL.revokeObjectURL(preview.value);
+        form.banner = null;
+        form.clearErrors('banner');
     }
 });
 </script>
 
 <template>
     <div class="app-page booking-page">
-        <header class="page-header page-heading">
-            <h1 class="page-title">Formulir Peminjaman</h1>
-        </header>
+        <PageHeader title="Formulir Peminjaman" />
 
         <div class="page-card">
             <form
@@ -426,35 +385,13 @@ onBeforeUnmount(() => {
                     ></textarea>
                 </div>
 
-                <div class="form-group" v-if="hasDisplay">
-                    <label>Unggah Banner Rapat</label>
-
-                    <input
-                        ref="bannerInput"
-                        type="file"
-                        accept=".jpg,.jpeg,.png"
-                        @change="handleFile"
-                    />
-
-                    <small>Format yang didukung: JPG, JPEG, PNG</small>
-
-                    <div v-if="preview" class="banner-preview">
-                        <img :src="preview" alt="Preview Banner" />
-                        <button
-                            type="button"
-                            class="banner-remove"
-                            aria-label="Batalkan unggahan banner"
-                            title="Batalkan unggahan"
-                            @click="clearBanner"
-                        >
-                            <X :size="18" :stroke-width="2.5" />
-                        </button>
-                    </div>
-
-                    <div v-if="form.errors.banner" class="error">
-                        {{ form.errors.banner }}
-                    </div>
-                </div>
+                <BannerUploadField
+                    v-if="hasDisplay"
+                    v-model="form.banner"
+                    :error="form.errors.banner"
+                    :disabled="form.processing"
+                    @change="form.clearErrors('banner')"
+                />
 
                 <div class="button-wrapper">
                     <button type="submit" :disabled="form.processing">
@@ -617,48 +554,6 @@ button:hover {
     textarea {
         font-size: 16px;
     }
-}
-
-.banner-preview {
-    position: relative;
-    width: fit-content;
-    max-width: 350px;
-    margin-top: 15px;
-}
-
-.banner-preview img {
-    display: block;
-    width: 100%;
-    max-width: 350px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    object-fit: cover;
-}
-
-.banner-remove {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: grid;
-    width: 36px;
-    height: 36px;
-    min-height: 36px;
-    padding: 0;
-    place-items: center;
-    border: 0;
-    border-radius: 9999px;
-    color: white;
-    background: rgba(17, 24, 39, 0.82);
-    cursor: pointer;
-}
-
-.banner-remove:hover {
-    background: #dc2626;
-}
-
-.banner-remove:focus-visible {
-    outline: 2px solid #2563eb;
-    outline-offset: 2px;
 }
 
 .error {

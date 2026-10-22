@@ -2,6 +2,7 @@
 
 use App\Models\Booking;
 use App\Models\BookingStatus;
+use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -13,7 +14,7 @@ function bannerUser(string $username, string $role): User
         'name' => ucfirst($username),
         'username' => $username,
         'password' => 'password',
-        'role' => $role,
+        'role_id' => Role::where('code', $role)->firstOrFail()->id,
     ]);
 }
 

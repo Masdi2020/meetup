@@ -17,7 +17,6 @@ class AuthorizeBookingAction
             'approve' => ['PENDING'],
             'reject' => ['PENDING'],
             'finish' => ['APPROVED'],
-            'destroy' => ['*'],
         ],
         'user' => [
             'update' => ['PENDING', 'APPROVED'],
@@ -48,9 +47,10 @@ class AuthorizeBookingAction
         }
 
         $booking->loadMissing('status');
-        $allowedStatuses = self::PERMISSIONS[$user->role][$action] ?? [];
-        $statusAllowed = in_array('*', $allowedStatuses, true)
-            || in_array($booking->status->code, $allowedStatuses, true);
+        $allowedStatuses = $user->isSuperAdmin()
+            ? array_merge(self::PERMISSIONS['admin'][$action] ?? [], self::PERMISSIONS['user'][$action] ?? [])
+            : (self::PERMISSIONS[$user->role][$action] ?? []);
+        $statusAllowed = in_array($booking->status->code, $allowedStatuses, true);
 
         if (! $statusAllowed) {
             abort(403, 'Aksi ini tidak diizinkan untuk role atau status booking tersebut.');
