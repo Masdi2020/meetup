@@ -4,10 +4,17 @@ import { FileText } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import BookingResults from '@/components/organisms/BookingResults.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
+import { update, cancel, finish } from '@/routes/booking';
+import {
+    documentation,
+    meetingMinutes,
+    destroy as destroyResult,
+} from '@/routes/booking/results';
 import type {
     BookingHistory,
     BookingHistoryStatus,
@@ -82,7 +89,7 @@ const submitEdit = () => {
         return;
     }
 
-    router.put(`/booking/${editForm.value.id}`, editForm.value, {
+    router.put(update.url(editForm.value.id), editForm.value, {
         onSuccess: () => {
             closeEditModal();
         },
@@ -191,7 +198,7 @@ const cancelBooking = () => {
 
     isCancelling.value = true;
     router.put(
-        `/booking/${bookingToCancel.value}/cancel`,
+        cancel.url(bookingToCancel.value),
         {},
         {
             preserveScroll: true,
@@ -216,7 +223,7 @@ const finishBooking = () => {
 
     isFinishing.value = true;
     router.patch(
-        '/booking/' + bookingToFinish.value + '/finish',
+        finish.url(bookingToFinish.value),
         {},
         {
             preserveScroll: true,
@@ -231,9 +238,7 @@ const finishBooking = () => {
 
 <template>
     <div class="app-page history-page">
-        <header class="page-header page-heading">
-            <h1 class="page-title">Riwayat Peminjaman Ruang Rapat</h1>
-        </header>
+        <PageHeader title="Riwayat Peminjaman Ruang Rapat" />
 
         <div class="page-card">
             <div class="filter">
@@ -385,7 +390,12 @@ const finishBooking = () => {
 
             <BookingResults
                 :key="selectedResultsBooking.id"
-                :base-url="`/booking/${selectedResultsBooking.id}`"
+                :booking-id="selectedResultsBooking.id"
+                :routes="{
+                    documentation: documentation.url,
+                    meetingMinutes: meetingMinutes.url,
+                    destroy: destroyResult.url,
+                }"
                 :documentations="selectedResultsBooking.documentations"
                 :meeting-minutes="selectedResultsBooking.meeting_minutes"
                 :editable="selectedResultsBooking.results_available"

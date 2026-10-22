@@ -3,12 +3,14 @@ import { useForm } from '@inertiajs/vue3';
 import { Check, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue';
 import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import RoomSummaryCard from '@/components/molecules/RoomSummaryCard.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import {
     localDateString,
     useBookingAvailability,
 } from '@/composables/useBookingAvailability';
+import { store } from '@/routes/booking';
 import type { BookingRoom } from '@/types/room';
 
 const today = localDateString();
@@ -123,7 +125,7 @@ const submitBooking = () => {
         return;
     }
 
-    form.post('/booking', {
+    form.post(store.url(), {
         forceFormData: true,
         onSuccess: () => {
             showSuccessDialog.value = true;
@@ -206,9 +208,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="app-page booking-page">
-        <header class="page-header page-heading">
-            <h1 class="page-title">Formulir Peminjaman</h1>
-        </header>
+        <PageHeader title="Formulir Peminjaman" />
 
         <div class="page-card">
             <form

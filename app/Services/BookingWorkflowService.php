@@ -29,11 +29,11 @@ class BookingWorkflowService
 
         $statusCode = $isAdmin ? (string) $data['status'] : 'PENDING';
         $borrowerId = $isAdmin ? (int) $data['user_id'] : $actorUserId;
-        $activeStatus = in_array($statusCode, ['PENDING', 'APPROVED'], true);
+        $activeStatus = in_array($statusCode, Booking::ACTIVE_STATUSES, true);
         $overlaps = $activeStatus && Booking::query()
             ->where('room_id', $data['room_id'])
             ->whereDate('date', $data['date'])
-            ->whereHas('status', fn ($query) => $query->whereIn('code', ['PENDING', 'APPROVED']))
+            ->active()
             ->whereTime('start_time', '<', $data['end_time'])
             ->whereTime('end_time', '>', $data['start_time'])
             ->exists();
@@ -159,7 +159,7 @@ class BookingWorkflowService
             ->whereKeyNot($booking->id)
             ->where('room_id', $booking->room_id)
             ->whereDate('date', $data['date'])
-            ->whereHas('status', fn ($query) => $query->whereIn('code', ['PENDING', 'APPROVED']))
+            ->active()
             ->whereTime('start_time', '<', $data['end_time'])
             ->whereTime('end_time', '>', $data['start_time'])
             ->exists();

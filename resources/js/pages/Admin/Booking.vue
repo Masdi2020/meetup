@@ -2,14 +2,15 @@
 import { router, useForm } from '@inertiajs/vue3';
 import { X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, toRef, watch } from 'vue';
-import AdminSearchPanel from '@/components/admin/AdminSearchPanel.vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import AppTextarea from '@/components/atoms/AppTextarea.vue';
 import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
 import FormField from '@/components/molecules/FormField.vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
+import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import BookingResults from '@/components/organisms/BookingResults.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
@@ -27,6 +28,22 @@ import type {
     BookingExportFormat,
     BookingExportPayload,
 } from '@/lib/bookingExport';
+import {
+    index,
+    store,
+    update,
+    cancel,
+    approve as approveBooking,
+    reject as rejectBooking,
+    finish,
+    destroy,
+    exportData,
+} from '@/routes/admin/bookings';
+import {
+    documentation,
+    meetingMinutes,
+    destroy as destroyResult,
+} from '@/routes/admin/bookings/results';
 import type {
     AdminBookingStatusOption,
     AdminBooking as Booking,
@@ -56,23 +73,20 @@ const search = ref(props.filters?.search ?? '');
 useBookingPageUpdates(['bookings', 'stats']);
 const statusFilter = ref(props.filters?.status ?? '');
 const roomFilter = ref(props.filters?.room ?? '');
-const { applyFilters, resetFilters, goToPage } = useAdminFilters(
-    '/admin/bookings',
-    {
-        debouncedSources: [search],
-        instantSources: [statusFilter, roomFilter],
-        query: () => ({
-            search: search.value,
-            status: statusFilter.value,
-            room: roomFilter.value,
-        }),
-        reset: () => {
-            search.value = '';
-            statusFilter.value = '';
-            roomFilter.value = '';
-        },
+const { applyFilters, resetFilters, goToPage } = useAdminFilters(index.url(), {
+    debouncedSources: [search],
+    instantSources: [statusFilter, roomFilter],
+    query: () => ({
+        search: search.value,
+        status: statusFilter.value,
+        room: roomFilter.value,
+    }),
+    reset: () => {
+        search.value = '';
+        statusFilter.value = '';
+        roomFilter.value = '';
     },
-);
+});
 const today = localDateString();
 
 const showAddBookingModal = computed(() => isModalOpen('add'));
@@ -293,7 +307,7 @@ function submitEditBooking() {
         return;
     }
 
-    editBookingForm.put(`/admin/bookings/${editingBooking.value.id}`, {
+    editBookingForm.put(update.url(editingBooking.value.id), {
         preserveScroll: true,
         onSuccess: () => closeEditBookingModal(),
     });
@@ -316,7 +330,7 @@ function cancelApprovedBooking() {
 
     isCancellingBooking.value = true;
     router.put(
-        `/admin/bookings/${bookingToCancel.value.id}/cancel`,
+        cancel.url(bookingToCancel.value.id),
         {},
         {
             preserveScroll: true,
@@ -441,32 +455,30 @@ async function loadExportPreview() {
     exportPreview.value = null;
 
     try {
-        const params = new URLSearchParams();
-        params.set('search', search.value);
-        params.set('room', roomFilter.value);
-        selectedExportColumns.value.forEach((column) =>
-            params.append('columns[]', column),
-        );
-        selectedExportStatuses.value.forEach((status) =>
-            params.append('statuses[]', status.toUpperCase()),
-        );
-        params.set('period', exportPeriod.value);
+        const query: Record<string, string | string[]> = {
+            search: search.value,
+            room: roomFilter.value,
+            columns: selectedExportColumns.value,
+            statuses: selectedExportStatuses.value.map((status) =>
+                status.toUpperCase(),
+            ),
+            period: exportPeriod.value,
+        };
 
         if (exportPeriod.value === 'date') {
-            params.set('date', exportDate.value);
+            query.date = exportDate.value;
         } else if (exportPeriod.value === 'range') {
-            params.set('start_date', exportStartDate.value);
-            params.set('end_date', exportEndDate.value);
+            query.start_date = exportStartDate.value;
+            query.end_date = exportEndDate.value;
         } else if (exportPeriod.value === 'month') {
-            params.set('month', exportMonth.value);
+            query.month = exportMonth.value;
         } else if (exportPeriod.value === 'year') {
-            params.set('year', exportYear.value);
+            query.year = exportYear.value;
         }
 
-        const response = await fetch(
-            `/admin/bookings/export-data?${params.toString()}`,
-            { headers: { Accept: 'application/json' } },
-        );
+        const response = await fetch(exportData.url({ query }), {
+            headers: { Accept: 'application/json' },
+        });
 
         if (!response.ok) {
             throw new Error('Data export tidak dapat dimuat.');
@@ -578,7 +590,7 @@ function deleteBooking() {
         return;
     }
 
-    router.delete(`/admin/bookings/${bookingToDelete.value.id}`, {
+    router.delete(destroy.url(bookingToDelete.value.id), {
         preserveScroll: true,
         onSuccess: () => closeDeleteModal(),
     });
@@ -629,7 +641,7 @@ function submitAddBooking() {
         return;
     }
 
-    addBookingForm.post('/admin/bookings', {
+    addBookingForm.post(store.url(), {
         forceFormData: true,
         onSuccess: () => {
             showAddBookingSuccess.value = true;
@@ -671,7 +683,7 @@ function confirmApprove() {
     }
 
     router.patch(
-        `/admin/bookings/${selectedBookingId.value}/approve`,
+        approveBooking.url(selectedBookingId.value),
         {},
         {
             preserveScroll: true,
@@ -696,7 +708,7 @@ function confirmReject() {
     }
 
     router.patch(
-        `/admin/bookings/${selectedBookingId.value}/reject`,
+        rejectBooking.url(selectedBookingId.value),
         { reason: rejectReason.value },
         {
             preserveScroll: true,
@@ -713,7 +725,7 @@ function confirmFinish() {
     }
 
     router.patch(
-        '/admin/bookings/' + selectedBookingId.value + '/finish',
+        finish.url(selectedBookingId.value),
         {},
         {
             preserveScroll: true,
@@ -733,13 +745,10 @@ function reject(id: number) {
 
 <template>
     <div class="app-page">
-        <div class="page-header">
-            <div class="page-heading">
-                <h1 class="page-title">Booking</h1>
-
-                <p class="text-gray-500">Kelola seluruh peminjaman ruangan.</p>
-            </div>
-
+        <PageHeader
+            title="Booking"
+            description="Kelola seluruh peminjaman ruangan."
+        >
             <div class="flex flex-wrap gap-3">
                 <button
                     type="button"
@@ -755,7 +764,7 @@ function reject(id: number) {
                     Tambah Peminjaman
                 </button>
             </div>
-        </div>
+        </PageHeader>
 
         <AppModal
             v-if="showExportModal"
@@ -1589,7 +1598,12 @@ function reject(id: number) {
                         v-if="detailBooking"
                         :key="detailBooking.id"
                         class="mt-3"
-                        :base-url="`/admin/bookings/${detailBooking.id}`"
+                        :booking-id="detailBooking.id"
+                        :routes="{
+                            documentation: documentation.url,
+                            meetingMinutes: meetingMinutes.url,
+                            destroy: destroyResult.url,
+                        }"
                         :documentations="detailBooking.documentations"
                         :meeting-minutes="detailBooking.meeting_minutes"
                         :editable="detailBooking.status === 'finished'"

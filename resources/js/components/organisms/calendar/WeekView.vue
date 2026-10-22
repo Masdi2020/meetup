@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { Dayjs } from 'dayjs';
 import { computed } from 'vue';
-import EventStatus from './EventStatus.vue';
-import { getRoomColor, getRoomTextColor } from './roomColors';
+import EventStatus from '@/components/atoms/EventStatus.vue';
+import { getRoomColor, getRoomTextColor } from '@/lib/roomColors';
 import type { CalendarEvent } from '@/types/calendar';
 
 const props = defineProps<{

@@ -2,12 +2,13 @@
 import { router, usePage } from '@inertiajs/vue3';
 import { Check, Copy } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
-import AdminSearchPanel from '@/components/admin/AdminSearchPanel.vue';
 import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
 import AppInput from '@/components/atoms/AppInput.vue';
 import AppSelect from '@/components/atoms/AppSelect.vue';
 import FormField from '@/components/molecules/FormField.vue';
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
+import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
 import AppModal from '@/components/organisms/AppModal.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
@@ -286,19 +287,14 @@ function deleteUser() {
 
 <template>
     <div class="app-page">
-        <div class="page-header">
-            <div class="page-heading">
-                <h1 class="page-title">Pengguna</h1>
-
-                <p class="text-gray-500">
-                    {{
-                        canManageUsers
-                            ? 'Kelola akun pengguna sistem.'
-                            : 'Lihat akun dan reset password pengguna.'
-                    }}
-                </p>
-            </div>
-
+        <PageHeader
+            title="Pengguna"
+            :description="
+                canManageUsers
+                    ? 'Kelola akun pengguna sistem.'
+                    : 'Lihat akun dan reset password pengguna.'
+            "
+        >
             <button
                 v-if="canManageUsers"
                 @click="openCreate"
@@ -306,7 +302,7 @@ function deleteUser() {
             >
                 + Tambah Pengguna
             </button>
-        </div>
+        </PageHeader>
 
         <div class="stats-grid">
             <StatCard label="Total" :value="users.length" />

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { LogOut } from '@lucide/vue';
+import { logout as logoutRoute } from '@/routes';
 
 withDefaults(defineProps<{ compact?: boolean }>(), { compact: false });
 
 function logout() {
-    router.post('/logout');
+    router.post(logoutRoute.url());
 }
 </script>
 

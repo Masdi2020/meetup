@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageHeader from '@/components/molecules/PageHeader.vue';
 import StatCard from '@/components/molecules/StatCard.vue';
 import type {
     AuditLog as Activity,
@@ -38,11 +39,10 @@ defineProps<{
 
 <template>
     <div class="app-page">
-        <div class="page-header page-heading">
-            <h1 class="page-title">Dashboard Admin</h1>
-
-            <p class="text-gray-500">Selamat datang kembali.</p>
-        </div>
+        <PageHeader
+            title="Dashboard Admin"
+            description="Selamat datang kembali."
+        />
 
         <div class="stats-grid">
             <StatCard label="Total Ruangan" :value="stats.rooms" size="large" />

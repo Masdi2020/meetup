@@ -9,11 +9,11 @@ import {
     watch,
 } from 'vue';
 
-import CalendarToolbar from './CalendarToolbar.vue';
-import DayView from './DayView.vue';
-import EventStatus from './EventStatus.vue';
-import MonthView from './MonthView.vue';
-import WeekView from './WeekView.vue';
+import EventStatus from '@/components/atoms/EventStatus.vue';
+import CalendarToolbar from '@/components/molecules/CalendarToolbar.vue';
+import DayView from '@/components/organisms/calendar/DayView.vue';
+import MonthView from '@/components/organisms/calendar/MonthView.vue';
+import WeekView from '@/components/organisms/calendar/WeekView.vue';
 import type { CalendarEvent } from '@/types/calendar';
 
 const props = defineProps<{
@@ -181,74 +181,82 @@ const formattedSelectedDate = computed(() => {
                 @select="selectedEvent = $event"
             />
         </div>
-    </div>
 
-    <Teleport to="body">
-        <div
-            v-if="selectedEvent"
-            class="detail-overlay"
-            @click.self="closeDetails"
-        >
-            <section
-                class="detail-modal"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="booking-detail-title"
+        <Teleport to="body">
+            <div
+                v-if="selectedEvent"
+                class="detail-overlay"
+                @click.self="closeDetails"
             >
-                <div class="detail-header">
-                    <div>
-                        <span class="detail-eyebrow">Rincian Peminjaman</span>
-                        <h3 id="booking-detail-title">
-                            {{ selectedEvent.title }}
-                        </h3>
+                <section
+                    class="detail-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="booking-detail-title"
+                >
+                    <div class="detail-header">
+                        <div>
+                            <span class="detail-eyebrow"
+                                >Rincian Peminjaman</span
+                            >
+                            <h3 id="booking-detail-title">
+                                {{ selectedEvent.title }}
+                            </h3>
+                        </div>
+                        <button
+                            type="button"
+                            class="detail-close"
+                            aria-label="Tutup rincian"
+                            @click="closeDetails"
+                        >
+                            &times;
+                        </button>
                     </div>
-                    <button
-                        type="button"
-                        class="detail-close"
-                        aria-label="Tutup rincian"
-                        @click="closeDetails"
-                    >
-                        &times;
-                    </button>
-                </div>
-                <dl class="detail-list">
-                    <div>
-                        <dt>Status</dt>
-                        <dd><EventStatus :status="selectedEvent.status" /></dd>
-                    </div>
-                    <div>
-                        <dt>Peminjam</dt>
-                        <dd>{{ selectedEvent.borrower }}</dd>
-                    </div>
-                    <div>
-                        <dt>Ruangan</dt>
-                        <dd>{{ selectedEvent.room }}</dd>
-                    </div>
-                    <div>
-                        <dt>Tanggal</dt>
-                        <dd>{{ formattedSelectedDate }}</dd>
-                    </div>
-                    <div>
-                        <dt>Waktu</dt>
-                        <dd>
-                            {{ selectedEvent.start_time }} -
-                            {{ selectedEvent.end_time }}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt>Jumlah peserta</dt>
-                        <dd>{{ selectedEvent.participants_count }} orang</dd>
-                    </div>
-                    <div class="detail-notes">
-                        <dt>Catatan</dt>
-                        <dd>
-                            {{ selectedEvent.notes || 'Tidak ada catatan.' }}
-                        </dd>
-                    </div>
-                </dl>
-            </section>
-        </div>
-    </Teleport>
+                    <dl class="detail-list">
+                        <div>
+                            <dt>Status</dt>
+                            <dd>
+                                <EventStatus :status="selectedEvent.status" />
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Peminjam</dt>
+                            <dd>{{ selectedEvent.borrower }}</dd>
+                        </div>
+                        <div>
+                            <dt>Ruangan</dt>
+                            <dd>{{ selectedEvent.room }}</dd>
+                        </div>
+                        <div>
+                            <dt>Tanggal</dt>
+                            <dd>{{ formattedSelectedDate }}</dd>
+                        </div>
+                        <div>
+                            <dt>Waktu</dt>
+                            <dd>
+                                {{ selectedEvent.start_time }} -
+                                {{ selectedEvent.end_time }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Jumlah peserta</dt>
+                            <dd>
+                                {{ selectedEvent.participants_count }} orang
+                            </dd>
+                        </div>
+                        <div class="detail-notes">
+                            <dt>Catatan</dt>
+                            <dd>
+                                {{
+                                    selectedEvent.notes || 'Tidak ada catatan.'
+                                }}
+                            </dd>
+                        </div>
+                    </dl>
+                </section>
+            </div>
+        </Teleport>
+    </div>
 </template>
 
 <style scoped>

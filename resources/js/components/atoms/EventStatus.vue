@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { eventStatusLabels } from './eventStatusLabels';
+import { eventStatusLabels } from '@/lib/eventStatusLabels';
 import type { CalendarEvent } from '@/types/calendar';
 
 defineProps<{ status: CalendarEvent['status'] }>();

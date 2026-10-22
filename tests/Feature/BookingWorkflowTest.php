@@ -111,6 +111,29 @@ afterEach(function () {
     Carbon::setTestNow();
 });
 
+it('returns only active intervals for the requested room and date', function () {
+    $user = bookingUser();
+    $room = bookingRoom();
+    bookingRecord($user, $room, 'APPROVED', ['start_time' => '11:00', 'end_time' => '12:00']);
+    bookingRecord($user, $room, 'PENDING');
+
+    foreach (['REJECTED', 'CANCELLED', 'FINISHED'] as $status) {
+        bookingRecord($user, $room, $status);
+    }
+
+    bookingRecord($user, $room, 'APPROVED')->delete();
+    bookingRecord($user, $room, 'APPROVED', ['date' => '2026-09-03']);
+    bookingRecord($user, bookingRoom(), 'APPROVED');
+
+    $this->actingAs($user)
+        ->getJson(route('booking.availability', ['room_id' => $room->id, 'date' => '2026-09-02']))
+        ->assertOk()
+        ->assertExactJson(['booked_intervals' => [
+            ['start_time' => '09:00', 'end_time' => '10:00'],
+            ['start_time' => '11:00', 'end_time' => '12:00'],
+        ]]);
+});
+
 it('allows an owner to edit an approved booking', function () {
     $user = bookingUser();
     $booking = bookingRecord($user, bookingRoom(), 'APPROVED');
