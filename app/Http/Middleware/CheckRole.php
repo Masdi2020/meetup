@@ -21,7 +21,7 @@ class CheckRole
             abort(401);
         }
 
-        if (! in_array($user->role, $roles)) {
+        if (! $user->isSuperAdmin() && ! in_array($user->role, $roles, true)) {
             abort(403);
         }
 

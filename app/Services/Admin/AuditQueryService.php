@@ -10,7 +10,7 @@ class AuditQueryService
     public function pageData(string $search, string $role): array
     {
         $audits = Audit::query()
-            ->with(['user:id,name,role'])
+            ->with(['user:id,name,role_id'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('action', 'like', "%{$search}%")
@@ -21,7 +21,7 @@ class AuditQueryService
             })
             ->when(
                 $role !== '',
-                fn ($query) => $query->whereHas('user', fn ($query) => $query->where('role', $role))
+                fn ($query) => $query->whereHas('user.assignedRole', fn ($query) => $query->where('code', $role))
             )
             ->latest('created_at')
             ->paginate(15)
@@ -34,8 +34,8 @@ class AuditQueryService
             'stats' => [
                 'total' => Audit::count(),
                 'today' => Audit::whereDate('created_at', $today)->count(),
-                'admin' => Audit::whereHas('user', fn ($query) => $query->where('role', 'admin'))->count(),
-                'user' => Audit::whereHas('user', fn ($query) => $query->where('role', 'user'))->count(),
+                'admin' => Audit::whereHas('user.assignedRole', fn ($query) => $query->whereIn('code', ['admin', 'super_admin']))->count(),
+                'user' => Audit::whereHas('user.assignedRole', fn ($query) => $query->where('code', 'user'))->count(),
             ],
             'filters' => [
                 'search' => $search,

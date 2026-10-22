@@ -63,11 +63,15 @@ function formatRole(role?: string | null) {
         return '-';
     }
 
+    if (role === 'super_admin') {
+        return 'Super Admin';
+    }
+
     return role.charAt(0).toUpperCase() + role.slice(1);
 }
 
 function badge(role?: string | null) {
-    return role === 'admin'
+    return role === 'admin' || role === 'super_admin'
         ? 'bg-indigo-100 text-indigo-700'
         : 'bg-green-100 text-green-700';
 }
@@ -139,6 +143,7 @@ function formatValue(value: unknown) {
                 >
                     <option value="">Semua Role</option>
 
+                    <option value="super_admin">Super Admin</option>
                     <option value="admin">Admin</option>
 
                     <option value="user">User</option>

@@ -30,7 +30,10 @@ class AdminBookingController extends Controller
 
         return Inertia::render(
             'Admin/Booking',
-            $this->bookingQueries->indexData($search, strtoupper($status), $room),
+            [
+                ...$this->bookingQueries->indexData($search, strtoupper($status), $room),
+                'canDeleteBookings' => $request->user()->isSuperAdmin(),
+            ],
         );
     }
 

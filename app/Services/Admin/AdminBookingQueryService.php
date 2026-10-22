@@ -76,8 +76,8 @@ class AdminBookingQueryService
             'bookings' => $bookings,
             'rooms' => Room::select('id', 'name')->orderBy('name')->get(),
             'users' => User::query()
-                ->select('id', 'name', 'role')
-                ->whereIn('role', ['user', 'admin'])
+                ->select('id', 'name', 'role_id')
+                ->whereHas('assignedRole', fn ($query) => $query->whereIn('code', ['user', 'admin', 'super_admin']))
                 ->orderBy('name')
                 ->get(),
             'statuses' => BookingStatus::query()

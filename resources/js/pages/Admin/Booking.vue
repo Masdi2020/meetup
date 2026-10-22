@@ -38,6 +38,7 @@ import type {
 } from '@/types/admin';
 
 const props = defineProps<{
+    canDeleteBookings: boolean;
     bookings: Pagination<Booking>;
     rooms?: Room[];
     users?: BorrowerOption[];
@@ -1168,7 +1169,13 @@ function reject(id: number) {
                             :value="user.id"
                         >
                             {{ user.name
-                            }}{{ user.role === 'admin' ? ' (Admin)' : '' }}
+                            }}{{
+                                user.role === 'super_admin'
+                                    ? ' (Super Admin)'
+                                    : user.role === 'admin'
+                                      ? ' (Admin)'
+                                      : ''
+                            }}
                         </option>
                     </AppSelect>
                 </FormField>
@@ -1829,6 +1836,7 @@ function reject(id: number) {
                                     @click="reject(booking.id)"
                                 />
                                 <ActionIconButton
+                                    v-if="canDeleteBookings"
                                     action="delete"
                                     @click="openDeleteModal(booking)"
                                 />

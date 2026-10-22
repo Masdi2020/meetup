@@ -12,6 +12,7 @@ uses(TestCase::class);
 
 it('compiles all migrations and rollbacks for supported database drivers', function (string $driver, string $connectionClass) {
     $pdo = Mockery::mock(PDO::class);
+    $pdo->shouldReceive('quote')->andReturnUsing(fn (string $value) => "'".str_replace("'", "''", $value)."'");
     $pdo->shouldReceive('getAttribute')->with(PDO::ATTR_SERVER_VERSION)
         ->andReturn(match ($driver) {
             'mariadb' => '10.11.0-MariaDB',

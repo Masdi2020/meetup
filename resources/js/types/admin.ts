@@ -9,6 +9,7 @@ export interface AdminUser {
     id: number;
     name: string;
     username: string;
+    role_id: number;
     role: UserRole;
 }
 
@@ -16,7 +17,7 @@ export type RoomOption = NamedEntity;
 export type FacilityOption = NamedEntity;
 
 export interface BorrowerOption extends NamedEntity {
-    role: Extract<UserRole, 'user' | 'admin'>;
+    role: Extract<UserRole, 'user' | 'admin' | 'super_admin'>;
 }
 
 export interface AdminBookingStatusOption {

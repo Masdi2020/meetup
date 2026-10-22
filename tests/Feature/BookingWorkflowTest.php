@@ -4,6 +4,7 @@ use App\Enums\BookingAttachmentType;
 use App\Models\Audit;
 use App\Models\Booking;
 use App\Models\BookingStatus;
+use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -14,7 +15,7 @@ it('deletes meeting results only when the attachment is eligible', function (str
     $this->withoutMiddleware(PreventRequestForgery::class);
     Storage::fake('public');
     $owner = bookingUser('owner');
-    $actor = $role === 'user' ? $owner : bookingUser('admin', 'admin');
+    $actor = $role === 'user' ? $owner : bookingUser('admin', $role);
     $booking = bookingRecord($owner, bookingRoom(), 'FINISHED');
     $attachmentBooking = $differentBooking
         ? bookingRecord($owner, $booking->room, 'FINISHED')
@@ -30,7 +31,7 @@ it('deletes meeting results only when the attachment is eligible', function (str
         'type' => $type,
         'uploaded_by' => $owner->id,
     ]);
-    $baseUrl = $role === 'admin' ? '/admin/bookings' : '/booking';
+    $baseUrl = $actor->isAdmin() ? '/admin/bookings' : '/booking';
 
     $this->actingAs($actor)
         ->delete("{$baseUrl}/{$booking->id}/attachments/{$attachment->id}")
@@ -48,6 +49,9 @@ it('deletes meeting results only when the attachment is eligible', function (str
     'owner minutes' => ['user', BookingAttachmentType::MeetingMinutes, false, 302],
     'admin documentation' => ['admin', BookingAttachmentType::Documentation, false, 302],
     'admin minutes' => ['admin', BookingAttachmentType::MeetingMinutes, false, 302],
+    'super admin documentation' => ['super_admin', BookingAttachmentType::Documentation, false, 302],
+    'super admin minutes' => ['super_admin', BookingAttachmentType::MeetingMinutes, false, 302],
+    'super admin another booking' => ['super_admin', BookingAttachmentType::Documentation, true, 404],
     'another booking' => ['user', BookingAttachmentType::Documentation, true, 404],
     'banner' => ['admin', BookingAttachmentType::Banner, false, 404],
 ]);
@@ -66,7 +70,7 @@ function bookingUser(string $username = 'user', string $role = 'user'): User
         'name' => ucfirst($username),
         'username' => $username,
         'password' => 'password',
-        'role' => $role,
+        'role_id' => Role::where('code', $role)->firstOrFail()->id,
     ]);
 }
 

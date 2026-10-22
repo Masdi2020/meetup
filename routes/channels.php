@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('bookings', function ($user) {
-    return in_array($user->role, ['user', 'admin'], true);
+    return $user->isAdmin() || $user->role === 'user';
 });
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {

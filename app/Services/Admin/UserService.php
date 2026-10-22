@@ -23,9 +23,9 @@ class UserService
                         ->orWhere('username', 'like', "%{$search}%");
                 });
             })
-            ->when($role !== '', fn ($query) => $query->where('role', $role))
+            ->when($role !== '', fn ($query) => $query->whereHas('assignedRole', fn ($query) => $query->where('code', $role)))
             ->orderBy('name')
-            ->get(['id', 'name', 'username', 'role']);
+            ->get(['id', 'name', 'username', 'role_id']);
     }
 
     /**
@@ -48,7 +48,7 @@ class UserService
                 $user->id,
                 'created',
                 null,
-                $user->only(['name', 'username', 'role', 'force_change_password']),
+                $user->only(['name', 'username', 'role_id', 'role', 'force_change_password']),
                 $actorId,
                 'pengguna dibuat oleh admin',
             );
@@ -63,15 +63,16 @@ class UserService
     public function update(User $user, array $data, int $actorId): void
     {
         DB::transaction(function () use ($user, $data, $actorId) {
-            $oldValues = $user->only(['name', 'username', 'role']);
+            $oldValues = $user->only(['name', 'username', 'role_id', 'role']);
             $user->update($data);
+            $user->load('assignedRole');
 
             $this->audits->record(
                 'User',
                 $user->id,
                 'updated',
                 $oldValues,
-                $user->only(['name', 'username', 'role']),
+                $user->only(['name', 'username', 'role_id', 'role']),
                 $actorId,
                 'data pengguna diperbarui oleh admin',
             );
@@ -80,6 +81,12 @@ class UserService
 
     public function resetPassword(User $user, int $actorId): string
     {
+        abort_if(
+            $user->isSuperAdmin() && ! User::findOrFail($actorId)->isSuperAdmin(),
+            403,
+            'Hanya Super Admin yang dapat mereset password Super Admin.',
+        );
+
         $password = Str::password(length: 8, symbols: false);
 
         DB::transaction(function () use ($user, $password, $actorId) {
@@ -106,7 +113,7 @@ class UserService
     public function delete(User $user, int $actorId): void
     {
         DB::transaction(function () use ($user, $actorId) {
-            $oldValues = $user->only(['name', 'username', 'role']);
+            $oldValues = $user->only(['name', 'username', 'role_id', 'role']);
             $user->delete();
 
             $this->audits->record(

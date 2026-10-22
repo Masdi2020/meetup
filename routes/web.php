@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return match (auth()->user()?->role) {
         'user' => to_route('availability.index'),
-        'admin' => to_route('admin.dashboard'),
+        'admin', 'super_admin' => to_route('admin.dashboard'),
         'display' => to_route('display.index'),
         default => to_route('login'),
     };

@@ -3,6 +3,7 @@
 use App\Models\Booking;
 use App\Models\BookingStatus;
 use App\Models\Facility;
+use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -13,7 +14,7 @@ function filterUser(string $name, string $username, string $role): User
         'name' => $name,
         'username' => $username,
         'password' => 'password',
-        'role' => $role,
+        'role_id' => Role::where('code', $role)->firstOrFail()->id,
     ]);
 }
 

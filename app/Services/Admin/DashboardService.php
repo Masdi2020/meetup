@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 class DashboardService
 {
     /** @return array<string, mixed> */
-    public function data(): array
+    public function data(bool $includeAudits): array
     {
         $pendingStatus = BookingStatus::where('code', 'PENDING')->value('id');
         $today = Carbon::today();
@@ -24,21 +24,21 @@ class DashboardService
                 'bookings' => Booking::count(),
                 'pending' => Booking::where('status_id', $pendingStatus)->count(),
                 'today_bookings' => Booking::whereDate('date', $today)->count(),
-                'today_audits' => Audit::whereDate('created_at', $today)->count(),
+                'today_audits' => $includeAudits ? Audit::whereDate('created_at', $today)->count() : null,
             ],
             'todayBookings' => Booking::query()
                 ->with('room:id,name')
                 ->whereDate('date', $today)
                 ->orderBy('start_time')
                 ->get(['id', 'room_id', 'title', 'start_time', 'end_time']),
-            'activities' => Audit::query()
-                ->with(['user:id,name,role'])
+            'activities' => $includeAudits ? Audit::query()
+                ->with(['user:id,name,role_id'])
                 ->latest()
                 ->take(5)
                 ->get([
                     'id', 'entity_type', 'entity_id', 'action', 'old_values',
                     'new_values', 'changed_by', 'ip_address', 'comment', 'created_at',
-                ]),
+                ]) : null,
         ];
     }
 }

@@ -32,7 +32,7 @@ function formatDateTime(date: string) {
 defineProps<{
     stats: Stats;
     todayBookings: TodayBooking[];
-    activities: Activity[];
+    activities: Activity[] | null;
 }>();
 </script>
 
@@ -64,7 +64,10 @@ defineProps<{
                 accent
             />
         </div>
-        <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div
+            class="grid grid-cols-1 gap-6"
+            :class="{ 'xl:grid-cols-2': activities }"
+        >
             <div class="ui-card ui-card-body">
                 <h2 class="mb-4 text-lg font-semibold">Booking Hari Ini</h2>
 
@@ -94,7 +97,7 @@ defineProps<{
                 </div>
             </div>
 
-            <div class="ui-card ui-card-body">
+            <div v-if="activities" class="ui-card ui-card-body">
                 <h2 class="mb-4 text-lg font-semibold">Aktivitas Terbaru</h2>
 
                 <div class="space-y-4">

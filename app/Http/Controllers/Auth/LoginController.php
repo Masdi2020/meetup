@@ -24,7 +24,7 @@ class LoginController extends Controller
 
         if ($user = $this->authentication->attempt($credentials)) {
             return match ($user->role) {
-                'admin' => to_route('admin.dashboard')
+                'admin', 'super_admin' => to_route('admin.dashboard')
                     ->with('success', 'Login Berhasil'),
 
                 'user' => to_route('availability.index')

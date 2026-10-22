@@ -13,14 +13,23 @@ import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import { useAdminFilters } from '@/composables/admin/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
+import {
+    destroy,
+    index,
+    resetPassword as resetPasswordRoute,
+    store,
+    update,
+} from '@/routes/admin/users';
 import type { AdminUser as User } from '@/types/admin';
-import type { UserRole as Role } from '@/types/auth';
+import type { RoleOption } from '@/types/auth';
 import type { FlashPageProps } from '@/types/shared';
 
 const page = usePage<FlashPageProps>();
 
 const props = defineProps<{
     users: User[];
+    roles: RoleOption[];
+    canManageUsers: boolean;
     filters: {
         search: string;
         role: string;
@@ -28,10 +37,22 @@ const props = defineProps<{
 }>();
 
 const users = computed(() => props.users);
+const assignableRoles = computed(() =>
+    props.roles.filter(
+        (role) => props.canManageUsers || role.code !== 'super_admin',
+    ),
+);
+const defaultRoleId = computed(
+    () => props.roles.find((role) => role.code === 'user')?.id ?? null,
+);
+
+function roleName(code: string) {
+    return props.roles.find((role) => role.code === code)?.name ?? code;
+}
 
 const search = ref(props.filters.search ?? '');
 const roleFilter = ref(props.filters.role ?? '');
-const { applyFilters, resetFilters } = useAdminFilters('/admin/users', {
+const { applyFilters, resetFilters } = useAdminFilters(index.url(), {
     debouncedSources: [search],
     instantSources: [roleFilter],
     query: () => ({ search: search.value, role: roleFilter.value }),
@@ -49,7 +70,7 @@ const editForm = ref({
     id: 0,
     name: '',
     username: '',
-    role: 'user' as Role,
+    role_id: defaultRoleId.value,
 });
 
 function initials(name: string) {
@@ -76,7 +97,7 @@ function openEdit(user: User) {
         id: user.id,
         name: user.name,
         username: user.username,
-        role: user.role,
+        role_id: user.role_id,
     };
 
     openModal('edit');
@@ -88,12 +109,12 @@ function closeEdit() {
         id: 0,
         name: '',
         username: '',
-        role: 'user',
+        role_id: defaultRoleId.value,
     };
 }
 
 function submitEdit() {
-    router.put(`/admin/users/${editForm.value.id}`, editForm.value, {
+    router.put(update.url(editForm.value.id), editForm.value, {
         preserveScroll: true,
         onSuccess: () => closeEdit(),
     });
@@ -136,7 +157,7 @@ function resetPassword() {
     }
 
     router.post(
-        `/admin/users/${userToConfirm.value.id}/reset-password`,
+        resetPasswordRoute.url(userToConfirm.value.id),
         {},
         {
             preserveScroll: true,
@@ -200,14 +221,14 @@ const showCreateModal = computed(() => isModalOpen('create'));
 const createForm = ref({
     name: '',
     username: '',
-    role: 'user' as Role,
+    role_id: defaultRoleId.value,
 });
 
 function openCreate() {
     createForm.value = {
         name: '',
         username: '',
-        role: 'user',
+        role_id: defaultRoleId.value,
     };
 
     openModal('create');
@@ -219,12 +240,12 @@ function closeCreate() {
     createForm.value = {
         name: '',
         username: '',
-        role: 'user',
+        role_id: defaultRoleId.value,
     };
 }
 
 function submitCreate() {
-    router.post('/admin/users', createForm.value, {
+    router.post(store.url(), createForm.value, {
         preserveScroll: true,
 
         onSuccess: () => {
@@ -256,7 +277,7 @@ function deleteUser() {
         return;
     }
 
-    router.delete(`/admin/users/${userToConfirm.value.id}`, {
+    router.delete(destroy.url(userToConfirm.value.id), {
         preserveScroll: true,
         onSuccess: () => closeConfirmModal(),
     });
@@ -269,10 +290,17 @@ function deleteUser() {
             <div class="page-heading">
                 <h1 class="page-title">Pengguna</h1>
 
-                <p class="text-gray-500">Kelola akun pengguna sistem.</p>
+                <p class="text-gray-500">
+                    {{
+                        canManageUsers
+                            ? 'Kelola akun pengguna sistem.'
+                            : 'Lihat akun dan reset password pengguna.'
+                    }}
+                </p>
             </div>
 
             <button
+                v-if="canManageUsers"
                 @click="openCreate"
                 class="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
             >
@@ -282,6 +310,13 @@ function deleteUser() {
 
         <div class="stats-grid">
             <StatCard label="Total" :value="users.length" />
+            <StatCard
+                label="Super Admin"
+                :value="
+                    users.filter((user) => user.role === 'super_admin').length
+                "
+                tone="indigo"
+            />
             <StatCard
                 label="Admin"
                 :value="users.filter((user) => user.role === 'admin').length"
@@ -307,11 +342,13 @@ function deleteUser() {
                 >
                     <option value="">Semua Role</option>
 
-                    <option value="admin">Admin</option>
-
-                    <option value="user">User</option>
-
-                    <option value="display">Display</option>
+                    <option
+                        v-for="role in roles"
+                        :key="role.id"
+                        :value="role.code"
+                    >
+                        {{ role.name }}
+                    </option>
                 </AppSelect>
             </template>
         </AdminSearchPanel>
@@ -359,7 +396,8 @@ function deleteUser() {
                         <td class="px-5 py-4">
                             <span
                                 :class="
-                                    user.role === 'admin'
+                                    user.role === 'admin' ||
+                                    user.role === 'super_admin'
                                         ? 'bg-indigo-100 text-indigo-700'
                                         : user.role === 'display'
                                           ? 'bg-amber-100 text-amber-700'
@@ -367,7 +405,7 @@ function deleteUser() {
                                 "
                                 class="rounded-full px-3 py-1 text-xs font-semibold uppercase"
                             >
-                                {{ user.role }}
+                                {{ roleName(user.role) }}
                             </span>
                         </td>
 
@@ -380,16 +418,22 @@ function deleteUser() {
 
                                 <ActionIconButton
                                     action="edit"
+                                    v-if="canManageUsers"
                                     @click="openEdit(user)"
                                 />
 
                                 <ActionIconButton
                                     action="reset"
+                                    v-if="
+                                        canManageUsers ||
+                                        user.role !== 'super_admin'
+                                    "
                                     @click="openResetModal(user)"
                                 />
 
                                 <ActionIconButton
                                     action="delete"
+                                    v-if="canManageUsers"
                                     @click="openDeleteModal(user)"
                                 />
                             </div>
@@ -419,13 +463,14 @@ function deleteUser() {
                     <p class="font-semibold text-gray-500">Role</p>
                     <span
                         :class="
-                            selectedUser.role === 'admin'
+                            selectedUser.role === 'admin' ||
+                            selectedUser.role === 'super_admin'
                                 ? 'bg-indigo-100 text-indigo-700'
                                 : 'bg-green-100 text-green-700'
                         "
                         class="mt-1 inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase"
                     >
-                        {{ selectedUser.role }}
+                        {{ roleName(selectedUser.role) }}
                     </span>
                 </div>
             </div>
@@ -463,13 +508,22 @@ function deleteUser() {
                         required
                 /></FormField>
 
-                <FormField label="Role" appearance="admin" required
-                    ><AppSelect v-model="editForm.role" required
-                        ><option value="user">User</option>
-                        <option value="admin">Admin</option>
-                        <option value="display">Display</option></AppSelect
-                    ></FormField
+                <FormField
+                    label="Role"
+                    appearance="admin"
+                    required
+                    :error="page.props.errors.role_id"
                 >
+                    <AppSelect v-model="editForm.role_id" required>
+                        <option
+                            v-for="role in assignableRoles"
+                            :key="role.id"
+                            :value="role.id"
+                        >
+                            {{ role.name }}
+                        </option>
+                    </AppSelect>
+                </FormField>
 
                 <div class="flex justify-end gap-3 pt-2">
                     <button
@@ -526,13 +580,22 @@ function deleteUser() {
                         required
                 /></FormField>
 
-                <FormField label="Role" appearance="admin" required
-                    ><AppSelect v-model="createForm.role" required
-                        ><option value="user">User</option>
-                        <option value="admin">Admin</option>
-                        <option value="display">Display</option></AppSelect
-                    ></FormField
+                <FormField
+                    label="Role"
+                    appearance="admin"
+                    required
+                    :error="page.props.errors.role_id"
                 >
+                    <AppSelect v-model="createForm.role_id" required>
+                        <option
+                            v-for="role in assignableRoles"
+                            :key="role.id"
+                            :value="role.id"
+                        >
+                            {{ role.name }}
+                        </option>
+                    </AppSelect>
+                </FormField>
 
                 <div class="rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
                     <p class="font-semibold">Password otomatis</p>

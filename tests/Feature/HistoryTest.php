@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\BookingStatus;
+use App\Models\Role;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -9,7 +10,7 @@ it('provides booking status options from the database', function () {
         'name' => 'History User',
         'username' => 'history-user',
         'password' => 'password',
-        'role' => 'user',
+        'role_id' => Role::where('code', 'user')->firstOrFail()->id,
     ]);
 
     BookingStatus::create([
