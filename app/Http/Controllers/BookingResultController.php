@@ -8,6 +8,8 @@ use App\Models\Booking;
 use App\Models\BookingAttachment;
 use App\Services\BookingResultService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BookingResultController extends Controller
 {
@@ -37,6 +39,11 @@ class BookingResultController extends Controller
         );
 
         return back()->with('success', 'Notulensi rapat berhasil disimpan.');
+    }
+
+    public function show(Request $request, Booking $booking, BookingAttachment $attachment): StreamedResponse
+    {
+        return $this->results->response($booking, $attachment, $request->user());
     }
 
     public function destroy(

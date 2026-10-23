@@ -46,7 +46,7 @@ class BookingAttachmentService
         }
 
         try {
-            if (! Storage::disk('public')->writeStream($path, $stream)) {
+            if (! Storage::disk($type === BookingAttachmentType::Banner ? 'public' : 'local')->writeStream($path, $stream)) {
                 throw new RuntimeException('Gagal menyimpan file hasil rapat.');
             }
         } finally {

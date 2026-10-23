@@ -23,22 +23,22 @@ class BookingWorkflowService
     /** @param array<string, mixed> $data */
     public function create(array $data, int $actorUserId, bool $isAdmin): Booking
     {
-        if (! Room::query()->whereKey($data['room_id'])->where('is_available', true)->exists()) {
-            throw ValidationException::withMessages(['room_id' => 'Ruangan tidak tersedia untuk dipinjam']);
-        }
-
         $statusCode = $isAdmin ? (string) $data['status'] : 'PENDING';
         $borrowerId = $isAdmin ? (int) $data['user_id'] : $actorUserId;
-        $activeStatus = in_array($statusCode, Booking::ACTIVE_STATUSES, true);
-        $overlaps = $activeStatus && $this->hasOverlap(
-            (int) $data['room_id'], $data['date'], $data['start_time'], $data['end_time'],
-        );
-
-        if ($overlaps) {
-            throw ValidationException::withMessages(['room_id' => 'Ruangan sudah dibooking pada waktu tersebut.']);
-        }
 
         $booking = DB::transaction(function () use ($data, $actorUserId, $borrowerId, $statusCode) {
+            $this->lockRoom((int) $data['room_id']);
+
+            if (! Room::query()->whereKey($data['room_id'])->where('is_available', true)->exists()) {
+                throw ValidationException::withMessages(['room_id' => 'Ruangan tidak tersedia untuk dipinjam']);
+            }
+
+            if (in_array($statusCode, Booking::ACTIVE_STATUSES, true) && $this->hasOverlap(
+                (int) $data['room_id'], $data['date'], $data['start_time'], $data['end_time'],
+            )) {
+                throw ValidationException::withMessages(['room_id' => 'Ruangan sudah dibooking pada waktu tersebut.']);
+            }
+
             $statusId = BookingStatus::where('code', $statusCode)->firstOrFail()->id;
             $processed = $statusCode !== 'PENDING';
             $booking = Booking::create([
@@ -109,24 +109,27 @@ class BookingWorkflowService
         int $userId,
         string $auditComment = 'booking diperbarui oleh peminjam',
     ): void {
-        $overlaps = $this->hasOverlap(
-            $booking->room_id, $data['date'], $data['start_time'], $data['end_time'], $booking->id,
-        );
+        DB::transaction(function () use ($booking, $data, $userId, $auditComment) {
+            $this->lockRoom($booking->room_id);
+            $booking->refresh();
 
-        if ($overlaps) {
-            throw ValidationException::withMessages([
-                'date' => 'Ruangan sudah dibooking pada waktu tersebut.',
-            ]);
-        }
+            if ($booking->trashed() || ! in_array($booking->status->code, Booking::ACTIVE_STATUSES, true)) {
+                throw ValidationException::withMessages(['booking' => 'Booking tidak dapat diperbarui pada status ini.']);
+            }
 
-        $oldValues = [
-            'title' => $booking->title,
-            'date' => $booking->date->format('Y-m-d'),
-            'start_time' => $booking->start_time->format('H:i'),
-            'end_time' => $booking->end_time->format('H:i'),
-        ];
+            if ($this->hasOverlap(
+                $booking->room_id, $data['date'], $data['start_time'], $data['end_time'], $booking->id,
+            )) {
+                throw ValidationException::withMessages(['date' => 'Ruangan sudah dibooking pada waktu tersebut.']);
+            }
 
-        DB::transaction(function () use ($booking, $data, $oldValues, $userId, $auditComment) {
+            $oldValues = [
+                'title' => $booking->title,
+                'date' => $booking->date->format('Y-m-d'),
+                'start_time' => $booking->start_time->format('H:i'),
+                'end_time' => $booking->end_time->format('H:i'),
+            ];
+
             $booking->update($data);
             $this->audits->record(
                 'Booking',
@@ -148,18 +151,26 @@ class BookingWorkflowService
 
     public function changeStatus(Booking $booking, string $statusCode, int $userId, string $notes): void
     {
-        $booking->loadMissing('status');
-        $previousStatusCode = $booking->status->code;
-        $allowedTransitions = [
-            'PENDING' => ['APPROVED', 'REJECTED', 'CANCELLED'],
-            'APPROVED' => ['FINISHED', 'CANCELLED'],
-        ];
+        $previousStatusCode = DB::transaction(function () use ($booking, $statusCode, $userId, $notes): string {
+            $this->lockRoom($booking->room_id);
+            $booking->refresh();
+            $previousStatusCode = $booking->status->code;
+            $allowedTransitions = [
+                'PENDING' => ['APPROVED', 'REJECTED', 'CANCELLED'],
+                'APPROVED' => ['FINISHED', 'CANCELLED'],
+            ];
 
-        if (! in_array($statusCode, $allowedTransitions[$booking->status->code] ?? [], true)) {
-            throw ValidationException::withMessages(['booking' => 'Perubahan status booking tidak valid.']);
-        }
+            if ($booking->trashed() || ! in_array($statusCode, $allowedTransitions[$previousStatusCode] ?? [], true)) {
+                throw ValidationException::withMessages(['booking' => 'Perubahan status booking tidak valid.']);
+            }
 
-        DB::transaction(function () use ($booking, $statusCode, $previousStatusCode, $userId, $notes) {
+            if ($statusCode === 'APPROVED' && $this->hasOverlap(
+                $booking->room_id, $booking->date->format('Y-m-d'),
+                $booking->start_time->format('H:i'), $booking->end_time->format('H:i'), $booking->id,
+            )) {
+                throw ValidationException::withMessages(['booking' => 'Ruangan sudah dibooking pada waktu tersebut.']);
+            }
+
             $oldStatusId = $booking->status_id;
             $status = BookingStatus::where('code', $statusCode)->firstOrFail();
             $booking->forceFill([
@@ -179,6 +190,8 @@ class BookingWorkflowService
                 $userId,
                 $notes,
             );
+
+            return $previousStatusCode;
         });
 
         BookingsUpdated::dispatch();
@@ -207,13 +220,15 @@ class BookingWorkflowService
                             ->whereTime('end_time', '<=', $now->format('H:i:s'));
                     });
             })
-            ->select('id')
+            ->select(['id', 'room_id'])
             ->chunkById(100, function ($bookings) use ($approvedStatus, $finishedStatus, $now, &$finishedCount) {
                 foreach ($bookings as $expiredBooking) {
                     DB::transaction(function () use ($expiredBooking, $approvedStatus, $finishedStatus, $now, &$finishedCount) {
+                        $this->lockRoom($expiredBooking->room_id);
                         $booking = Booking::query()->lockForUpdate()->find($expiredBooking->id);
 
-                        if (! $booking || $booking->status_id !== $approvedStatus->id) {
+                        if (! $booking || $booking->status_id !== $approvedStatus->id
+                            || $booking->date->format('Y-m-d').' '.$booking->end_time->format('H:i:s') > $now->format('Y-m-d H:i:s')) {
                             return;
                         }
 
@@ -277,6 +292,12 @@ class BookingWorkflowService
 
         BookingsUpdated::dispatch();
         broadcast(new BannerUpdated);
+    }
+
+    private function lockRoom(int $roomId): void
+    {
+        // A write locks the room before any reads, including on SQLite where FOR UPDATE is ignored.
+        DB::table('rooms')->where('id', $roomId)->update(['updated_at' => DB::raw('updated_at')]);
     }
 
     private function hasOverlap(int $roomId, string $date, string $startTime, string $endTime, ?int $ignoreBookingId = null): bool

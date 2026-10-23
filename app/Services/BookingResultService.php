@@ -8,6 +8,8 @@ use App\Models\BookingAttachment;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class BookingResultService
@@ -39,10 +41,31 @@ class BookingResultService
         }
     }
 
+    public function response(Booking $booking, BookingAttachment $attachment, User $actor): StreamedResponse
+    {
+        $this->assertCanManage($booking, $actor);
+        $this->assertResultAttachment($booking, $attachment);
+        $disk = Storage::disk('local');
+
+        abort_unless($disk->exists($attachment->path), 404);
+
+        return $disk->response($attachment->path, $attachment->original_filename, [
+            'Content-Type' => $attachment->mime_type,
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public function delete(Booking $booking, BookingAttachment $attachment, User $actor): void
     {
         $this->assertCanManage($booking, $actor);
 
+        $this->assertResultAttachment($booking, $attachment);
+        $this->remove($attachment);
+    }
+
+    private function assertResultAttachment(Booking $booking, BookingAttachment $attachment): void
+    {
         abort_unless(
             $attachment->booking_id === $booking->id
                 && in_array($attachment->getRawOriginal('type'), [
@@ -52,13 +75,11 @@ class BookingResultService
             404,
             'Lampiran tidak ditemukan.',
         );
-
-        $this->remove($attachment);
     }
 
     private function assertCanManage(Booking $booking, User $actor): void
     {
-        if ($actor->role === 'user' && $booking->user_id !== $actor->id) {
+        if (! $actor->isAdmin() && ($actor->role !== 'user' || $booking->user_id !== $actor->id)) {
             throw new AccessDeniedHttpException('Anda tidak memiliki akses ke hasil rapat ini.');
         }
 
@@ -73,7 +94,10 @@ class BookingResultService
 
     private function remove(BookingAttachment $attachment): void
     {
-        Storage::disk('public')->delete($attachment->path);
+        if (! Storage::disk('local')->delete($attachment->path)) {
+            throw new RuntimeException('Gagal menghapus file hasil rapat.');
+        }
+
         $attachment->delete();
     }
 }

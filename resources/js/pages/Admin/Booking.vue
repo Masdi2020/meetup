@@ -38,6 +38,7 @@ import {
     documentation,
     meetingMinutes,
     destroy as destroyResult,
+    show as showResult,
 } from '@/routes/admin/bookings/results';
 import type {
     AdminBookingStatusOption,
@@ -546,6 +547,7 @@ function reject(id: number) {
                             documentation: documentation.url,
                             meetingMinutes: meetingMinutes.url,
                             destroy: destroyResult.url,
+                            show: showResult.url,
                         }"
                         :documentations="detailBooking.documentations"
                         :meeting-minutes="detailBooking.meeting_minutes"

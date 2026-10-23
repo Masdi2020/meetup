@@ -18,5 +18,6 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::patch('/booking/{booking}/finish', [BookingController::class, 'finish'])->middleware('booking.action:finish')->name('booking.finish');
     Route::post('/booking/{booking}/results/documentation', [BookingResultController::class, 'storeDocumentation'])->name('booking.results.documentation');
     Route::post('/booking/{booking}/results/meeting-minutes', [BookingResultController::class, 'storeMeetingMinutes'])->name('booking.results.meeting-minutes');
+    Route::get('/booking/{booking}/attachments/{attachment}', [BookingResultController::class, 'show'])->name('booking.results.show');
     Route::delete('/booking/{booking}/attachments/{attachment}', [BookingResultController::class, 'destroy'])->name('booking.results.destroy');
 });

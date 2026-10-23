@@ -16,6 +16,7 @@ import {
     documentation,
     meetingMinutes,
     destroy as destroyResult,
+    show as showResult,
 } from '@/routes/booking/results';
 import type {
     BookingHistory,
@@ -371,6 +372,7 @@ const finishBooking = () => {
                     documentation: documentation.url,
                     meetingMinutes: meetingMinutes.url,
                     destroy: destroyResult.url,
+                    show: showResult.url,
                 }"
                 :documentations="selectedResultsBooking.documentations"
                 :meeting-minutes="selectedResultsBooking.meeting_minutes"

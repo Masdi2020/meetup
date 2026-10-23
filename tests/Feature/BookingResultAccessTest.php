@@ -1,0 +1,121 @@
+<?php
+
+use App\Enums\BookingAttachmentType;
+use App\Models\Booking;
+use App\Models\BookingStatus;
+use App\Models\Role;
+use App\Models\Room;
+use App\Models\User;
+use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Storage;
+
+beforeEach(function () {
+    Storage::fake('local');
+    Storage::fake('public');
+    $this->owner = User::create([
+        'name' => 'Owner', 'username' => 'result-owner', 'password' => 'password',
+        'role_id' => Role::where('code', 'user')->firstOrFail()->id,
+    ]);
+    $room = Room::create(['name' => 'Meeting room', 'location' => 'Office', 'capacity' => 10, 'is_available' => true]);
+    $status = BookingStatus::create(['code' => 'FINISHED', 'label' => 'Finished']);
+    $this->booking = Booking::create([
+        'room_id' => $room->id, 'user_id' => $this->owner->id, 'status_id' => $status->id,
+        'title' => 'Private meeting', 'date' => '2026-09-01', 'start_time' => '09:00',
+        'end_time' => '10:00', 'participants_count' => 2,
+    ]);
+});
+
+it('serves meeting results only to the owner and administrators', function (string $role, int $status, string $type) {
+    $actor = $role === 'owner' ? $this->owner : User::create([
+        'name' => 'Visitor', 'username' => 'result-visitor', 'password' => 'password',
+        'role_id' => Role::where('code', $role)->firstOrFail()->id,
+    ]);
+    $path = 'booking-results/private.pdf';
+    Storage::disk('local')->put($path, 'private content');
+    $attachment = $this->booking->attachments()->create([
+        'original_filename' => 'meeting.pdf', 'filename' => 'private.pdf', 'path' => $path,
+        'type' => $type, 'mime_type' => 'application/pdf', 'size' => 15, 'uploaded_by' => $this->owner->id,
+    ]);
+    $route = $actor->isAdmin() ? 'admin.bookings.results.show' : 'booking.results.show';
+    $response = $this->actingAs($actor)->get(route($route, [$this->booking, $attachment]));
+    $response->assertStatus($status);
+
+    if ($status === 200) {
+        $response->assertStreamedContent('private content')
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+        expect($response->headers->get('Cache-Control'))->toContain('private', 'no-store');
+    }
+
+    Storage::disk('public')->assertMissing($path);
+})->with([
+    'owner' => ['owner', 200],
+    'other user' => ['user', 403],
+    'admin' => ['admin', 200],
+    'super admin' => ['super_admin', 200],
+    'display' => ['display', 403],
+])->with(['documentation', 'meeting_minutes']);
+
+it('rejects unauthenticated access and attachments outside the requested booking', function (string $case) {
+    $attachment = $this->booking->attachments()->create([
+        'original_filename' => 'meeting.pdf', 'filename' => 'private.pdf', 'path' => 'booking-results/private.pdf',
+        'type' => BookingAttachmentType::MeetingMinutes, 'mime_type' => 'application/pdf',
+        'size' => 15, 'uploaded_by' => $this->owner->id,
+    ]);
+
+    if ($case === 'guest') {
+        $this->get(route('booking.results.show', [$this->booking, $attachment]))->assertRedirect(route('login'));
+
+        return;
+    }
+
+    if ($case === 'another booking') {
+        $other = $this->booking->replicate();
+        $other->save();
+        $attachment->update(['booking_id' => $other->id]);
+    } elseif ($case === 'banner') {
+        $attachment->update(['type' => BookingAttachmentType::Banner]);
+    } elseif ($case === 'deleted') {
+        $attachment->delete();
+    }
+
+    $this->actingAs($this->owner)->get(route('booking.results.show', [$this->booking, $attachment]))->assertNotFound();
+})->with(['guest', 'another booking', 'banner', 'deleted', 'missing file']);
+
+it('moves old public results including orphan files while preserving banners and contents', function (bool $alreadyCopied) {
+    Storage::disk('public')->put('booking-results/legacy.pdf', 'legacy contents');
+    Storage::disk('public')->put('banners/banner.png', 'public banner');
+
+    if ($alreadyCopied) {
+        Storage::disk('local')->put('booking-results/legacy.pdf', 'legacy contents');
+    }
+
+    $this->artisan('booking-results:privatize')->assertSuccessful();
+    Storage::disk('public')->assertMissing('booking-results/legacy.pdf');
+    Storage::disk('public')->assertExists('banners/banner.png');
+    expect(Storage::disk('local')->get('booking-results/legacy.pdf'))->toBe('legacy contents');
+    $this->artisan('booking-results:privatize')->assertSuccessful();
+})->with([false, true]);
+
+it('does not remove or overwrite conflicting copies when moving old results', function () {
+    Storage::disk('public')->put('booking-results/legacy.pdf', 'original contents');
+    Storage::disk('local')->put('booking-results/legacy.pdf', 'different contents');
+
+    expect(fn () => $this->artisan('booking-results:privatize')->run())->toThrow(RuntimeException::class);
+    expect(Storage::disk('public')->get('booking-results/legacy.pdf'))->toBe('original contents');
+    expect(Storage::disk('local')->get('booking-results/legacy.pdf'))->toBe('different contents');
+});
+
+it('keeps attachment metadata when deleting the private file fails', function () {
+    $attachment = $this->booking->attachments()->create([
+        'original_filename' => 'meeting.pdf', 'filename' => 'private.pdf', 'path' => 'booking-results/private.pdf',
+        'type' => BookingAttachmentType::MeetingMinutes, 'mime_type' => 'application/pdf',
+        'size' => 15, 'uploaded_by' => $this->owner->id,
+    ]);
+    $disk = Mockery::mock(Filesystem::class);
+    $disk->shouldReceive('delete')->with($attachment->path)->once()->andReturn(false);
+    Storage::shouldReceive('disk')->with('local')->once()->andReturn($disk);
+
+    $this->actingAs($this->owner)->delete(route('booking.results.destroy', [$this->booking, $attachment]))->assertStatus(500);
+    $this->assertNotSoftDeleted($attachment);
+});
