@@ -17,10 +17,6 @@ export interface BookingRoom extends RoomDetails {
     has_display: boolean;
 }
 
-export interface AvailabilityRoom extends RoomDetails {
-    calendar_url: string;
-}
-
 export interface DisplayRoom extends RoomSummary {
     location: string;
     capacity: number;

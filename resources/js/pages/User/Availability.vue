@@ -7,10 +7,10 @@ import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import { getRoomColor } from '@/lib/roomColors';
 import { index } from '@/routes/availability';
 import type { CalendarEvent } from '@/types/calendar';
-import type { AvailabilityRoom, RoomDetails } from '@/types/room';
+import type { RoomDetails } from '@/types/room';
 
 const props = defineProps<{
-    rooms: AvailabilityRoom[];
+    rooms: RoomDetails[];
     events: CalendarEvent[];
     month: number;
     year: number;

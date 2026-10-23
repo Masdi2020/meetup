@@ -281,14 +281,6 @@ function confirmFinish() {
         },
     );
 }
-
-function approve(id: number) {
-    openApproveModal(id);
-}
-
-function reject(id: number) {
-    openRejectModal(id);
-}
 </script>
 
 <template>
@@ -417,38 +409,15 @@ function reject(id: number) {
             </div>
         </DetailModal>
 
-        <AppModal
+        <ConfirmModal
             v-if="showApproveModal"
             title="Setujui Booking"
-            max-width="lg"
+            :message="`Booking ID ${selectedBookingId} akan langsung ditandai sebagai Approved dan tercatat sebagai diproses.`"
+            confirm-label="Setujui"
+            tone="primary"
             @close="closeApproveModal"
-        >
-            <div class="space-y-4">
-                <p class="text-sm text-gray-700">
-                    Booking ID <strong>{{ selectedBookingId }}</strong> akan
-                    langsung ditandai sebagai <strong>Approved</strong> dan
-                    tercatat sebagai diproses.
-                </p>
-                <div class="flex justify-end gap-3">
-                    <AppButton
-                        type="button"
-                        variant="neutral"
-                        size="sm"
-                        @click="closeApproveModal"
-                    >
-                        Batal
-                    </AppButton>
-                    <AppButton
-                        type="button"
-                        variant="success"
-                        size="sm"
-                        @click="confirmApprove"
-                    >
-                        Setujui
-                    </AppButton>
-                </div>
-            </div>
-        </AppModal>
+            @confirm="confirmApprove"
+        />
 
         <AppModal
             v-if="showRejectModal"
@@ -486,37 +455,15 @@ function reject(id: number) {
             </div>
         </AppModal>
 
-        <AppModal
+        <ConfirmModal
             v-if="showFinishModal"
             title="Akhiri Peminjaman"
-            max-width="lg"
+            :message="`Peminjaman ID ${selectedBookingId} akan langsung ditandai sebagai Finished.`"
+            confirm-label="Akhiri Sekarang"
+            tone="primary"
             @close="closeFinishModal"
-        >
-            <div class="space-y-4">
-                <p class="text-sm text-gray-700">
-                    Peminjaman ID <strong>{{ selectedBookingId }}</strong> akan
-                    langsung ditandai sebagai <strong>Finished</strong>.
-                </p>
-                <div class="flex justify-end gap-3">
-                    <AppButton
-                        type="button"
-                        variant="neutral"
-                        size="sm"
-                        @click="closeFinishModal"
-                    >
-                        Batal
-                    </AppButton>
-                    <AppButton
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        @click="confirmFinish"
-                    >
-                        Akhiri Sekarang
-                    </AppButton>
-                </div>
-            </div>
-        </AppModal>
+            @confirm="confirmFinish"
+        />
 
         <div class="stats-grid">
             <StatCard label="Total" :value="stats?.total" />
@@ -628,7 +575,7 @@ function reject(id: number) {
                                 <ActionIconButton
                                     v-if="booking.status === 'pending'"
                                     action="approve"
-                                    @click="approve(booking.id)"
+                                    @click="openApproveModal(booking.id)"
                                 />
 
                                 <ActionIconButton
@@ -652,7 +599,7 @@ function reject(id: number) {
                                 <ActionIconButton
                                     v-if="booking.status === 'pending'"
                                     action="reject"
-                                    @click="reject(booking.id)"
+                                    @click="openRejectModal(booking.id)"
                                 />
                                 <ActionIconButton
                                     v-if="canDeleteBookings"

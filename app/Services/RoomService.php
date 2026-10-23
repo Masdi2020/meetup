@@ -24,25 +24,6 @@ class RoomService
             ->get();
     }
 
-    /**
-     * Summary of calendar
-     *
-     * @return Collection<int, Room>
-     */
-    public function calendar(): Collection
-    {
-        return Room::with('facilities:id,name')
-            ->select([
-                'id', 'name', 'capacity', 'location',
-                'calendar_url',
-            ])->get();
-    }
-
-    public function find(int $id): Room
-    {
-        return Room::findOrFail($id);
-    }
-
     /** @return Collection<int, Room> */
     public function displayList(): Collection
     {
