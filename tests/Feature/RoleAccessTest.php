@@ -6,11 +6,13 @@ use App\Models\BookingStatus;
 use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\Admin\UserService;
 use Database\Seeders\BookingStatusSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 function roleAccessUser(string $code, string $username = 'actor'): User
 {
@@ -294,3 +296,17 @@ it('filters audit entries by super admin role', function () {
             ->where('audits.data.0.user.role', 'super_admin')
             ->where('stats.admin', 1));
 });
+
+it('checks the current target and actor roles before resetting a password', function (bool $promoteTarget) {
+    $actor = roleAccessUser('admin');
+    $target = roleAccessUser('user', 'target');
+    $originalPassword = $target->password;
+    User::whereKey($promoteTarget ? $target->id : $actor->id)->update([
+        'role_id' => Role::where('code', $promoteTarget ? 'super_admin' : 'user')->firstOrFail()->id,
+    ]);
+
+    expect(fn () => app(UserService::class)->resetPassword($target, $actor->id))
+        ->toThrow(HttpException::class);
+    expect($target->fresh()->password)->toBe($originalPassword);
+    expect(Audit::where('action', 'password_reset')->exists())->toBeFalse();
+})->with([true, false]);

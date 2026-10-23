@@ -643,3 +643,16 @@ it('does not finish a booking rescheduled after the scheduler selected it', func
     expect($rescheduled)->toBeTrue();
     expect($booking->refresh()->status->code)->toBe('APPROVED');
 });
+
+it('excludes only an owned booking from user availability checks', function (bool $ownBooking) {
+    $owner = bookingUser('owner');
+    $actor = $ownBooking ? $owner : bookingUser('visitor');
+    $room = bookingRoom();
+    $booking = bookingRecord($owner, $room, 'APPROVED');
+
+    $this->actingAs($actor)->getJson(route('booking.availability', [
+        'room_id' => $room->id,
+        'date' => $booking->date->format('Y-m-d'),
+        'ignore_booking_id' => $booking->id,
+    ]))->assertOk()->assertJsonCount($ownBooking ? 0 : 1, 'booked_intervals');
+})->with([true, false]);

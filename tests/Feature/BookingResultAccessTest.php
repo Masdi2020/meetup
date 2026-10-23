@@ -2,11 +2,17 @@
 
 use App\Enums\BookingAttachmentType;
 use App\Models\Booking;
+use App\Models\BookingAttachment;
 use App\Models\BookingStatus;
 use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\BookingAttachmentService;
+use App\Services\BookingResultService;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -118,4 +124,53 @@ it('keeps attachment metadata when deleting the private file fails', function ()
 
     $this->actingAs($this->owner)->delete(route('booking.results.destroy', [$this->booking, $attachment]))->assertStatus(500);
     $this->assertNotSoftDeleted($attachment);
+});
+
+it('replaces the current minutes even when both requests loaded an older relation', function () {
+    $first = $this->booking->fresh()->load('meetingMinutes');
+    $second = $this->booking->fresh()->load('meetingMinutes');
+    $service = app(BookingResultService::class);
+    $service->replaceMeetingMinutes($first, $this->owner, UploadedFile::fake()->create('first.pdf', 10, 'application/pdf'));
+    $previous = $this->booking->fresh()->meetingMinutes;
+    $service->replaceMeetingMinutes($second, $this->owner, UploadedFile::fake()->create('second.pdf', 10, 'application/pdf'));
+
+    expect($this->booking->attachments()->where('type', 'meeting_minutes')->count())->toBe(1);
+    $current = $this->booking->fresh()->meetingMinutes;
+    expect($current->original_filename)->toBe('second.pdf');
+    $this->assertSoftDeleted($previous);
+    Storage::disk('local')->assertMissing($previous->path);
+    Storage::disk('local')->assertExists($current->path);
+});
+
+it('removes the uploaded file when attachment metadata cannot be saved', function () {
+    expect(fn () => app(BookingAttachmentService::class)->store(
+        $this->booking,
+        $this->owner->id + 1000,
+        UploadedFile::fake()->create('minutes.pdf', 10, 'application/pdf'),
+        BookingAttachmentType::MeetingMinutes,
+    ))->toThrow(QueryException::class);
+
+    expect(Storage::disk('local')->allFiles())->toBe([]);
+    expect($this->booking->attachments()->count())->toBe(0);
+});
+
+it('preserves the previous minutes and removes the replacement when the transaction fails', function () {
+    $service = app(BookingResultService::class);
+    $service->replaceMeetingMinutes($this->booking, $this->owner, UploadedFile::fake()->create('original.pdf', 10, 'application/pdf'));
+    $previous = $this->booking->fresh()->meetingMinutes;
+    BookingAttachment::deleting(function () {
+        throw new RuntimeException('Metadata delete failed');
+    });
+
+    try {
+        expect(fn () => $service->replaceMeetingMinutes(
+            $this->booking, $this->owner, UploadedFile::fake()->create('replacement.pdf', 10, 'application/pdf'),
+        ))->toThrow(RuntimeException::class, 'Metadata delete failed');
+    } finally {
+        Event::forget('eloquent.deleting: '.BookingAttachment::class);
+    }
+
+    $this->assertNotSoftDeleted($previous);
+    expect($this->booking->attachments()->count())->toBe(1);
+    expect(Storage::disk('local')->allFiles())->toBe([$previous->path]);
 });

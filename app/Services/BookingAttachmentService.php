@@ -9,6 +9,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Throwable;
 
 class BookingAttachmentService
 {
@@ -55,15 +56,21 @@ class BookingAttachmentService
             }
         }
 
-        return BookingAttachment::create([
-            'booking_id' => $booking->id,
-            'original_filename' => $file->getClientOriginalName(),
-            'filename' => $filename,
-            'path' => $path,
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-            'type' => $type,
-            'uploaded_by' => $actorId,
-        ]);
+        try {
+            return BookingAttachment::create([
+                'booking_id' => $booking->id,
+                'original_filename' => $file->getClientOriginalName(),
+                'filename' => $filename,
+                'path' => $path,
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'type' => $type,
+                'uploaded_by' => $actorId,
+            ]);
+        } catch (Throwable $exception) {
+            Storage::disk($type === BookingAttachmentType::Banner ? 'public' : 'local')->delete($path);
+
+            throw $exception;
+        }
     }
 }

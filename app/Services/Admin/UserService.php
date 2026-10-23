@@ -81,15 +81,26 @@ class UserService
 
     public function resetPassword(User $user, int $actorId): string
     {
-        abort_if(
-            $user->isSuperAdmin() && ! User::findOrFail($actorId)->isSuperAdmin(),
-            403,
-            'Hanya Super Admin yang dapat mereset password Super Admin.',
-        );
-
         $password = Str::password(length: 8, symbols: false);
 
         DB::transaction(function () use ($user, $password, $actorId) {
+            // Lock in ID order so simultaneous resets cannot deadlock each other.
+            $ids = array_unique([$user->id, $actorId]);
+            sort($ids);
+
+            foreach ($ids as $id) {
+                DB::table('users')->where('id', $id)->update(['updated_at' => DB::raw('updated_at')]);
+            }
+
+            $user = User::findOrFail($user->id);
+            $actor = User::findOrFail($actorId);
+            abort_unless($actor->isAdmin(), 403);
+            abort_if(
+                $user->isSuperAdmin() && ! $actor->isSuperAdmin(),
+                403,
+                'Hanya Super Admin yang dapat mereset password Super Admin.',
+            );
+
             $oldForceChangePassword = (bool) $user->force_change_password;
             $user->update([
                 'password' => Hash::make($password),

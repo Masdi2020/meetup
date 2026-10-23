@@ -7,10 +7,12 @@ use App\Models\Booking;
 use App\Models\BookingAttachment;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Throwable;
 
 class BookingResultService
 {
@@ -31,13 +33,35 @@ class BookingResultService
         User $actor,
         UploadedFile $file,
     ): void {
-        $this->assertCanManage($booking, $actor);
+        $replacement = null;
 
-        $previousMinutes = $booking->meetingMinutes;
-        $this->attachments->store($booking, $actor->id, $file, BookingAttachmentType::MeetingMinutes);
+        try {
+            DB::transaction(function () use ($booking, $actor, $file, &$replacement) {
+                DB::table('bookings')->where('id', $booking->id)->update(['updated_at' => DB::raw('updated_at')]);
+                $booking = Booking::findOrFail($booking->id);
+                $this->assertCanManage($booking, $actor);
+                $previousMinutes = $booking->meetingMinutes;
+                $replacement = $this->attachments->store($booking, $actor->id, $file, BookingAttachmentType::MeetingMinutes);
 
-        if ($previousMinutes) {
-            $this->remove($previousMinutes);
+                if ($previousMinutes) {
+                    $previousMinutes->delete();
+                    DB::afterCommit(function () use ($previousMinutes) {
+                        try {
+                            if (! Storage::disk('local')->delete($previousMinutes->path)) {
+                                throw new RuntimeException('Gagal menghapus file notulensi lama.');
+                            }
+                        } catch (Throwable $exception) {
+                            report($exception);
+                        }
+                    });
+                }
+            });
+        } catch (Throwable $exception) {
+            if ($replacement) {
+                Storage::disk('local')->delete($replacement->path);
+            }
+
+            throw $exception;
         }
     }
 

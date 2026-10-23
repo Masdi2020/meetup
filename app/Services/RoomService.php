@@ -144,6 +144,8 @@ class RoomService
     public function toggleAvailability(Room $room, int $actorId): void
     {
         DB::transaction(function () use ($actorId, $room) {
+            DB::table('rooms')->where('id', $room->id)->update(['updated_at' => DB::raw('updated_at')]);
+            $room = Room::findOrFail($room->id);
             $oldAvailability = (bool) $room->is_available;
 
             $room->update(['is_available' => ! $oldAvailability]);

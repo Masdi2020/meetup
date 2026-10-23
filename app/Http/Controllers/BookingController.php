@@ -35,9 +35,14 @@ class BookingController extends Controller
             'ignore_booking_id' => ['nullable', 'integer', 'exists:bookings,id'],
         ]);
 
-        $ignoreBookingId = $request->user()->isAdmin()
-            ? ($validated['ignore_booking_id'] ?? null)
-            : null;
+        $ignoreBookingId = $validated['ignore_booking_id'] ?? null;
+
+        if ($ignoreBookingId && ! $request->user()->isAdmin()) {
+            $ignoreBookingId = Booking::query()
+                ->whereKey($ignoreBookingId)
+                ->where('user_id', $request->user()->id)
+                ->value('id');
+        }
 
         return response()->json([
             'booked_intervals' => $this->bookingService->activeIntervals(
