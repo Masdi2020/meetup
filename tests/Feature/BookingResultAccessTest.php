@@ -13,7 +13,9 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     Storage::fake('local');
@@ -112,18 +114,20 @@ it('does not remove or overwrite conflicting copies when moving old results', fu
     expect(Storage::disk('local')->get('booking-results/legacy.pdf'))->toBe('different contents');
 });
 
-it('keeps attachment metadata when deleting the private file fails', function () {
+it('reports failed file cleanup while keeping deleted metadata for tracing', function () {
     $attachment = $this->booking->attachments()->create([
         'original_filename' => 'meeting.pdf', 'filename' => 'private.pdf', 'path' => 'booking-results/private.pdf',
         'type' => BookingAttachmentType::MeetingMinutes, 'mime_type' => 'application/pdf',
         'size' => 15, 'uploaded_by' => $this->owner->id,
     ]);
+    Exceptions::fake();
     $disk = Mockery::mock(Filesystem::class);
     $disk->shouldReceive('delete')->with($attachment->path)->once()->andReturn(false);
     Storage::shouldReceive('disk')->with('local')->once()->andReturn($disk);
 
-    $this->actingAs($this->owner)->delete(route('booking.results.destroy', [$this->booking, $attachment]))->assertStatus(500);
-    $this->assertNotSoftDeleted($attachment);
+    $this->actingAs($this->owner)->delete(route('booking.results.destroy', [$this->booking, $attachment]))->assertRedirect();
+    $this->assertSoftDeleted($attachment);
+    Exceptions::assertReported(RuntimeException::class);
 });
 
 it('replaces the current minutes even when both requests loaded an older relation', function () {
@@ -173,4 +177,41 @@ it('preserves the previous minutes and removes the replacement when the transact
     $this->assertNotSoftDeleted($previous);
     expect($this->booking->attachments()->count())->toBe(1);
     expect(Storage::disk('local')->allFiles())->toBe([$previous->path]);
+});
+
+it('rolls back the entire documentation batch when a later upload fails', function () {
+    $invalid = new UploadedFile('/missing-upload', 'missing.pdf', null, UPLOAD_ERR_NO_FILE, true);
+    expect(fn () => app(BookingResultService::class)->uploadDocumentation($this->booking, $this->owner, [
+        UploadedFile::fake()->create('first.pdf', 10, 'application/pdf'), $invalid,
+    ]))->toThrow(ValidationException::class);
+    expect($this->booking->attachments()->count())->toBe(0);
+    expect(Storage::disk('local')->allFiles())->toBe([]);
+});
+
+it('keeps the file if deleting its metadata fails', function () {
+    $service = app(BookingResultService::class);
+    $service->uploadDocumentation($this->booking, $this->owner, [UploadedFile::fake()->create('original.pdf', 10, 'application/pdf')]);
+    $attachment = $this->booking->attachments()->firstOrFail();
+    BookingAttachment::deleting(fn () => throw new RuntimeException('Delete failed'));
+
+    try {
+        expect(fn () => $service->delete($this->booking, $attachment, $this->owner))->toThrow(RuntimeException::class, 'Delete failed');
+    } finally {
+        Event::forget('eloquent.deleting: '.BookingAttachment::class);
+    }
+    $this->assertNotSoftDeleted($attachment);
+    Storage::disk('local')->assertExists($attachment->path);
+});
+
+it('cleans partial writes when storage fails without saving metadata', function () {
+    $file = UploadedFile::fake()->create('minutes.pdf', 10, 'application/pdf');
+    $path = "booking-results/{$this->booking->id}/meeting_minutes/{$file->hashName()}";
+    $disk = Mockery::mock(Filesystem::class);
+    $disk->shouldReceive('writeStream')->once()->andReturn(false);
+    $disk->shouldReceive('delete')->with($path)->once()->andReturn(true);
+    Storage::shouldReceive('disk')->with('local')->andReturn($disk);
+
+    expect(fn () => app(BookingAttachmentService::class)->store($this->booking, $this->owner->id, $file, BookingAttachmentType::MeetingMinutes))
+        ->toThrow(RuntimeException::class, 'Gagal menyimpan file hasil rapat.');
+    expect($this->booking->attachments()->count())->toBe(0);
 });
