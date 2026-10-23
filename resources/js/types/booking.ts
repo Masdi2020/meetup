@@ -6,6 +6,7 @@ export type BookingStatusCode = Uppercase<BookingStatus>;
 
 export interface BookingHistory {
     id: number;
+    room_id: number;
     room: string;
     date: string;
     time: string;
@@ -46,4 +47,13 @@ export interface BannerPageProps {
     booking: BannerBooking | null;
     next_change: string | null;
     now: string;
+}
+
+export interface BookingEdit {
+    id: number;
+    room_id: number;
+    title: string;
+    date: string;
+    start_time: string;
+    end_time: string;
 }

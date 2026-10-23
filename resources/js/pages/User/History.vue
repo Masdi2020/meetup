@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { FileText } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import {
     ActionIconButton,
-    AppInput,
+    AppButton,
     BookingStatusBadge,
 } from '@/components/atoms';
 import { PageHeader } from '@/components/molecules';
-import { AppModal, BookingResults, ConfirmModal } from '@/components/organisms';
+import {
+    AppModal,
+    BookingEditModal,
+    BookingResults,
+    ConfirmModal,
+} from '@/components/organisms';
+import { useAdminFilters } from '@/composables/admin/useAdminFilters';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
-import { localDateString, bookingDateForInput } from '@/lib/dates';
 import { update, cancel, finish } from '@/routes/booking';
 import {
     documentation,
@@ -18,14 +23,15 @@ import {
     destroy as destroyResult,
     show as showResult,
 } from '@/routes/booking/results';
+import { index as historyIndex } from '@/routes/history';
+import type { Pagination } from '@/types/admin';
 import type {
+    BookingEdit,
     BookingHistory,
     BookingHistoryStatus,
     HistoryStatusOption,
 } from '@/types/booking';
 
-const showEditModal = ref(false);
-const showDateAlertModal = ref(false);
 const bookingToCancel = ref<number | null>(null);
 const isCancelling = ref(false);
 const bookingToFinish = ref<number | null>(null);
@@ -33,54 +39,36 @@ const isFinishing = ref(false);
 const resultsBusy = ref(false);
 const selectedResultsBooking = ref<BookingHistory | null>(null);
 const showResultsModal = ref(false);
-const today = localDateString();
-
-const editForm = ref({
-    id: 0,
-    title: '',
-    date: '',
-    start_time: '',
-    end_time: '',
+const editingBooking = ref<BookingEdit | null>(null);
+const props = defineProps<{
+    histories: Pagination<BookingHistory> & { per_page: number };
+    statuses: HistoryStatusOption[];
+    filters: { status: BookingHistoryStatus | '' };
+}>();
+const filterStatus = ref(props.filters.status);
+const { goToPage } = useAdminFilters(historyIndex.url(), {
+    instantSources: [filterStatus],
+    query: () => ({ status: filterStatus.value }),
+    reset: () => {
+        filterStatus.value = '';
+    },
 });
 
 const openEditModal = (booking: BookingHistory) => {
     const [start, end] = booking.time.split(' - ');
-
-    editForm.value = {
+    editingBooking.value = {
         id: booking.id,
+        room_id: booking.room_id,
         title: booking.title,
-        date: bookingDateForInput(booking.date),
+        date: booking.date,
         start_time: start,
         end_time: end,
     };
-
-    showEditModal.value = true;
 };
 
 const closeEditModal = () => {
-    showEditModal.value = false;
+    editingBooking.value = null;
 };
-
-const submitEdit = () => {
-    if (editForm.value.date && editForm.value.date < today) {
-        showDateAlertModal.value = true;
-
-        return;
-    }
-
-    router.put(update.url(editForm.value.id), editForm.value, {
-        onSuccess: () => {
-            closeEditModal();
-        },
-    });
-};
-
-const filterStatus = ref<BookingHistoryStatus | ''>('');
-
-const { histories, statuses } = defineProps<{
-    histories: BookingHistory[];
-    statuses: HistoryStatusOption[];
-}>();
 
 const openResultsModal = (booking: BookingHistory) => {
     selectedResultsBooking.value = booking;
@@ -114,7 +102,7 @@ const resultStatus = (booking: BookingHistory) => {
 useBookingPageUpdates(['histories']);
 
 watch(
-    () => histories,
+    () => props.histories.data,
     (bookings) => {
         if (selectedResultsBooking.value) {
             selectedResultsBooking.value =
@@ -131,7 +119,7 @@ watch(
                     ['Pending', 'Approved'].includes(booking.status),
             );
 
-        if (showEditModal.value && !canEdit(editForm.value.id)) {
+        if (editingBooking.value && !canEdit(editingBooking.value.id)) {
             closeEditModal();
         }
 
@@ -151,14 +139,6 @@ watch(
         }
     },
 );
-
-const filteredHistory = computed(() => {
-    if (!filterStatus.value) {
-        return histories;
-    }
-
-    return histories.filter((history) => history.status === filterStatus.value);
-});
 
 const openCancelModal = (id: number) => {
     bookingToCancel.value = id;
@@ -253,10 +233,17 @@ const finishBooking = () => {
 
                     <tbody>
                         <tr
-                            v-for="(item, index) in filteredHistory"
+                            v-for="(item, index) in histories.data"
                             :key="item.id"
                         >
-                            <td>{{ index + 1 }}</td>
+                            <td>
+                                {{
+                                    (histories.current_page - 1) *
+                                        histories.per_page +
+                                    index +
+                                    1
+                                }}
+                            </td>
                             <td>{{ item.room }}</td>
                             <td>{{ item.date }}</td>
                             <td>{{ item.time }}</td>
@@ -330,132 +317,116 @@ const finishBooking = () => {
                             </td>
                         </tr>
 
-                        <tr v-if="filteredHistory.length === 0">
+                        <tr v-if="histories.data.length === 0">
                             <td colspan="8" class="empty">Tidak ada data.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-
-    <AppModal
-        v-if="showResultsModal && selectedResultsBooking"
-        title="Hasil Rapat"
-        max-width="2xl"
-        @close="closeResultsModal"
-    >
-        <div class="results-modal-content">
-            <div class="booking-summary">
-                <div>
-                    <span>Ruangan</span>
-                    <strong>{{ selectedResultsBooking.room }}</strong>
-                </div>
-                <div>
-                    <span>Tanggal</span>
-                    <strong>{{ selectedResultsBooking.date }}</strong>
-                </div>
-                <div>
-                    <span>Waktu</span>
-                    <strong>{{ selectedResultsBooking.time }}</strong>
-                </div>
-                <div class="sm:col-span-2">
-                    <span>Judul rapat</span>
-                    <strong>{{ selectedResultsBooking.title }}</strong>
-                </div>
+            <div
+                v-if="histories.last_page > 1 || histories.current_page > 1"
+                class="flex items-center justify-center gap-3"
+            >
+                <AppButton
+                    variant="outline"
+                    size="sm"
+                    :disabled="histories.current_page <= 1"
+                    @click="goToPage(histories.current_page - 1)"
+                    >Sebelumnya</AppButton
+                >
+                <span class="text-sm text-gray-600"
+                    >Halaman {{ histories.current_page }} dari
+                    {{ histories.last_page }}</span
+                >
+                <AppButton
+                    variant="outline"
+                    size="sm"
+                    :disabled="histories.current_page >= histories.last_page"
+                    @click="goToPage(histories.current_page + 1)"
+                    >Berikutnya</AppButton
+                >
             </div>
-
-            <BookingResults
-                :key="selectedResultsBooking.id"
-                :booking-id="selectedResultsBooking.id"
-                :routes="{
-                    documentation: documentation.url,
-                    meetingMinutes: meetingMinutes.url,
-                    destroy: destroyResult.url,
-                    show: showResult.url,
-                }"
-                :documentations="selectedResultsBooking.documentations"
-                :meeting-minutes="selectedResultsBooking.meeting_minutes"
-                :editable="selectedResultsBooking.results_available"
-                @busy="resultsBusy = $event"
-            />
         </div>
-        <template #actions>
-            <button
-                type="button"
-                class="ui-button"
-                :disabled="resultsBusy"
-                @click="closeResultsModal"
-            >
-                Tutup
-            </button>
-        </template>
-    </AppModal>
 
-    <AppModal
-        v-if="showDateAlertModal"
-        title="Tanggal Tidak Valid"
-        max-width="md"
-        @close="showDateAlertModal = false"
-    >
-        <p>Tanggal tidak boleh kurang dari hari ini.</p>
-        <template #actions
-            ><button
-                class="ui-button ui-button--primary"
-                @click="showDateAlertModal = false"
-            >
-                Mengerti
-            </button></template
+        <AppModal
+            v-if="showResultsModal && selectedResultsBooking"
+            title="Hasil Rapat"
+            max-width="2xl"
+            @close="closeResultsModal"
         >
-    </AppModal>
+            <div class="results-modal-content">
+                <div class="booking-summary">
+                    <div>
+                        <span>Ruangan</span>
+                        <strong>{{ selectedResultsBooking.room }}</strong>
+                    </div>
+                    <div>
+                        <span>Tanggal</span>
+                        <strong>{{ selectedResultsBooking.date }}</strong>
+                    </div>
+                    <div>
+                        <span>Waktu</span>
+                        <strong>{{ selectedResultsBooking.time }}</strong>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <span>Judul rapat</span>
+                        <strong>{{ selectedResultsBooking.title }}</strong>
+                    </div>
+                </div>
 
-    <ConfirmModal
-        v-if="bookingToCancel !== null"
-        title="Batalkan Peminjaman"
-        message="Apakah Anda yakin ingin membatalkan peminjaman ini?"
-        confirm-label="Batalkan Peminjaman"
-        :processing="isCancelling"
-        @close="closeCancelModal"
-        @confirm="cancelBooking"
-    />
-    <ConfirmModal
-        v-if="bookingToFinish !== null"
-        title="Akhiri Peminjaman"
-        message="Apakah Anda yakin ingin mengakhiri peminjaman ini sekarang?"
-        confirm-label="Akhiri Sekarang"
-        :processing="isFinishing"
-        @close="closeFinishModal"
-        @confirm="finishBooking"
-    />
-    <AppModal v-if="showEditModal" title="Edit Booking" @close="closeEditModal">
-        <div class="form-group">
-            <label>Judul</label>
-            <input type="text" v-model="editForm.title" />
-        </div>
+                <BookingResults
+                    :key="selectedResultsBooking.id"
+                    :booking-id="selectedResultsBooking.id"
+                    :routes="{
+                        documentation: documentation.url,
+                        meetingMinutes: meetingMinutes.url,
+                        destroy: destroyResult.url,
+                        show: showResult.url,
+                    }"
+                    :documentations="selectedResultsBooking.documentations"
+                    :meeting-minutes="selectedResultsBooking.meeting_minutes"
+                    :editable="selectedResultsBooking.results_available"
+                    @busy="resultsBusy = $event"
+                />
+            </div>
+            <template #actions>
+                <button
+                    type="button"
+                    class="ui-button"
+                    :disabled="resultsBusy"
+                    @click="closeResultsModal"
+                >
+                    Tutup
+                </button>
+            </template>
+        </AppModal>
 
-        <div class="form-group">
-            <label>Tanggal</label>
-            <AppInput v-model="editForm.date" type="date" :min="today" />
-        </div>
-
-        <div class="form-group">
-            <label>Jam Mulai</label>
-            <AppInput v-model="editForm.start_time" type="time" />
-        </div>
-
-        <div class="form-group">
-            <label>Jam Selesai</label>
-            <AppInput v-model="editForm.end_time" type="time" />
-        </div>
-
-        <template #actions>
-            <button class="ui-button" @click="closeEditModal">Batal</button>
-
-            <button class="ui-button ui-button--primary" @click="submitEdit">
-                Simpan
-            </button>
-        </template>
-    </AppModal>
+        <ConfirmModal
+            v-if="bookingToCancel !== null"
+            title="Batalkan Peminjaman"
+            message="Apakah Anda yakin ingin membatalkan peminjaman ini?"
+            confirm-label="Batalkan Peminjaman"
+            :processing="isCancelling"
+            @close="closeCancelModal"
+            @confirm="cancelBooking"
+        />
+        <ConfirmModal
+            v-if="bookingToFinish !== null"
+            title="Akhiri Peminjaman"
+            message="Apakah Anda yakin ingin mengakhiri peminjaman ini sekarang?"
+            confirm-label="Akhiri Sekarang"
+            :processing="isFinishing"
+            @close="closeFinishModal"
+            @confirm="finishBooking"
+        />
+        <BookingEditModal
+            v-if="editingBooking"
+            :key="editingBooking.id"
+            :booking="editingBooking"
+            :update-url="update.url"
+            @close="closeEditModal"
+        />
+    </div>
 </template>
 
 <style scoped>
@@ -510,20 +481,6 @@ tbody tr:hover {
 .action-buttons {
     display: flex;
     gap: 8px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: var(--ui-gap);
-}
-
-.form-group input {
-    min-height: var(--ui-control-height);
-    padding: 10px 12px;
-    border: 1px solid var(--ui-border);
-    border-radius: 8px;
 }
 
 .results-cell {

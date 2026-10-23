@@ -4,11 +4,8 @@ namespace App\Services;
 
 use App\Models\Booking;
 use App\Models\BookingStatus;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-
-// use ILluminate\Http\UploadedFile;
-// use Illuminate\Support\Facades\DB;
-// use Illuminate\Support\Facades\Storage;
 
 class BookingService
 {
@@ -31,11 +28,9 @@ class BookingService
     }
 
     /**
-     * Summary of history
-     *
-     * @return Collection<int, array<string, mixed>>
+     * @return LengthAwarePaginator<int, array<string, mixed>>
      */
-    public function history(int $userId): Collection
+    public function history(int $userId, string $status = ''): LengthAwarePaginator
     {
         return Booking::with([
             'room:id,name',
@@ -43,9 +38,11 @@ class BookingService
             'documentations:id,booking_id,original_filename,path,mime_type,size,type',
             'meetingMinutes:id,booking_id,original_filename,path,mime_type,size,type',
         ])->where('user_id', $userId)
-            ->orderBy('created_at', 'asc')
-            ->get()
-            ->map(fn (Booking $booking): array => $this->formatHistoryBooking($booking));
+            ->when($status !== '', fn ($query) => $query->whereHas('status', fn ($query) => $query->where('code', $status)))
+            ->orderBy('created_at')->orderBy('id')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (Booking $booking): array => $this->formatHistoryBooking($booking));
     }
 
     /**
@@ -55,6 +52,7 @@ class BookingService
     {
         return [
             'id' => (int) $booking->id,
+            'room_id' => (int) $booking->room_id,
             'room' => (string) $booking->room->name,
             'date' => (string) $booking->date->format('d/m/Y'),
             'time' => (string) $booking->start_time->format('H:i').' - '.$booking->end_time->format('H:i'),

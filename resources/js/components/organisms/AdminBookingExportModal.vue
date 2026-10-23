@@ -7,12 +7,14 @@ import type {
     BookingExportColumnKey,
     BookingExportFormat,
     BookingExportPayload,
+    BookingExportOptions,
 } from '@/lib/bookingExport';
 import { exportData } from '@/routes/admin/bookings';
 import type { BookingStatus } from '@/types/admin';
 
 const props = defineProps<{
     open: boolean;
+    options: BookingExportOptions;
     search: string;
     room: string;
     status: string;
@@ -45,34 +47,11 @@ const exportPeriodOptions: Array<{
     { value: 'month', label: 'Bulan', description: 'Satu bulan' },
     { value: 'year', label: 'Tahun', description: 'Satu tahun' },
 ];
-const exportStatusOptions: Array<{ value: BookingStatus; label: string }> = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'rejected', label: 'Rejected' },
-    { value: 'cancelled', label: 'Cancelled' },
-    { value: 'finished', label: 'Finished' },
-];
+const exportStatusOptions = computed(() => props.options.statuses);
+const exportColumnOptions = computed(() => props.options.columns);
 const selectedExportStatuses = ref<BookingStatus[]>(
-    exportStatusOptions.map((status) => status.value),
+    exportStatusOptions.value.map((status) => status.value),
 );
-const exportColumnOptions: Array<{
-    key: BookingExportColumnKey;
-    label: string;
-}> = [
-    { key: 'id', label: 'ID' },
-    { key: 'borrower', label: 'Peminjam' },
-    { key: 'room', label: 'Ruangan' },
-    { key: 'activity', label: 'Kegiatan' },
-    { key: 'date', label: 'Tanggal' },
-    { key: 'start', label: 'Waktu Mulai' },
-    { key: 'end', label: 'Waktu Selesai' },
-    { key: 'participants', label: 'Jumlah Peserta' },
-    { key: 'status', label: 'Status' },
-    { key: 'request', label: 'Catatan/Request' },
-    { key: 'processed_notes', label: 'Catatan Proses' },
-    { key: 'submitted_at', label: 'Dibuat Pada' },
-    { key: 'processed_at', label: 'Diproses Pada' },
-];
 const selectedExportColumns = ref<BookingExportColumnKey[]>([
     'borrower',
     'room',
@@ -82,10 +61,13 @@ const selectedExportColumns = ref<BookingExportColumnKey[]>([
     'end',
 ]);
 const allExportColumnsSelected = computed(
-    () => selectedExportColumns.value.length === exportColumnOptions.length,
+    () =>
+        selectedExportColumns.value.length === exportColumnOptions.value.length,
 );
 const allExportStatusesSelected = computed(
-    () => selectedExportStatuses.value.length === exportStatusOptions.length,
+    () =>
+        selectedExportStatuses.value.length ===
+        exportStatusOptions.value.length,
 );
 const exportBusy = computed(
     () => previewLoading.value || downloadLoading.value,
@@ -146,7 +128,7 @@ const exportPeriodDescription = computed(() => {
 });
 
 function openExportModal() {
-    const activeStatus = exportStatusOptions.find(
+    const activeStatus = exportStatusOptions.value.find(
         (status) => status.value === props.status,
     )?.value;
 
@@ -154,7 +136,7 @@ function openExportModal() {
     exportPreview.value = null;
     selectedExportStatuses.value = activeStatus
         ? [activeStatus]
-        : exportStatusOptions.map((status) => status.value);
+        : exportStatusOptions.value.map((status) => status.value);
 }
 
 function closeExportModal() {
@@ -170,13 +152,13 @@ function closeExportModal() {
 function toggleAllExportColumns() {
     selectedExportColumns.value = allExportColumnsSelected.value
         ? []
-        : exportColumnOptions.map((column) => column.key);
+        : exportColumnOptions.value.map((column) => column.key);
 }
 
 function toggleAllExportStatuses() {
     selectedExportStatuses.value = allExportStatusesSelected.value
         ? []
-        : exportStatusOptions.map((status) => status.value);
+        : exportStatusOptions.value.map((status) => status.value);
 }
 
 watch(

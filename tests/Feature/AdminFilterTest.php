@@ -243,6 +243,13 @@ it('exports an automatic number column followed by the selected ID column', func
         'period' => 'all',
     ]);
 
+    $attachmentQueries = 0;
+    DB::listen(function (QueryExecuted $query) use (&$attachmentQueries): void {
+        if (str_contains($query->sql, 'booking_attachments')) {
+            $attachmentQueries++;
+        }
+    });
+
     $response = $this->actingAs($admin)
         ->getJson("/admin/bookings/export-data?{$query}")
         ->assertOk()
@@ -253,6 +260,7 @@ it('exports an automatic number column followed by the selected ID column', func
         ->assertJsonPath('rows.0.number', 1)
         ->assertJsonPath('rows.1.number', 2);
 
+    expect($attachmentQueries)->toBe(0);
     expect($response->json('rows.*.id'))
         ->toEqualCanonicalizing($bookings->pluck('id')->all());
 });
@@ -270,4 +278,20 @@ it('rejects unsupported booking export options through its form request', functi
         ->getJson("/admin/bookings/export-data?{$query}")
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['columns.0', 'statuses.0', 'period']);
+});
+
+it('provides export choices that the export endpoint accepts', function () {
+    $admin = filterUser('Admin', 'export-options-admin', 'admin');
+    $response = $this->actingAs($admin)->get('/admin/bookings')->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('exportOptions.columns', 13)
+            ->has('exportOptions.statuses', 5)
+            ->where('exportOptions.columns.0.key', 'id')
+            ->where('exportOptions.columns.0.label', 'ID'));
+    $options = $response->inertiaProps('exportOptions');
+
+    $this->getJson('/admin/bookings/export-data?'.http_build_query([
+        'columns' => collect($options['columns'])->pluck('key')->all(),
+        'statuses' => collect($options['statuses'])->pluck('value')->all(),
+    ]))->assertOk()->assertJsonCount(14, 'columns');
 });

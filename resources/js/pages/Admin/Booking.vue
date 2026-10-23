@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { router, useForm } from '@inertiajs/vue3';
-import { computed, ref, toRef, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
 import {
     ActionIconButton,
     AppButton,
-    AppInput,
     AppSelect,
     AppTextarea,
     BookingStatusBadge,
-    VCalendarInput,
 } from '@/components/atoms';
 import { FormField, PageHeader, StatCard } from '@/components/molecules';
 import {
@@ -16,15 +14,15 @@ import {
     AdminBookingExportModal,
     AdminSearchPanel,
     AppModal,
+    BookingEditModal,
     BookingResults,
     ConfirmModal,
     DetailModal,
 } from '@/components/organisms';
 import { useAdminFilters } from '@/composables/admin/useAdminFilters';
-import { useBookingAvailability } from '@/composables/useBookingAvailability';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import { useModalManager } from '@/composables/useModal';
-import { localDateString, bookingDateForInput } from '@/lib/dates';
+import type { BookingExportOptions } from '@/lib/bookingExport';
 import {
     index,
     update,
@@ -48,9 +46,11 @@ import type {
     Pagination,
     BookingRoomOption as Room,
 } from '@/types/admin';
+import type { BookingEdit } from '@/types/booking';
 
 const props = defineProps<{
     canDeleteBookings: boolean;
+    exportOptions: BookingExportOptions;
     bookings: Pagination<Booking>;
     rooms?: Room[];
     users?: BorrowerOption[];
@@ -82,7 +82,6 @@ const { applyFilters, resetFilters, goToPage } = useAdminFilters(index.url(), {
         roomFilter.value = '';
     },
 });
-const today = localDateString();
 
 const showAddBookingModal = computed(() => isModalOpen('add'));
 const { openModal, closeModal, isModalOpen } = useModalManager<
@@ -102,53 +101,23 @@ const isCancellingBooking = ref(false);
 const rejectReason = ref('');
 const rejectValidationErrors = ref({ reason: '' });
 const resultsBusy = ref(false);
-const editBookingForm = useForm({
-    title: '',
-    date: '',
-    start_time: '',
-    end_time: '',
-});
-const editingBooking = ref<Booking | null>(null);
-
-const editingRoomId = computed(() => editingBooking.value?.room_id ?? null);
-const editingBookingId = computed(() => editingBooking.value?.id ?? null);
-const editAvailability = useBookingAvailability({
-    roomId: editingRoomId,
-    date: toRef(editBookingForm, 'date'),
-    startTime: toRef(editBookingForm, 'start_time'),
-    endTime: toRef(editBookingForm, 'end_time'),
-    ignoreBookingId: editingBookingId,
-});
+const editingBooking = ref<BookingEdit | null>(null);
 
 function openEditBookingModal(booking: Booking) {
-    editingBooking.value = booking;
-    editBookingForm.clearErrors();
-    editBookingForm.title = booking.activity;
-    editBookingForm.date = bookingDateForInput(booking.date);
-    editBookingForm.start_time = booking.start;
-    editBookingForm.end_time = booking.end;
+    editingBooking.value = {
+        id: booking.id,
+        room_id: booking.room_id,
+        title: booking.activity,
+        date: booking.date,
+        start_time: booking.start,
+        end_time: booking.end,
+    };
     openModal('edit');
 }
 
 function closeEditBookingModal() {
-    if (editBookingForm.processing) {
-        return;
-    }
-
     closeModal();
     editingBooking.value = null;
-    editBookingForm.reset();
-}
-
-function submitEditBooking() {
-    if (!editingBooking.value) {
-        return;
-    }
-
-    editBookingForm.put(update.url(editingBooking.value.id), {
-        preserveScroll: true,
-        onSuccess: () => closeEditBookingModal(),
-    });
 }
 
 function openCancelBookingModal(booking: Booking) {
@@ -352,6 +321,7 @@ function reject(id: number) {
             :search="search"
             :room="roomFilter"
             :status="statusFilter"
+            :options="exportOptions"
             @close="closeModal"
         />
         <AdminBookingCreateModal
@@ -362,124 +332,13 @@ function reject(id: number) {
             @close="closeModal"
         />
 
-        <AppModal
-            v-if="showEditBookingModal"
-            title="Edit Booking Approved"
-            max-width="2xl"
+        <BookingEditModal
+            v-if="showEditBookingModal && editingBooking"
+            :key="editingBooking.id"
+            :booking="editingBooking"
+            :update-url="update.url"
             @close="closeEditBookingModal"
-        >
-            <div class="grid gap-4 md:grid-cols-2">
-                <FormField
-                    class="md:col-span-2"
-                    label="Judul Kegiatan"
-                    appearance="admin"
-                    required
-                    :error="editBookingForm.errors.title"
-                >
-                    <AppInput
-                        v-model="editBookingForm.title"
-                        appearance="admin"
-                    />
-                </FormField>
-                <FormField
-                    label="Tanggal"
-                    appearance="admin"
-                    required
-                    :error="editBookingForm.errors.date"
-                >
-                    <VCalendarInput
-                        v-model="editBookingForm.date"
-                        appearance="admin"
-                        mode="date"
-                        :min-date="today"
-                    />
-                </FormField>
-                <div class="hidden md:block" />
-                <div class="grid min-w-0 grid-cols-2 gap-3 md:col-span-2">
-                    <FormField
-                        label="Dari Jam"
-                        appearance="admin"
-                        required
-                        :error="editBookingForm.errors.start_time"
-                    >
-                        <VCalendarInput
-                            v-model="editBookingForm.start_time"
-                            appearance="admin"
-                            mode="time"
-                            :rules="editAvailability.startRules.value"
-                            :disabled="
-                                editAvailability.isLoading.value ||
-                                Boolean(editAvailability.loadError.value) ||
-                                editAvailability.availableStartTimes.value
-                                    .length === 0
-                            "
-                        />
-                    </FormField>
-                    <FormField
-                        label="Sampai Jam"
-                        appearance="admin"
-                        required
-                        :error="editBookingForm.errors.end_time"
-                    >
-                        <VCalendarInput
-                            v-model="editBookingForm.end_time"
-                            appearance="admin"
-                            mode="time"
-                            :rules="editAvailability.endRules.value"
-                            :disabled="
-                                !editBookingForm.start_time ||
-                                editAvailability.isLoading.value ||
-                                Boolean(editAvailability.loadError.value) ||
-                                editAvailability.availableEndTimes.value
-                                    .length === 0
-                            "
-                        />
-                    </FormField>
-                </div>
-                <p
-                    v-if="editAvailability.isLoading.value"
-                    class="-mt-2 text-sm text-gray-500 md:col-span-2"
-                >
-                    Memuat jam yang tersedia...
-                </p>
-                <p
-                    v-else-if="editAvailability.loadError.value"
-                    class="-mt-2 text-sm text-red-600 md:col-span-2"
-                >
-                    {{ editAvailability.loadError.value }}
-                </p>
-                <p
-                    v-else-if="editAvailability.bookedIntervals.value.length"
-                    class="-mt-2 text-sm text-gray-500 md:col-span-2"
-                >
-                    Jam booking lain disembunyikan dari pilihan.
-                </p>
-                <div class="flex justify-end gap-3 md:col-span-2">
-                    <AppButton
-                        type="button"
-                        variant="neutral"
-                        size="sm"
-                        :disabled="editBookingForm.processing"
-                        @click="closeEditBookingModal"
-                    >
-                        Batal
-                    </AppButton>
-                    <AppButton
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        :disabled="editBookingForm.processing"
-                        @click="submitEditBooking"
-                    >
-                        {{
-                            editBookingForm.processing
-                                ? 'Menyimpan...'
-                                : 'Simpan Perubahan'
-                        }}
-                    </AppButton>
-                </div>
-            </div>
-        </AppModal>
+        />
 
         <DetailModal
             v-if="showDetailModal"
