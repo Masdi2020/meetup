@@ -1,0 +1,4 @@
+[mcp_servers.laravel-boost]
+command = "/usr/bin/php"
+args = ["artisan", "boost:mcp"]
+cwd = "/home/masdi/Public/MEETUP"
