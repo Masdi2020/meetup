@@ -2,17 +2,19 @@
 import { router, usePage } from '@inertiajs/vue3';
 import { Check, Copy } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
-import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
-import AppButton from '@/components/atoms/AppButton.vue';
-import AppInput from '@/components/atoms/AppInput.vue';
-import AppSelect from '@/components/atoms/AppSelect.vue';
-import FormField from '@/components/molecules/FormField.vue';
-import PageHeader from '@/components/molecules/PageHeader.vue';
-import StatCard from '@/components/molecules/StatCard.vue';
-import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
-import AppModal from '@/components/organisms/AppModal.vue';
-import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
-import DetailModal from '@/components/organisms/DetailModal.vue';
+import {
+    ActionIconButton,
+    AppButton,
+    AppInput,
+    AppSelect,
+} from '@/components/atoms';
+import { FormField, PageHeader, StatCard } from '@/components/molecules';
+import {
+    AdminSearchPanel,
+    AppModal,
+    ConfirmModal,
+    DetailModal,
+} from '@/components/organisms';
 import { useAdminFilters } from '@/composables/admin/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import {

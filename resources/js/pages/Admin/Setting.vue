@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
-import AppButton from '@/components/atoms/AppButton.vue';
-import AppInput from '@/components/atoms/AppInput.vue';
-import FormField from '@/components/molecules/FormField.vue';
-import PageHeader from '@/components/molecules/PageHeader.vue';
+import { AppButton, AppInput } from '@/components/atoms';
+import { FormField, PageHeader } from '@/components/molecules';
 import { update } from '@/routes/admin/settings';
 const props = defineProps<{
     settings: {

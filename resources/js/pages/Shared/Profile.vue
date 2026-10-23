@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import PageHeader from '@/components/molecules/PageHeader.vue';
-import PasswordField from '@/components/molecules/PasswordField.vue';
+import { PageHeader, PasswordField } from '@/components/molecules';
 import { update, password } from '@/routes/profile';
 import type { ProfilePageProps } from '@/types/auth';
 

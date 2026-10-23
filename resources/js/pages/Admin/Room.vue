@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
-import AppButton from '@/components/atoms/AppButton.vue';
-import AppInput from '@/components/atoms/AppInput.vue';
-import CheckboxField from '@/components/molecules/CheckboxField.vue';
-import CheckboxGroup from '@/components/molecules/CheckboxGroup.vue';
-import FormField from '@/components/molecules/FormField.vue';
-import PageHeader from '@/components/molecules/PageHeader.vue';
-import StatCard from '@/components/molecules/StatCard.vue';
-import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
-import AppModal from '@/components/organisms/AppModal.vue';
-import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
-import DetailModal from '@/components/organisms/DetailModal.vue';
+import { ActionIconButton, AppButton, AppInput } from '@/components/atoms';
+import {
+    CheckboxField,
+    CheckboxGroup,
+    FormField,
+    PageHeader,
+    StatCard,
+} from '@/components/molecules';
+import {
+    AdminSearchPanel,
+    AppModal,
+    ConfirmModal,
+    DetailModal,
+} from '@/components/organisms';
 import { useAdminFilters } from '@/composables/admin/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import {

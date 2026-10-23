@@ -2,13 +2,13 @@
 import { router } from '@inertiajs/vue3';
 import { FileText } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
-import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
-import AppInput from '@/components/atoms/AppInput.vue';
-import BookingStatusBadge from '@/components/atoms/BookingStatusBadge.vue';
-import PageHeader from '@/components/molecules/PageHeader.vue';
-import AppModal from '@/components/organisms/AppModal.vue';
-import BookingResults from '@/components/organisms/BookingResults.vue';
-import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
+import {
+    ActionIconButton,
+    AppInput,
+    BookingStatusBadge,
+} from '@/components/atoms';
+import { PageHeader } from '@/components/molecules';
+import { AppModal, BookingResults, ConfirmModal } from '@/components/organisms';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import { localDateString, bookingDateForInput } from '@/lib/dates';
 import { update, cancel, finish } from '@/routes/booking';

@@ -2,7 +2,7 @@
 import { router, useForm } from '@inertiajs/vue3';
 import { FileText, ImagePlus, Upload, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
+import { ActionIconButton } from '@/components/atoms';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import type { BookingResultFile } from '@/types/booking';
 

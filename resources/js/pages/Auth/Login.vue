@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import AppButton from '@/components/atoms/AppButton.vue';
-import AppInput from '@/components/atoms/AppInput.vue';
-import FormField from '@/components/molecules/FormField.vue';
-import PasswordField from '@/components/molecules/PasswordField.vue';
-import SurfaceCard from '@/components/molecules/SurfaceCard.vue';
+import { AppButton, AppInput } from '@/components/atoms';
+import { FormField, PasswordField, SurfaceCard } from '@/components/molecules';
 import { csrfToken } from '@/routes';
 import { store } from '@/routes/login';
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Dayjs } from 'dayjs';
 import { computed } from 'vue';
-import BookingStatusBadge from '@/components/atoms/BookingStatusBadge.vue';
+import { BookingStatusBadge } from '@/components/atoms';
 import { getRoomColor, getRoomTextColor } from '@/lib/roomColors';
 import type { CalendarEvent } from '@/types/calendar';
 

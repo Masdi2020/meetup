@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import PageHeader from '@/components/molecules/PageHeader.vue';
-import StatCard from '@/components/molecules/StatCard.vue';
+import { PageHeader, StatCard } from '@/components/molecules';
 import type {
     AuditLog as Activity,
     DashboardStats as Stats,
