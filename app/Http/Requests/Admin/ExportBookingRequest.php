@@ -37,6 +37,7 @@ class ExportBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'preview' => ['sometimes', 'boolean'],
             'columns' => ['required', 'array', 'min:1'],
             'columns.*' => [
                 'required',
@@ -67,6 +68,7 @@ class ExportBookingRequest extends FormRequest
     public function exportOptions(): array
     {
         return $this->safe()->only([
+            'preview',
             'columns',
             'statuses',
             'period',

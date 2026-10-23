@@ -150,9 +150,13 @@ class AdminBookingQueryService
             $bookingsQuery->whereYear('date', (int) $data['year']);
         }
 
+        $preview = (bool) ($data['preview'] ?? false);
+        $total = $preview ? (clone $bookingsQuery)->count() : null;
         $bookings = $bookingsQuery
+            ->when($preview, fn ($query) => $query->limit(20))
             ->orderByDesc('date')
             ->orderByDesc('start_time')
+            ->orderByDesc('id')
             ->get();
 
         return [
@@ -164,7 +168,7 @@ class AdminBookingQueryService
                 ->mapWithKeys(fn (string $column) => [$column => $this->exportValue($booking, $column)])
                 ->prepend($index + 1, 'number')),
             'meta' => [
-                'total' => $bookings->count(),
+                'total' => $total ?? $bookings->count(),
                 'exported_at' => now()->format('d/m/Y H:i'),
             ],
         ];

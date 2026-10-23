@@ -9,7 +9,6 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Throwable;
@@ -21,10 +20,24 @@ class BookingResultService
     /** @param array<int, UploadedFile> $files */
     public function uploadDocumentation(Booking $booking, User $actor, array $files): void
     {
-        $this->assertCanManage($booking, $actor);
+        $stored = [];
 
-        foreach ($files as $file) {
-            $this->attachments->store($booking, $actor->id, $file, BookingAttachmentType::Documentation);
+        try {
+            DB::transaction(function () use ($booking, $actor, $files, &$stored) {
+                DB::table('bookings')->where('id', $booking->id)->update(['updated_at' => DB::raw('updated_at')]);
+                $booking = Booking::findOrFail($booking->id);
+                $this->assertCanManage($booking, $actor);
+
+                foreach ($files as $file) {
+                    $stored[] = $this->attachments->store($booking, $actor->id, $file, BookingAttachmentType::Documentation);
+                }
+            });
+        } catch (Throwable $exception) {
+            foreach ($stored as $attachment) {
+                $this->attachments->deleteFile($attachment->path, $attachment->type);
+            }
+
+            throw $exception;
         }
     }
 
@@ -44,21 +57,12 @@ class BookingResultService
                 $replacement = $this->attachments->store($booking, $actor->id, $file, BookingAttachmentType::MeetingMinutes);
 
                 if ($previousMinutes) {
-                    $previousMinutes->delete();
-                    DB::afterCommit(function () use ($previousMinutes) {
-                        try {
-                            if (! Storage::disk('local')->delete($previousMinutes->path)) {
-                                throw new RuntimeException('Gagal menghapus file notulensi lama.');
-                            }
-                        } catch (Throwable $exception) {
-                            report($exception);
-                        }
-                    });
+                    $this->remove($previousMinutes);
                 }
             });
         } catch (Throwable $exception) {
             if ($replacement) {
-                Storage::disk('local')->delete($replacement->path);
+                $this->attachments->deleteFile($replacement->path, $replacement->type);
             }
 
             throw $exception;
@@ -85,7 +89,7 @@ class BookingResultService
         $this->assertCanManage($booking, $actor);
 
         $this->assertResultAttachment($booking, $attachment);
-        $this->remove($attachment);
+        DB::transaction(fn () => $this->remove($attachment));
     }
 
     private function assertResultAttachment(Booking $booking, BookingAttachment $attachment): void
@@ -118,10 +122,7 @@ class BookingResultService
 
     private function remove(BookingAttachment $attachment): void
     {
-        if (! Storage::disk('local')->delete($attachment->path)) {
-            throw new RuntimeException('Gagal menghapus file hasil rapat.');
-        }
-
         $attachment->delete();
+        DB::afterCommit(fn () => $this->attachments->deleteFile($attachment->path, $attachment->type));
     }
 }

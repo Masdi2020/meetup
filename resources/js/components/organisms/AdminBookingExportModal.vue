@@ -97,9 +97,7 @@ const exportPeriodValid = computed(() => {
 
     return true;
 });
-const previewRows = computed(
-    () => exportPreview.value?.rows.slice(0, 20) ?? [],
-);
+const previewRows = computed(() => exportPreview.value?.rows ?? []);
 const formatDisplayDate = (value: string) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
 
@@ -179,6 +177,40 @@ watch(
     { deep: true },
 );
 
+async function fetchExport(preview: boolean): Promise<BookingExportPayload> {
+    const query: Record<string, string | string[]> = {
+        search: props.search,
+        room: props.room,
+        columns: selectedExportColumns.value,
+        statuses: selectedExportStatuses.value.map((status) =>
+            status.toUpperCase(),
+        ),
+        period: exportPeriod.value,
+        preview: preview ? '1' : '0',
+    };
+
+    if (exportPeriod.value === 'date') {
+        query.date = exportDate.value;
+    } else if (exportPeriod.value === 'range') {
+        query.start_date = exportStartDate.value;
+        query.end_date = exportEndDate.value;
+    } else if (exportPeriod.value === 'month') {
+        query.month = exportMonth.value;
+    } else if (exportPeriod.value === 'year') {
+        query.year = exportYear.value;
+    }
+
+    const response = await fetch(exportData.url({ query }), {
+        headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+        throw new Error('Data export tidak dapat dimuat.');
+    }
+
+    return (await response.json()) as BookingExportPayload;
+}
+
 async function loadExportPreview() {
     if (selectedExportColumns.value.length === 0) {
         exportError.value = 'Pilih minimal satu kolom untuk diekspor.';
@@ -206,36 +238,7 @@ async function loadExportPreview() {
     exportPreview.value = null;
 
     try {
-        const query: Record<string, string | string[]> = {
-            search: props.search,
-            room: props.room,
-            columns: selectedExportColumns.value,
-            statuses: selectedExportStatuses.value.map((status) =>
-                status.toUpperCase(),
-            ),
-            period: exportPeriod.value,
-        };
-
-        if (exportPeriod.value === 'date') {
-            query.date = exportDate.value;
-        } else if (exportPeriod.value === 'range') {
-            query.start_date = exportStartDate.value;
-            query.end_date = exportEndDate.value;
-        } else if (exportPeriod.value === 'month') {
-            query.month = exportMonth.value;
-        } else if (exportPeriod.value === 'year') {
-            query.year = exportYear.value;
-        }
-
-        const response = await fetch(exportData.url({ query }), {
-            headers: { Accept: 'application/json' },
-        });
-
-        if (!response.ok) {
-            throw new Error('Data export tidak dapat dimuat.');
-        }
-
-        const payload = (await response.json()) as BookingExportPayload;
+        const payload = await fetchExport(true);
         exportPreview.value = payload;
     } catch (error) {
         exportError.value =
@@ -258,7 +261,8 @@ async function downloadPreview() {
     exportError.value = '';
 
     try {
-        await downloadBookingExport(exportFormat.value, exportPreview.value);
+        const payload = await fetchExport(false);
+        await downloadBookingExport(exportFormat.value, payload);
         emit('close');
     } catch (error) {
         exportError.value =

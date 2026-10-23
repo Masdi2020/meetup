@@ -3,6 +3,7 @@
 use App\Enums\BookingAttachmentType;
 use App\Models\Audit;
 use App\Models\Booking;
+use App\Models\BookingAttachment;
 use App\Models\BookingStatus;
 use App\Models\Role;
 use App\Models\Room;
@@ -13,6 +14,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -561,7 +563,8 @@ it('keeps the previous minutes when storing the replacement fails', function () 
     ]);
     $failedDisk = Mockery::mock(Filesystem::class);
     $failedDisk->shouldReceive('writeStream')->once()->andReturn(false);
-    Storage::shouldReceive('disk')->with('local')->once()->andReturn($failedDisk);
+    $failedDisk->shouldReceive('delete')->once()->andReturn(true);
+    Storage::shouldReceive('disk')->with('local')->twice()->andReturn($failedDisk);
 
     $this->actingAs($user)->post(route('booking.results.meeting-minutes', $booking), [
         'meeting_minutes' => UploadedFile::fake()->create('new.pdf', 1, 'application/pdf'),
@@ -656,3 +659,28 @@ it('excludes only an owned booking from user availability checks', function (boo
         'ignore_booking_id' => $booking->id,
     ]))->assertOk()->assertJsonCount($ownBooking ? 0 : 1, 'booked_intervals');
 })->with([true, false]);
+
+it('removes the banner when a later booking audit fails', function () {
+    Storage::fake('public');
+    $owner = bookingUser();
+    $room = bookingRoom();
+    bookingStatus('PENDING');
+    Audit::creating(function (Audit $audit) {
+        if ($audit->entity_type === 'BookingAttachment') {
+            throw new RuntimeException('Audit failed');
+        }
+    });
+
+    try {
+        expect(fn () => app(BookingWorkflowService::class)->create([
+            'room_id' => $room->id, 'date' => '2027-01-10', 'start_time' => '09:00',
+            'end_time' => '10:00', 'title' => 'Meeting', 'participants' => 2,
+            'banner' => UploadedFile::fake()->create('banner.png', 10, 'image/png'),
+        ], $owner->id, false))->toThrow(RuntimeException::class, 'Audit failed');
+    } finally {
+        Event::forget('eloquent.creating: '.Audit::class);
+    }
+    expect(Booking::count())->toBe(0);
+    expect(BookingAttachment::count())->toBe(0);
+    expect(Storage::disk('public')->allFiles())->toBe([]);
+});

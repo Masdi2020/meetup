@@ -24,6 +24,7 @@ class BookingAttachment extends Model
 
     public const UPDATED_AT = null;
 
+    /** @return array{type: 'App\Enums\BookingAttachmentType', size: 'integer'} */
     protected function casts(): array
     {
         return [

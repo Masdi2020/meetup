@@ -50,13 +50,7 @@ class BookingAttachmentService
             if (! Storage::disk($type === BookingAttachmentType::Banner ? 'public' : 'local')->writeStream($path, $stream)) {
                 throw new RuntimeException('Gagal menyimpan file hasil rapat.');
             }
-        } finally {
-            if (is_resource($stream)) {
-                fclose($stream);
-            }
-        }
 
-        try {
             return BookingAttachment::create([
                 'booking_id' => $booking->id,
                 'original_filename' => $file->getClientOriginalName(),
@@ -68,9 +62,25 @@ class BookingAttachmentService
                 'uploaded_by' => $actorId,
             ]);
         } catch (Throwable $exception) {
-            Storage::disk($type === BookingAttachmentType::Banner ? 'public' : 'local')->delete($path);
+            $this->deleteFile($path, $type);
 
             throw $exception;
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
+    }
+
+    public function deleteFile(string $path, BookingAttachmentType $type): void
+    {
+        try {
+            if (! Storage::disk($type === BookingAttachmentType::Banner ? 'public' : 'local')->delete($path)) {
+                throw new RuntimeException("Gagal menghapus file lampiran: {$path}");
+            }
+        } catch (Throwable $exception) {
+            // shortcut: cleanup failures require manual retry; add a cleanup job if they recur.
+            report($exception);
         }
     }
 }

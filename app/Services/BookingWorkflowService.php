@@ -12,6 +12,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class BookingWorkflowService
 {
@@ -26,72 +27,83 @@ class BookingWorkflowService
         $statusCode = $isAdmin ? (string) $data['status'] : 'PENDING';
         $borrowerId = $isAdmin ? (int) $data['user_id'] : $actorUserId;
 
-        $booking = DB::transaction(function () use ($data, $actorUserId, $borrowerId, $statusCode) {
-            $this->lockRoom((int) $data['room_id']);
+        $attachment = null;
 
-            if (! Room::query()->whereKey($data['room_id'])->where('is_available', true)->exists()) {
-                throw ValidationException::withMessages(['room_id' => 'Ruangan tidak tersedia untuk dipinjam']);
-            }
+        try {
+            $booking = DB::transaction(function () use ($data, $actorUserId, $borrowerId, $statusCode, &$attachment) {
+                $this->lockRoom((int) $data['room_id']);
 
-            if (in_array($statusCode, Booking::ACTIVE_STATUSES, true) && $this->hasOverlap(
-                (int) $data['room_id'], $data['date'], $data['start_time'], $data['end_time'],
-            )) {
-                throw ValidationException::withMessages(['room_id' => 'Ruangan sudah dibooking pada waktu tersebut.']);
-            }
+                if (! Room::query()->whereKey($data['room_id'])->where('is_available', true)->exists()) {
+                    throw ValidationException::withMessages(['room_id' => 'Ruangan tidak tersedia untuk dipinjam']);
+                }
 
-            $statusId = BookingStatus::where('code', $statusCode)->firstOrFail()->id;
-            $processed = $statusCode !== 'PENDING';
-            $booking = Booking::create([
-                'room_id' => $data['room_id'], 'user_id' => $borrowerId, 'date' => $data['date'],
-                'start_time' => $data['start_time'], 'end_time' => $data['end_time'], 'title' => $data['title'],
-                'participants_count' => $data['participants'], 'notes' => $data['request'] ?? null,
-                'status_id' => $statusId, 'processed_by' => $processed ? $actorUserId : null,
-                'processed_at' => $processed ? now() : null,
-                'processed_notes' => $processed ? "Status {$statusCode} ditetapkan oleh admin saat dibuat" : null,
-            ]);
-            $this->audits->record(
-                'Booking',
-                $booking->id,
-                'created',
-                null,
-                [
-                    'room_id' => (int) $data['room_id'],
-                    'user_id' => $borrowerId,
-                    'date' => (string) $data['date'],
-                    'start_time' => (string) $data['start_time'],
-                    'end_time' => (string) $data['end_time'],
-                    'title' => (string) $data['title'],
-                    'participants_count' => (int) $data['participants'],
-                    'notes' => $data['request'] ?? null,
-                    'status_id' => $statusId,
-                ],
-                $actorUserId,
-                'booking dibuat oleh '.($actorUserId === $borrowerId ? 'peminjam' : 'admin'),
-            );
+                if (in_array($statusCode, Booking::ACTIVE_STATUSES, true) && $this->hasOverlap(
+                    (int) $data['room_id'], $data['date'], $data['start_time'], $data['end_time'],
+                )) {
+                    throw ValidationException::withMessages(['room_id' => 'Ruangan sudah dibooking pada waktu tersebut.']);
+                }
 
-            if (($data['banner'] ?? null) instanceof UploadedFile) {
-                $attachment = $this->attachments->store(
-                    $booking, $actorUserId, $data['banner'], BookingAttachmentType::Banner,
-                );
-
+                $statusId = BookingStatus::where('code', $statusCode)->firstOrFail()->id;
+                $processed = $statusCode !== 'PENDING';
+                $booking = Booking::create([
+                    'room_id' => $data['room_id'], 'user_id' => $borrowerId, 'date' => $data['date'],
+                    'start_time' => $data['start_time'], 'end_time' => $data['end_time'], 'title' => $data['title'],
+                    'participants_count' => $data['participants'], 'notes' => $data['request'] ?? null,
+                    'status_id' => $statusId, 'processed_by' => $processed ? $actorUserId : null,
+                    'processed_at' => $processed ? now() : null,
+                    'processed_notes' => $processed ? "Status {$statusCode} ditetapkan oleh admin saat dibuat" : null,
+                ]);
                 $this->audits->record(
-                    'BookingAttachment',
-                    $attachment->id,
+                    'Booking',
+                    $booking->id,
                     'created',
                     null,
                     [
-                        'booking_id' => $booking->id,
-                        'original_filename' => $attachment->original_filename,
-                        'mime_type' => $attachment->mime_type,
-                        'size' => $attachment->size,
+                        'room_id' => (int) $data['room_id'],
+                        'user_id' => $borrowerId,
+                        'date' => (string) $data['date'],
+                        'start_time' => (string) $data['start_time'],
+                        'end_time' => (string) $data['end_time'],
+                        'title' => (string) $data['title'],
+                        'participants_count' => (int) $data['participants'],
+                        'notes' => $data['request'] ?? null,
+                        'status_id' => $statusId,
                     ],
                     $actorUserId,
-                    'banner booking diunggah',
+                    'booking dibuat oleh '.($actorUserId === $borrowerId ? 'peminjam' : 'admin'),
                 );
+
+                if (($data['banner'] ?? null) instanceof UploadedFile) {
+                    $attachment = $this->attachments->store(
+                        $booking, $actorUserId, $data['banner'], BookingAttachmentType::Banner,
+                    );
+
+                    $this->audits->record(
+                        'BookingAttachment',
+                        $attachment->id,
+                        'created',
+                        null,
+                        [
+                            'booking_id' => $booking->id,
+                            'original_filename' => $attachment->original_filename,
+                            'mime_type' => $attachment->mime_type,
+                            'size' => $attachment->size,
+                        ],
+                        $actorUserId,
+                        'banner booking diunggah',
+                    );
+                }
+
+                return $booking;
+            });
+
+        } catch (Throwable $exception) {
+            if ($attachment) {
+                $this->attachments->deleteFile($attachment->path, $attachment->type);
             }
 
-            return $booking;
-        });
+            throw $exception;
+        }
 
         BookingsUpdated::dispatch();
 
