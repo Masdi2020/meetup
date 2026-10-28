@@ -2,6 +2,7 @@ export async function copyText(text: string): Promise<void> {
     if (navigator.clipboard?.writeText) {
         try {
             await navigator.clipboard.writeText(text);
+
             return;
         } catch {
             // Try the fallback when clipboard access is denied.
@@ -26,6 +27,7 @@ export async function copyText(text: string): Promise<void> {
         }
     } finally {
         input.remove();
+
         if (previousFocus instanceof HTMLElement) {
             previousFocus.focus({ preventScroll: true });
         }

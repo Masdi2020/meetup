@@ -3,16 +3,27 @@ import { test } from 'node:test';
 import { copyText } from '../../resources/js/lib/clipboard.ts';
 
 function clipboardEnvironment(t, clipboard, result = true) {
-    const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    const originalNavigator = Object.getOwnPropertyDescriptor(
+        globalThis,
+        'navigator',
+    );
     const calls = [];
     class Element {
-        focus() { calls.push('focus'); }
+        focus() {
+            calls.push('focus');
+        }
     }
     const input = {
         style: {},
-        focus() { calls.push('input focus'); },
-        select() { calls.push('select'); },
-        remove() { calls.push('remove'); },
+        focus() {
+            calls.push('input focus');
+        },
+        select() {
+            calls.push('select');
+        },
+        remove() {
+            calls.push('remove');
+        },
     };
     Object.defineProperty(globalThis, 'navigator', {
         configurable: true,
@@ -22,8 +33,16 @@ function clipboardEnvironment(t, clipboard, result = true) {
     globalThis.document = {
         activeElement: new Element(),
         createElement: () => input,
-        body: { appendChild() { calls.push('append'); } },
-        execCommand(command) { calls.push(command); return result; },
+        body: {
+            appendChild() {
+                calls.push('append');
+            },
+        },
+        execCommand(command) {
+            calls.push(command);
+
+            return result;
+        },
     };
     t.after(() => {
         if (originalNavigator) {
@@ -31,9 +50,11 @@ function clipboardEnvironment(t, clipboard, result = true) {
         } else {
             delete globalThis.navigator;
         }
+
         delete globalThis.HTMLElement;
         delete globalThis.document;
     });
+
     return { input, calls };
 }
 
@@ -51,12 +72,21 @@ test('copies without the Clipboard API and cleans up the password field', async 
     const { input, calls } = clipboardEnvironment(t, undefined);
     await copyText('test-password');
     assert.equal(input.value, 'test-password');
-    assert.deepEqual(calls, ['append', 'input focus', 'select', 'copy', 'remove', 'focus']);
+    assert.deepEqual(calls, [
+        'append',
+        'input focus',
+        'select',
+        'copy',
+        'remove',
+        'focus',
+    ]);
 });
 
 test('falls back when the Clipboard API rejects access', async (t) => {
     const { calls } = clipboardEnvironment(t, {
-        writeText: async () => { throw new Error('Permission denied'); },
+        writeText: async () => {
+            throw new Error('Permission denied');
+        },
     });
     await copyText('test-password');
     assert.ok(calls.includes('copy'));
