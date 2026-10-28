@@ -21,7 +21,6 @@ const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
             class="fixed inset-y-0 right-0 z-[1100] flex items-center justify-center bg-slate-950/40 p-4 transition-[left] duration-200"
             :style="{ left: sidebarOffset }"
             role="presentation"
-            @click.self="emit('close')"
         >
             <section
                 class="ui-card-body flex max-h-[calc(100dvh-2rem)] w-full min-w-0 flex-col rounded-xl bg-white shadow-xl"

@@ -2,6 +2,7 @@
 import { Check, Copy } from '@lucide/vue';
 import { onBeforeUnmount, ref } from 'vue';
 import AppModal from '@/components/organisms/AppModal.vue';
+import { copyText } from '@/lib/clipboard';
 
 const props = defineProps<{ password: string }>();
 const emit = defineEmits<{ close: [] }>();
@@ -15,7 +16,7 @@ async function copyPassword() {
     }
 
     try {
-        await navigator.clipboard.writeText(props.password);
+        await copyText(props.password);
         copyStatus.value = 'copied';
 
         copyUnlockTimer = window.setTimeout(() => {
@@ -95,7 +96,7 @@ onBeforeUnmount(() => {
                         {{
                             copyStatus === 'copied'
                                 ? 'Password berhasil disalin.'
-                                : 'Password gagal disalin. Silakan coba kembali.'
+                                : 'Password gagal disalin. Pilih teks password dan salin secara manual.'
                         }}
                     </p>
                 </div>
