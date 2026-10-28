@@ -8,7 +8,6 @@ x-laravel: &laravel
   restart: unless-stopped
   networks:
     - backend
-    - pgsql_net
   extra_hosts:
     - "host.docker.internal:host-gateway"
   volumes:
@@ -72,15 +71,9 @@ services:
     <<: *laravel
     command: php artisan schedule:work
 
-  # Network Laravel sendiri
-  # PostgreSQL existing tetap memakai aam_default
 networks:
   backend:
     driver: bridge
-
-  pgsql_net:
-    external: true
-    name: aam_default
 
 volumes:
   laravel_storage:
