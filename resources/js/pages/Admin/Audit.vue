@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
-import AppSelect from '@/components/atoms/AppSelect.vue';
-import PageHeader from '@/components/molecules/PageHeader.vue';
-import StatCard from '@/components/molecules/StatCard.vue';
-import AdminSearchPanel from '@/components/organisms/AdminSearchPanel.vue';
-import DetailModal from '@/components/organisms/DetailModal.vue';
+import { ActionIconButton, AppSelect } from '@/components/atoms';
+import { PageHeader, StatCard } from '@/components/molecules';
+import { AdminSearchPanel, DetailModal } from '@/components/organisms';
 import { useAdminFilters } from '@/composables/admin/useAdminFilters';
 import { useModalManager } from '@/composables/useModal';
 import { index } from '@/routes/admin/audits';

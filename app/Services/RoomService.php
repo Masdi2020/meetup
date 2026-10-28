@@ -24,25 +24,6 @@ class RoomService
             ->get();
     }
 
-    /**
-     * Summary of calendar
-     *
-     * @return Collection<int, Room>
-     */
-    public function calendar(): Collection
-    {
-        return Room::with('facilities:id,name')
-            ->select([
-                'id', 'name', 'capacity', 'location',
-                'calendar_url',
-            ])->get();
-    }
-
-    public function find(int $id): Room
-    {
-        return Room::findOrFail($id);
-    }
-
     /** @return Collection<int, Room> */
     public function displayList(): Collection
     {
@@ -144,6 +125,8 @@ class RoomService
     public function toggleAvailability(Room $room, int $actorId): void
     {
         DB::transaction(function () use ($actorId, $room) {
+            DB::table('rooms')->where('id', $room->id)->update(['updated_at' => DB::raw('updated_at')]);
+            $room = Room::findOrFail($room->id);
             $oldAvailability = (bool) $room->is_available;
 
             $room->update(['is_available' => ! $oldAvailability]);

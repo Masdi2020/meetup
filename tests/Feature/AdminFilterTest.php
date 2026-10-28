@@ -8,6 +8,7 @@ use App\Models\Room;
 use App\Models\User;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Inertia\Testing\AssertableInertia as Assert;
 
 function filterUser(string $name, string $username, string $role): User
@@ -243,6 +244,13 @@ it('exports an automatic number column followed by the selected ID column', func
         'period' => 'all',
     ]);
 
+    $attachmentQueries = 0;
+    DB::listen(function (QueryExecuted $query) use (&$attachmentQueries): void {
+        if (str_contains($query->sql, 'booking_attachments')) {
+            $attachmentQueries++;
+        }
+    });
+
     $response = $this->actingAs($admin)
         ->getJson("/admin/bookings/export-data?{$query}")
         ->assertOk()
@@ -253,6 +261,7 @@ it('exports an automatic number column followed by the selected ID column', func
         ->assertJsonPath('rows.0.number', 1)
         ->assertJsonPath('rows.1.number', 2);
 
+    expect($attachmentQueries)->toBe(0);
     expect($response->json('rows.*.id'))
         ->toEqualCanonicalizing($bookings->pluck('id')->all());
 });
@@ -270,4 +279,52 @@ it('rejects unsupported booking export options through its form request', functi
         ->getJson("/admin/bookings/export-data?{$query}")
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['columns.0', 'statuses.0', 'period']);
+});
+
+it('provides export choices that the export endpoint accepts', function () {
+    $admin = filterUser('Admin', 'export-options-admin', 'admin');
+    $response = $this->actingAs($admin)->get('/admin/bookings')->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('exportOptions.columns', 13)
+            ->has('exportOptions.statuses', 5)
+            ->where('exportOptions.columns.0.key', 'id')
+            ->where('exportOptions.columns.0.label', 'ID'));
+    $options = $response->inertiaProps('exportOptions');
+
+    $this->getJson('/admin/bookings/export-data?'.http_build_query([
+        'columns' => collect($options['columns'])->pluck('key')->all(),
+        'statuses' => collect($options['statuses'])->pluck('value')->all(),
+    ]))->assertOk()->assertJsonCount(14, 'columns');
+});
+
+it('loads only twenty preview bookings but downloads all matching rows', function () {
+    $admin = filterUser('Admin', 'preview-admin', 'admin');
+    $room = filterRoom('Export room');
+    $status = BookingStatus::create(['code' => 'APPROVED', 'label' => 'Approved']);
+    for ($index = 0; $index < 25; $index++) {
+        Booking::create([
+            'room_id' => $room->id, 'user_id' => $admin->id, 'status_id' => $status->id,
+            'date' => '2026-09-03', 'start_time' => '09:00', 'end_time' => '10:00',
+            'title' => 'Export meeting', 'participants_count' => 2,
+        ]);
+    }
+    $loaded = 0;
+    Booking::retrieved(function () use (&$loaded) {
+        $loaded++;
+    });
+    $query = ['columns' => ['id', 'activity'], 'room' => $room->id, 'statuses' => ['APPROVED'], 'period' => 'date', 'date' => '2026-09-03'];
+
+    try {
+        $this->actingAs($admin)->getJson('/admin/bookings/export-data?'.http_build_query([...$query, 'preview' => 1]))
+            ->assertOk()->assertJsonCount(20, 'rows')->assertJsonPath('meta.total', 25);
+        expect($loaded)->toBe(20);
+        $loaded = 0;
+        $this->getJson('/admin/bookings/export-data?'.http_build_query([...$query, 'preview' => 0]))
+            ->assertOk()->assertJsonCount(25, 'rows')->assertJsonPath('meta.total', 25);
+        expect($loaded)->toBe(25);
+        $this->getJson('/admin/bookings/export-data?'.http_build_query([...$query, 'preview' => 1, 'date' => '2026-09-04']))
+            ->assertOk()->assertJsonCount(0, 'rows')->assertJsonPath('meta.total', 0);
+    } finally {
+        Event::forget('eloquent.retrieved: '.Booking::class);
+    }
 });

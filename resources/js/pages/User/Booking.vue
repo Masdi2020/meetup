@@ -2,11 +2,13 @@
 import { useForm } from '@inertiajs/vue3';
 import { Check } from '@lucide/vue';
 import { computed, onMounted, ref, toRef, watch } from 'vue';
-import VCalendarInput from '@/components/atoms/VCalendarInput.vue';
-import BannerUploadField from '@/components/molecules/BannerUploadField.vue';
-import PageHeader from '@/components/molecules/PageHeader.vue';
-import RoomSummaryCard from '@/components/molecules/RoomSummaryCard.vue';
-import AppModal from '@/components/organisms/AppModal.vue';
+import { VCalendarInput } from '@/components/atoms';
+import {
+    BannerUploadField,
+    PageHeader,
+    RoomSummaryCard,
+} from '@/components/molecules';
+import { AppModal } from '@/components/organisms';
 import { useBookingAvailability } from '@/composables/useBookingAvailability';
 import { localDateString } from '@/lib/dates';
 import { store } from '@/routes/booking';

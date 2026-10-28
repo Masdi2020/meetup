@@ -2,7 +2,7 @@
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, inject, ref } from 'vue';
 import type { Ref } from 'vue';
-import PasswordField from '@/components/molecules/PasswordField.vue';
+import { PasswordField } from '@/components/molecules';
 import { forcedPassword } from '@/routes/profile';
 import type { Auth } from '@/types';
 

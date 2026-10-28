@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Eye, EyeOff } from '@lucide/vue';
 import { computed, ref } from 'vue';
-import AppInput from '@/components/atoms/AppInput.vue';
+import { AppInput } from '@/components/atoms';
 import FormField from '@/components/molecules/FormField.vue';
 
 withDefaults(

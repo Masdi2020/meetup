@@ -1,3 +1,5 @@
+import type { BookingStatus } from '@/types/booking';
+
 export type BookingExportFormat = 'pdf' | 'xlsx' | 'csv';
 
 export type BookingExportColumnKey =
@@ -181,3 +183,8 @@ export const downloadBookingExport = async (
 
     await exportPdf(payload);
 };
+
+export interface BookingExportOptions {
+    columns: BookingExportColumn[];
+    statuses: Array<{ value: BookingStatus; label: string }>;
+}

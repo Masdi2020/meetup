@@ -4,38 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 
 #[Fillable(['key', 'value', 'type'])]
 class Setting extends Model
 {
     public static function get(string $key, mixed $default = null): mixed
     {
-        return Cache::rememberForever(
-            "setting:{$key}",
-            function () use ($key, $default) {
-                $setting = static::where('key', $key)->first();
+        $setting = static::where('key', $key)->first();
 
-                if ($setting === null) {
-                    return $default;
-                }
+        if ($setting === null) {
+            return $default;
+        }
 
-                return match ($setting->type) {
-                    'boolean' => filter_var(
-                        $setting->value,
-                        FILTER_VALIDATE_BOOLEAN
-                    ),
-
-                    'integer' => (int) $setting->value,
-
-                    'float' => (float) $setting->value,
-
-                    'json' => json_decode($setting->value, true),
-
-                    default => $setting->value,
-                };
-            }
-        );
+        return match ($setting->type) {
+            'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
+            'integer' => (int) $setting->value,
+            'float' => (float) $setting->value,
+            'json' => json_decode($setting->value, true),
+            default => $setting->value,
+        };
     }
 
     public static function set(
@@ -56,7 +43,5 @@ class Setting extends Model
                 'type' => $type,
             ]
         );
-
-        Cache::forget("setting:{$key}");
     }
 }

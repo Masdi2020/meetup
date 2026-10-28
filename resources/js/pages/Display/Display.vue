@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
-import PageHeader from '@/components/molecules/PageHeader.vue';
+import { ActionIconButton } from '@/components/atoms';
+import { PageHeader } from '@/components/molecules';
 import { banner } from '@/routes/display';
 import type { DisplayRoom } from '@/types/room';
 

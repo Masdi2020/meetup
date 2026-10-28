@@ -154,7 +154,7 @@ php artisan storage:link
 
 Seeder mengisi status peminjaman, fasilitas, ruangan, pengaturan, dan akun awal. Jalankan pada database baru; beberapa seeder membuat data langsung sehingga pengulangan dapat menyebabkan duplikasi atau kegagalan karena data sudah ada.
 
-Akun awal admin menggunakan username `admin`, dan akun layar menggunakan username `display`. Password awal keduanya tercantum di [UserSeeder](database/seeders/UserSeeder.php). Ganti password akun bawaan sebelum digunakan di lingkungan operasional. Akun umum dari seeder memakai `DEFAULT_PASSWORD`, kecuali yang memiliki password khusus.
+Akun awal admin menggunakan username `admin`, memakai `DEFAULT_PASSWORD`, dan wajib mengganti password saat login pertama. Akun layar menggunakan username `display` dengan password awal yang tercantum di [UserSeeder](database/seeders/UserSeeder.php). Ganti password akun bawaan sebelum digunakan di lingkungan operasional. Akun umum dari seeder memakai `DEFAULT_PASSWORD`, kecuali yang memiliki password khusus.
 
 ## Menjalankan aplikasi
 

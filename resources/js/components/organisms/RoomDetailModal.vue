@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RoomSummaryCard from '@/components/molecules/RoomSummaryCard.vue';
+import { RoomSummaryCard } from '@/components/molecules';
 import DetailModal from '@/components/organisms/DetailModal.vue';
 import type { RoomDetails } from '@/types/room';
 

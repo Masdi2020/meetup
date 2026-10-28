@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import AppButton from '@/components/atoms/AppButton.vue';
-import AppInput from '@/components/atoms/AppInput.vue';
+import { AppButton, AppInput } from '@/components/atoms';
 
 const props = withDefaults(
     defineProps<{

@@ -40,6 +40,10 @@ class AdminBookingQueryService
     public function indexData(string $search, string $status, ?int $roomId): array
     {
         $bookings = $this->filteredBookings($search, $status, $roomId)
+            ->with([
+                'documentations:id,booking_id,original_filename,path',
+                'meetingMinutes:id,booking_id,original_filename,path',
+            ])
             ->latest()
             ->paginate(10)
             ->withQueryString()
@@ -86,6 +90,16 @@ class AdminBookingQueryService
                 'code' => strtolower($bookingStatus->code),
                 'label' => ucfirst(strtolower($bookingStatus->label)),
             ]),
+            'exportOptions' => [
+                'columns' => collect(self::EXPORT_COLUMNS)->map(fn (string $label, string $key) => [
+                    'key' => $key,
+                    'label' => $label,
+                ])->values(),
+                'statuses' => collect(self::EXPORT_STATUSES)->map(fn (string $code) => [
+                    'value' => strtolower($code),
+                    'label' => ucfirst(strtolower($code)),
+                ]),
+            ],
             'stats' => [
                 'total' => Booking::count(),
                 'pending' => $counts->get('PENDING', 0),
@@ -136,9 +150,13 @@ class AdminBookingQueryService
             $bookingsQuery->whereYear('date', (int) $data['year']);
         }
 
+        $preview = (bool) ($data['preview'] ?? false);
+        $total = $preview ? (clone $bookingsQuery)->count() : null;
         $bookings = $bookingsQuery
+            ->when($preview, fn ($query) => $query->limit(20))
             ->orderByDesc('date')
             ->orderByDesc('start_time')
+            ->orderByDesc('id')
             ->get();
 
         return [
@@ -150,7 +168,7 @@ class AdminBookingQueryService
                 ->mapWithKeys(fn (string $column) => [$column => $this->exportValue($booking, $column)])
                 ->prepend($index + 1, 'number')),
             'meta' => [
-                'total' => $bookings->count(),
+                'total' => $total ?? $bookings->count(),
                 'exported_at' => now()->format('d/m/Y H:i'),
             ],
         ];
@@ -171,8 +189,6 @@ class AdminBookingQueryService
                 'room:id,name',
                 'user:id,name',
                 'status:id,code,label',
-                'documentations:id,booking_id,original_filename,path',
-                'meetingMinutes:id,booking_id,original_filename,path',
             ])
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('title', 'like', "%{$search}%")

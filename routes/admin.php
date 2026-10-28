@@ -27,6 +27,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/bookings/{booking}/finish', [AdminBookingController::class, 'finish'])->middleware('booking.action:finish')->name('bookings.finish');
         Route::post('/bookings/{booking}/results/documentation', [BookingResultController::class, 'storeDocumentation'])->name('bookings.results.documentation');
         Route::post('/bookings/{booking}/results/meeting-minutes', [BookingResultController::class, 'storeMeetingMinutes'])->name('bookings.results.meeting-minutes');
+        Route::get('/bookings/{booking}/attachments/{attachment}', [BookingResultController::class, 'show'])->name('bookings.results.show');
         Route::delete('/bookings/{booking}/attachments/{attachment}', [BookingResultController::class, 'destroy'])->name('bookings.results.destroy');
 
         Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');

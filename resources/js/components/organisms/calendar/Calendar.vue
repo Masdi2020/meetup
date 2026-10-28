@@ -9,8 +9,8 @@ import {
     watch,
 } from 'vue';
 
-import BookingStatusBadge from '@/components/atoms/BookingStatusBadge.vue';
-import CalendarToolbar from '@/components/molecules/CalendarToolbar.vue';
+import { BookingStatusBadge } from '@/components/atoms';
+import { CalendarToolbar } from '@/components/molecules';
 import DayView from '@/components/organisms/calendar/DayView.vue';
 import MonthView from '@/components/organisms/calendar/MonthView.vue';
 import WeekView from '@/components/organisms/calendar/WeekView.vue';

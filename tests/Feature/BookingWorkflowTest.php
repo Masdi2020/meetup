@@ -3,20 +3,26 @@
 use App\Enums\BookingAttachmentType;
 use App\Models\Audit;
 use App\Models\Booking;
+use App\Models\BookingAttachment;
 use App\Models\BookingStatus;
 use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\BookingWorkflowService;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 it('deletes meeting results only when the attachment is eligible', function (string $role, BookingAttachmentType $type, bool $differentBooking, int $expectedStatus) {
     $this->withoutMiddleware(PreventRequestForgery::class);
     Storage::fake('public');
+    Storage::fake('local');
     $owner = bookingUser('owner');
     $actor = $role === 'user' ? $owner : bookingUser('admin', $role);
     $booking = bookingRecord($owner, bookingRoom(), 'FINISHED');
@@ -24,7 +30,7 @@ it('deletes meeting results only when the attachment is eligible', function (str
         ? bookingRecord($owner, $booking->room, 'FINISHED')
         : $booking;
     $path = 'booking-results/result.pdf';
-    Storage::disk('public')->put($path, 'result content');
+    Storage::disk('local')->put($path, 'result content');
     $attachment = $attachmentBooking->attachments()->create([
         'original_filename' => 'result.pdf',
         'filename' => 'result.pdf',
@@ -42,10 +48,10 @@ it('deletes meeting results only when the attachment is eligible', function (str
 
     if ($expectedStatus === 302) {
         $this->assertSoftDeleted($attachment);
-        Storage::disk('public')->assertMissing($path);
+        Storage::disk('local')->assertMissing($path);
     } else {
         $this->assertNotSoftDeleted($attachment);
-        Storage::disk('public')->assertExists($path);
+        Storage::disk('local')->assertExists($path);
     }
 })->with([
     'owner documentation' => ['user', BookingAttachmentType::Documentation, false, 302],
@@ -513,6 +519,7 @@ it('validates new passwords consistently for normal and forced changes', functio
 
 it('stores banner and documentation metadata through the shared attachment storage', function (bool $banner) {
     Storage::fake('public');
+    Storage::fake('local');
     $user = bookingUser();
     $room = bookingRoom();
     $room->update(['has_display' => true]);
@@ -535,7 +542,8 @@ it('stores banner and documentation metadata through the shared attachment stora
     expect($attachment->type)->toBe($banner ? BookingAttachmentType::Banner : BookingAttachmentType::Documentation);
     expect($attachment->original_filename)->toBe('meeting.png');
     expect($attachment->uploaded_by)->toBe($user->id);
-    Storage::disk('public')->assertExists($attachment->path);
+    Storage::disk($banner ? 'public' : 'local')->assertExists($attachment->path);
+    Storage::disk($banner ? 'local' : 'public')->assertMissing($attachment->path);
 
     if ($banner) {
         $this->assertDatabaseHas('audits', ['entity_type' => 'BookingAttachment', 'entity_id' => $attachment->id, 'action' => 'created']);
@@ -543,7 +551,7 @@ it('stores banner and documentation metadata through the shared attachment stora
 })->with([false, true]);
 
 it('keeps the previous minutes when storing the replacement fails', function () {
-    $disk = Storage::fake('public');
+    $disk = Storage::fake('local');
     $user = bookingUser();
     $booking = bookingRecord($user, bookingRoom(), 'FINISHED');
     $path = 'booking-results/previous.pdf';
@@ -555,7 +563,8 @@ it('keeps the previous minutes when storing the replacement fails', function () 
     ]);
     $failedDisk = Mockery::mock(Filesystem::class);
     $failedDisk->shouldReceive('writeStream')->once()->andReturn(false);
-    Storage::shouldReceive('disk')->with('public')->once()->andReturn($failedDisk);
+    $failedDisk->shouldReceive('delete')->once()->andReturn(true);
+    Storage::shouldReceive('disk')->with('local')->twice()->andReturn($failedDisk);
 
     $this->actingAs($user)->post(route('booking.results.meeting-minutes', $booking), [
         'meeting_minutes' => UploadedFile::fake()->create('new.pdf', 1, 'application/pdf'),
@@ -568,10 +577,11 @@ it('keeps the previous minutes when storing the replacement fails', function () 
 
 it('replaces minutes after the new file is stored', function () {
     Storage::fake('public');
+    Storage::fake('local');
     $user = bookingUser();
     $booking = bookingRecord($user, bookingRoom(), 'FINISHED');
     $path = 'booking-results/previous.pdf';
-    Storage::disk('public')->put($path, 'previous minutes');
+    Storage::disk('local')->put($path, 'previous minutes');
     $previous = $booking->attachments()->create([
         'filename' => 'previous.pdf', 'original_filename' => 'previous.pdf', 'path' => $path,
         'mime_type' => 'application/pdf', 'size' => 16, 'type' => BookingAttachmentType::MeetingMinutes,
@@ -583,8 +593,94 @@ it('replaces minutes after the new file is stored', function () {
     ])->assertRedirect()->assertSessionHasNoErrors();
 
     $this->assertSoftDeleted($previous);
-    Storage::disk('public')->assertMissing($path);
+    Storage::disk('local')->assertMissing($path);
     $current = $booking->attachments()->sole();
     expect($current->original_filename)->toBe('new.pdf');
-    Storage::disk('public')->assertExists($current->path);
+    Storage::disk('local')->assertExists($current->path);
+});
+
+it('rechecks the stored status before applying a stale edit or transition', function (bool $editing, bool $deleted) {
+    $user = bookingUser();
+    $booking = bookingRecord($user, bookingRoom(), 'APPROVED');
+    $booking->load('status');
+
+    if ($deleted) {
+        Booking::findOrFail($booking->id)->delete();
+    } else {
+        Booking::whereKey($booking->id)->update(['status_id' => bookingStatus('CANCELLED')->id]);
+    }
+
+    $service = app(BookingWorkflowService::class);
+    $action = fn () => $editing
+        ? $service->update($booking, ['title' => 'Stale edit', 'date' => '2026-09-03', 'start_time' => '09:00', 'end_time' => '10:00'], $user->id)
+        : $service->changeStatus($booking, 'FINISHED', $user->id, 'Stale transition');
+
+    expect($action)->toThrow(ValidationException::class);
+    expect(Booking::withTrashed()->findOrFail($booking->id)->title)->toBe('Rapat awal');
+})->with([false, true])->with([false, true]);
+
+it('does not approve a legacy pending booking that overlaps another active booking', function () {
+    $admin = bookingUser('admin', 'admin');
+    $room = bookingRoom();
+    $booking = bookingRecord($admin, $room, 'PENDING');
+    bookingRecord($admin, $room, 'APPROVED');
+
+    $this->actingAs($admin)->patch(route('admin.bookings.approve', $booking))
+        ->assertSessionHasErrors('booking');
+
+    expect($booking->refresh()->status->code)->toBe('PENDING');
+});
+
+it('does not finish a booking rescheduled after the scheduler selected it', function () {
+    $user = bookingUser();
+    $booking = bookingRecord($user, bookingRoom(), 'APPROVED', ['date' => '2026-08-31']);
+    $rescheduled = false;
+    Booking::retrieved(function (Booking $selected) use ($booking, &$rescheduled): void {
+        if (! $rescheduled && $selected->id === $booking->id && ! array_key_exists('date', $selected->getAttributes())) {
+            $rescheduled = true;
+            DB::table('bookings')->where('id', $booking->id)->update(['date' => '2026-09-03']);
+        }
+    });
+
+    $this->artisan('bookings:finish-expired')->expectsOutput('0 booking diubah menjadi finished.')->assertSuccessful();
+    expect($rescheduled)->toBeTrue();
+    expect($booking->refresh()->status->code)->toBe('APPROVED');
+});
+
+it('excludes only an owned booking from user availability checks', function (bool $ownBooking) {
+    $owner = bookingUser('owner');
+    $actor = $ownBooking ? $owner : bookingUser('visitor');
+    $room = bookingRoom();
+    $booking = bookingRecord($owner, $room, 'APPROVED');
+
+    $this->actingAs($actor)->getJson(route('booking.availability', [
+        'room_id' => $room->id,
+        'date' => $booking->date->format('Y-m-d'),
+        'ignore_booking_id' => $booking->id,
+    ]))->assertOk()->assertJsonCount($ownBooking ? 0 : 1, 'booked_intervals');
+})->with([true, false]);
+
+it('removes the banner when a later booking audit fails', function () {
+    Storage::fake('public');
+    $owner = bookingUser();
+    $room = bookingRoom();
+    bookingStatus('PENDING');
+    Audit::creating(function (Audit $audit) {
+        if ($audit->entity_type === 'BookingAttachment') {
+            throw new RuntimeException('Audit failed');
+        }
+    });
+
+    try {
+        expect(fn () => app(BookingWorkflowService::class)->create([
+            'room_id' => $room->id, 'date' => '2027-01-10', 'start_time' => '09:00',
+            'end_time' => '10:00', 'title' => 'Meeting', 'participants' => 2,
+            'banner' => UploadedFile::fake()->create('banner.png', 10, 'image/png'),
+        ], $owner->id, false))->toThrow(RuntimeException::class, 'Audit failed');
+    } finally {
+        Event::forget('eloquent.creating: '.Audit::class);
+    }
+    expect(Booking::count())->toBe(0);
+    expect(BookingAttachment::count())->toBe(0);
+    expect(Storage::disk('public')->allFiles())->toBe([]);
 });

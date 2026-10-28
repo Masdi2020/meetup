@@ -7,6 +7,7 @@ use App\Models\Facility;
 use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\RoomService;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 
 beforeEach(function () {
@@ -176,4 +177,23 @@ it('audits login profile settings and logout actions', function () {
         ->toContain('logged_in', 'profile_updated', 'updated', 'logged_out')
         ->and(Audit::where('entity_type', 'Authentication')
             ->where('action', 'login_failed')->exists())->toBeTrue();
+});
+
+it('applies both room toggles from stale models and audits their actual values', function () {
+    $actor = auditAdmin();
+    $room = Room::create(['name' => 'Room', 'location' => 'Office', 'capacity' => 10, 'is_available' => true]);
+    $first = $room->fresh();
+    $second = $room->fresh();
+    $service = app(RoomService::class);
+    $service->toggleAvailability($first, $actor->id);
+    $service->toggleAvailability($second, $actor->id);
+
+    expect($room->fresh()->is_available)->toBeTrue();
+    $audits = Audit::where('entity_type', 'Room')->where('entity_id', $room->id)
+        ->where('action', 'availability_changed')->orderBy('id')->get();
+    expect($audits)->toHaveCount(2);
+    expect($audits[0]->old_values['is_available'])->toBeTrue()
+        ->and($audits[0]->new_values['is_available'])->toBeFalse()
+        ->and($audits[1]->old_values['is_available'])->toBeFalse()
+        ->and($audits[1]->new_values['is_available'])->toBeTrue();
 });

@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
-import PageHeader from '@/components/molecules/PageHeader.vue';
-import RoomSelector from '@/components/molecules/RoomSelector.vue';
-import Calendar from '@/components/organisms/calendar/Calendar.vue';
-import RoomDetailModal from '@/components/organisms/RoomDetailModal.vue';
+import { PageHeader, RoomSelector } from '@/components/molecules';
+import { Calendar, RoomDetailModal } from '@/components/organisms';
 import { useBookingPageUpdates } from '@/composables/useBookingUpdates';
 import { getRoomColor } from '@/lib/roomColors';
 import { index } from '@/routes/availability';
 import type { CalendarEvent } from '@/types/calendar';
-import type { AvailabilityRoom, RoomDetails } from '@/types/room';
+import type { RoomDetails } from '@/types/room';
 
 const props = defineProps<{
-    rooms: AvailabilityRoom[];
+    rooms: RoomDetails[];
     events: CalendarEvent[];
     month: number;
     year: number;

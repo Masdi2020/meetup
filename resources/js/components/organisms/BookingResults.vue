@@ -2,7 +2,7 @@
 import { router, useForm } from '@inertiajs/vue3';
 import { FileText, ImagePlus, Upload, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import ActionIconButton from '@/components/atoms/ActionIconButton.vue';
+import { ActionIconButton } from '@/components/atoms';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import type { BookingResultFile } from '@/types/booking';
 
@@ -11,6 +11,7 @@ const props = defineProps<{
     routes: {
         documentation: (booking: number) => string;
         meetingMinutes: (booking: number) => string;
+        show: (params: { booking: number; attachment: number }) => string;
         destroy: (params: { booking: number; attachment: number }) => string;
     };
     documentations: BookingResultFile[];
@@ -235,12 +236,22 @@ onBeforeUnmount(() => {
                     class="relative min-w-0 overflow-hidden rounded-lg border border-slate-200"
                 >
                     <a
-                        :href="`/storage/${attachment.path}`"
+                        :href="
+                            routes.show({
+                                booking: bookingId,
+                                attachment: attachment.id,
+                            })
+                        "
                         target="_blank"
                         rel="noreferrer"
                         :aria-label="`Lihat ${attachment.original_filename}`"
                         ><img
-                            :src="`/storage/${attachment.path}`"
+                            :src="
+                                routes.show({
+                                    booking: bookingId,
+                                    attachment: attachment.id,
+                                })
+                            "
                             :alt="attachment.original_filename"
                             class="aspect-video w-full object-cover"
                         />
@@ -388,7 +399,12 @@ onBeforeUnmount(() => {
                     aria-hidden="true"
                 />
                 <a
-                    :href="`/storage/${meetingMinutes.path}`"
+                    :href="
+                        routes.show({
+                            booking: bookingId,
+                            attachment: meetingMinutes.id,
+                        })
+                    "
                     target="_blank"
                     rel="noreferrer"
                     class="min-w-0 flex-1 text-sm break-words text-blue-700 hover:underline"

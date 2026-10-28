@@ -9,6 +9,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Throwable;
 
 class BookingAttachmentService
 {
@@ -46,24 +47,40 @@ class BookingAttachmentService
         }
 
         try {
-            if (! Storage::disk('public')->writeStream($path, $stream)) {
+            if (! Storage::disk($type === BookingAttachmentType::Banner ? 'public' : 'local')->writeStream($path, $stream)) {
                 throw new RuntimeException('Gagal menyimpan file hasil rapat.');
             }
+
+            return BookingAttachment::create([
+                'booking_id' => $booking->id,
+                'original_filename' => $file->getClientOriginalName(),
+                'filename' => $filename,
+                'path' => $path,
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'type' => $type,
+                'uploaded_by' => $actorId,
+            ]);
+        } catch (Throwable $exception) {
+            $this->deleteFile($path, $type);
+
+            throw $exception;
         } finally {
             if (is_resource($stream)) {
                 fclose($stream);
             }
         }
+    }
 
-        return BookingAttachment::create([
-            'booking_id' => $booking->id,
-            'original_filename' => $file->getClientOriginalName(),
-            'filename' => $filename,
-            'path' => $path,
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-            'type' => $type,
-            'uploaded_by' => $actorId,
-        ]);
+    public function deleteFile(string $path, BookingAttachmentType $type): void
+    {
+        try {
+            if (! Storage::disk($type === BookingAttachmentType::Banner ? 'public' : 'local')->delete($path)) {
+                throw new RuntimeException("Gagal menghapus file lampiran: {$path}");
+            }
+        } catch (Throwable $exception) {
+            // shortcut: cleanup failures require manual retry; add a cleanup job if they recur.
+            report($exception);
+        }
     }
 }
