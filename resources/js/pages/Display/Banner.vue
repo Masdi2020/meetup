@@ -17,6 +17,9 @@ const showCalendar = ref(false);
 const slideshowPaused = ref(false);
 let slideshow: number | undefined;
 
+const CALENDAR_SLIDE_DURATION = 15_000;
+const BANNER_SLIDE_DURATION = 30_000;
+
 let timer: number | undefined;
 let clock: number | undefined;
 let isActive = false;
@@ -140,6 +143,35 @@ function refreshWhenVisible() {
     }
 }
 
+function scheduleSlideshow() {
+    if (slideshow) {
+        window.clearTimeout(slideshow);
+        slideshow = undefined;
+    }
+
+    if (
+        !isActive ||
+        slideshowPaused.value ||
+        (!showCalendar.value && !props.booking)
+    ) {
+        return;
+    }
+
+    const duration = showCalendar.value
+        ? CALENDAR_SLIDE_DURATION
+        : BANNER_SLIDE_DURATION;
+
+    slideshow = window.setTimeout(() => {
+        if (!slideshowPaused.value && isActive) {
+            showCalendar.value = !showCalendar.value;
+        }
+    }, duration);
+}
+
+function onVideoEnded() {
+    showCalendar.value = true;
+}
+
 async function toggleFullscreen() {
     if (isFullscreenChanging.value) {
         return;
@@ -170,12 +202,7 @@ onMounted(() => {
     isActive = true;
 
     scheduleReload();
-
-    slideshow = window.setInterval(() => {
-        if (!slideshowPaused.value) {
-            showCalendar.value = !showCalendar.value;
-        }
-    }, 15_000);
+    scheduleSlideshow();
 
     clock = window.setInterval(() => {
         currentTime.value = new Date(getServerNow());
@@ -203,9 +230,19 @@ watch(
     },
 );
 
+watch(showCalendar, scheduleSlideshow);
+
+watch(() => props.booking, scheduleSlideshow);
+
+watch(slideshowPaused, scheduleSlideshow);
+
 onUnmounted(() => {
     isActive = false;
-    clearInterval(slideshow);
+
+    if (slideshow) {
+        window.clearTimeout(slideshow);
+        slideshow = undefined;
+    }
 
     if (timer) {
         clearTimeout(timer);
@@ -294,11 +331,12 @@ onUnmounted(() => {
 
             <video
                 v-else
+                class="display-video"
                 src="/storage/videos/Video tampilan kosong.mp4"
                 autoplay
                 muted
-                loop
                 playsinline
+                @ended="onVideoEnded"
             />
         </div>
         <div class="slideshow-controls">
@@ -381,7 +419,8 @@ onUnmounted(() => {
     align-items: center;
 }
 
-.banner {
+.banner,
+.display-video {
     width: 100%;
     height: 100%;
 
