@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 class BookingService
 {
     /**
-     * @return Collection<int, array{start_time: non-falsy-string, end_time: non-falsy-string}>
+     * @return Collection<int, array{start_time: string, end_time: string}>
      */
     public function activeIntervals(int $roomId, string $date, ?int $ignoreBookingId = null): Collection
     {

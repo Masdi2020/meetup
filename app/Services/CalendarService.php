@@ -14,6 +14,7 @@ class CalendarService
      *      title: string,
      *      status: string,
      *      room: string,
+     *      room_id: int,
      *      date: string,
      *      start_time: string,
      *      end_time: string,
@@ -29,10 +30,8 @@ class CalendarService
     ): array {
         return Booking::query()
             ->with(['room', 'status', 'user'])
-            ->whereBetween('date', [
-                $start->toDateString(),
-                $end->toDateString(),
-            ])
+            ->where('date', '>=', $start->toDateString())
+            ->where('date', '<', $end->copy()->addDay()->toDateString())
             ->when($roomId !== null, function ($query) use ($roomId) {
                 $query->whereIn('room_id', (array) $roomId);
             })
@@ -48,6 +47,7 @@ class CalendarService
                     'title' => $booking->title,
                     'status' => $booking->status->code,
                     'room' => $booking->room->name,
+                    'room_id' => $booking->room_id,
                     'date' => $booking->date->format('Y-m-d'),
                     'start_time' => $booking->start_time->format('H:i'),
                     'end_time' => $booking->end_time->format('H:i'),

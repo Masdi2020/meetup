@@ -102,7 +102,7 @@ watch(selectedRoomIds, () => {
                     :year="year"
                     :date="date"
                     :view="view"
-                    @open-day="loadCalendar($event, 'day')"
+                    :room-ids="props.selectedRoomIds"
                     @navigate="loadCalendar"
                     @change-view="changeView"
                 />

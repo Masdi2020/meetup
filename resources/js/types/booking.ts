@@ -1,3 +1,5 @@
+import type { CalendarEvent } from './calendar';
+
 export type BookingStatus =
     'pending' | 'approved' | 'rejected' | 'cancelled' | 'finished';
 
@@ -47,6 +49,11 @@ export interface BannerPageProps {
     booking: BannerBooking | null;
     next_change: string | null;
     now: string;
+    calendar: {
+        date: string;
+        room: { id: number; name: string };
+        events: CalendarEvent[];
+    };
 }
 
 export interface BookingEdit {

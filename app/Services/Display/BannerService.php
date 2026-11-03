@@ -4,14 +4,19 @@ namespace App\Services\Display;
 
 use App\Models\Booking;
 use App\Models\Room;
+use App\Services\CalendarService;
+use Carbon\CarbonInterface;
 
 class BannerService
 {
+    public function __construct(private CalendarService $calendar) {}
+
     /**
      * @return array{
      *      booking: Booking | null,
      *      next_change: string | null,
-     *      now: string
+     *      now: string,
+     *      calendar: array{date: string, room: array{id: int, name: string}, events: array<int, array<string, mixed>>}
      * }
      */
     public function current(Room $room): array
@@ -52,6 +57,15 @@ class BannerService
             'booking' => $booking,
             'next_change' => $nextChange,
             'now' => $now->toIso8601String(),
+            'calendar' => [
+                'date' => $now->toDateString(),
+                'room' => ['id' => $room->id, 'name' => $room->name],
+                'events' => $this->calendar->events(
+                    $now->copy()->startOfMonth()->startOfWeek(CarbonInterface::MONDAY),
+                    $now->copy()->endOfMonth()->endOfWeek(CarbonInterface::SUNDAY),
+                    $room->id,
+                ),
+            ],
         ];
     }
 }

@@ -5,6 +5,7 @@ export interface CalendarEvent {
     title: string;
     status: Extract<BookingStatusCode, 'PENDING' | 'APPROVED' | 'FINISHED'>;
     room: string;
+    room_id: number;
     date: string;
     start_time: string;
     end_time: string;

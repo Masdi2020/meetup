@@ -22,12 +22,13 @@ const props = defineProps<{
     year: number;
     date: string;
     view: 'month' | 'week' | 'day';
+    roomIds: number[];
+    readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
     navigate: [date: string];
     'change-view': [view: 'month' | 'week' | 'day'];
-    'open-day': [date: string];
 }>();
 
 const currentDate = ref(dayjs());
@@ -45,6 +46,17 @@ onBeforeUnmount(() => {
     document.removeEventListener('visibilitychange', updateClock);
 });
 const selectedEvent = ref<CalendarEvent | null>(null);
+const selectedDay = ref('');
+const dayDialog = ref<HTMLDialogElement | null>(null);
+const dayEvents = computed(() =>
+    props.events.filter((event) => event.date === selectedDay.value),
+);
+
+async function openDay(date: string) {
+    selectedDay.value = date;
+    await nextTick();
+    dayDialog.value?.showModal();
+}
 
 watch(
     () => props.events,
@@ -139,6 +151,7 @@ const formattedSelectedDate = computed(() => {
 <template>
     <div class="calendar">
         <CalendarToolbar
+            v-if="!props.readonly"
             :title="title"
             :view="props.view"
             @previous="navigate(-1)"
@@ -146,8 +159,16 @@ const formattedSelectedDate = computed(() => {
             @today="today"
             @update:view="emit('change-view', $event)"
         />
+        <h2 v-else class="text-xl font-bold">{{ title }}</h2>
 
         <div class="calendar-legend" aria-label="Keterangan kalender">
+            <span class="rounded border bg-white px-2 py-1">Kosong</span>
+            <span class="rounded bg-yellow-200 px-2 py-1 text-yellow-900"
+                >Ada booking</span
+            >
+            <span class="rounded bg-red-200 px-2 py-1 text-red-900"
+                >Penuh 07:30–16:00</span
+            >
             <BookingStatusBadge appearance="calendar" status="PENDING" />
             <span>Garis putus-putus: menunggu persetujuan</span>
             <BookingStatusBadge appearance="calendar" status="APPROVED" />
@@ -163,8 +184,9 @@ const formattedSelectedDate = computed(() => {
                 :date="currentDate"
                 :now="now"
                 :events="props.events"
-                @select="selectedEvent = $event"
-                @open-day="emit('open-day', $event)"
+                :room-ids="props.roomIds"
+                :readonly="props.readonly"
+                @open-day="openDay"
             />
             <WeekView
                 v-else-if="props.view === 'week'"
@@ -183,6 +205,61 @@ const formattedSelectedDate = computed(() => {
         </div>
 
         <Teleport to="body">
+            <dialog
+                ref="dayDialog"
+                class="detail-modal day-dialog"
+                aria-labelledby="day-bookings-title"
+                @click.self="dayDialog?.close()"
+            >
+                <div class="detail-header">
+                    <div>
+                        <span class="detail-eyebrow">Daftar Peminjaman</span>
+                        <h3 id="day-bookings-title">
+                            {{ dayjs(selectedDay).format('dddd, D MMMM YYYY') }}
+                        </h3>
+                    </div>
+                    <button
+                        type="button"
+                        class="detail-close"
+                        aria-label="Tutup daftar peminjaman"
+                        @click="dayDialog?.close()"
+                    >
+                        &times;
+                    </button>
+                </div>
+                <p v-if="!dayEvents.length" class="py-6 text-slate-500">
+                    Tidak ada peminjaman pada tanggal ini.
+                </p>
+                <ul v-else class="divide-y divide-slate-200">
+                    <li
+                        v-for="event in dayEvents"
+                        :key="event.id"
+                        class="space-y-2 py-4"
+                    >
+                        <h4 class="font-bold text-slate-900">
+                            {{ event.title }}
+                        </h4>
+                        <BookingStatusBadge
+                            appearance="calendar"
+                            :status="event.status"
+                        />
+                        <p>
+                            {{ event.start_time }}–{{ event.end_time }} ·
+                            {{ event.room }}
+                        </p>
+                        <p class="text-sm text-slate-600">
+                            {{ event.borrower }} ·
+                            {{ event.participants_count }} peserta
+                        </p>
+                        <p
+                            v-if="event.notes"
+                            class="text-sm whitespace-pre-wrap text-slate-600"
+                        >
+                            {{ event.notes }}
+                        </p>
+                    </li>
+                </ul>
+            </dialog>
             <div
                 v-if="selectedEvent"
                 class="detail-overlay"
@@ -317,6 +394,13 @@ const formattedSelectedDate = computed(() => {
     background: #fff;
     padding: var(--ui-card-padding);
     box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+.day-dialog {
+    margin: auto;
+    border: 0;
+}
+.day-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.58);
 }
 .detail-header {
     display: flex;

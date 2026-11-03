@@ -1,4 +1,6 @@
 [mcp_servers.laravel-boost]
 command = "/usr/bin/php"
-args = ["artisan", "boost:mcp"]
+args = ["/home/masdi/Public/MEETUP/artisan", "boost:mcp"]
 cwd = "/home/masdi/Public/MEETUP"
+startup_timeout_sec = 30.0
+

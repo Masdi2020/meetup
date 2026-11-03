@@ -76,7 +76,37 @@ it('shows the active booking for the selected display room', function () {
             ->component('Display/Banner')
             ->where('booking.id', $selectedBooking->id)
             ->where('booking.room_id', $secondRoom->id)
-            ->where('booking.title', 'Rapat ruang kedua'));
+            ->where('booking.title', 'Rapat ruang kedua')
+            ->where('calendar.room.id', $secondRoom->id)
+            ->where('calendar.date', '2026-09-02')
+            ->has('calendar.events', 1)
+            ->where('calendar.events.0.id', $selectedBooking->id)
+            ->where('calendar.events.0.room_id', $secondRoom->id));
+});
+
+it('shows the calendar without an active banner and includes complete edge weeks', function () {
+    $display = bannerUser('display', 'display');
+    $owner = bannerUser('owner', 'user');
+    $room = bannerRoom('Ruang Kalender', true);
+    $approved = BookingStatus::create(['code' => 'APPROVED', 'label' => 'Approved']);
+    $cancelled = BookingStatus::create(['code' => 'CANCELLED', 'label' => 'Cancelled']);
+    $first = bannerBooking($owner, $room, $approved, 'Awal minggu');
+    $first->update(['date' => '2026-08-31']);
+    $last = bannerBooking($owner, $room, $approved, 'Akhir minggu');
+    $last->update(['date' => '2026-10-04']);
+    $outside = bannerBooking($owner, $room, $approved, 'Di luar kalender');
+    $outside->update(['date' => '2026-10-05']);
+    bannerBooking($owner, $room, $cancelled, 'Dibatalkan');
+
+    $this->actingAs($display)
+        ->get(route('display.banner', ['room' => $room]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Display/Banner')
+            ->where('booking', null)
+            ->has('calendar.events', 2)
+            ->where('calendar.events.0.id', $first->id)
+            ->where('calendar.events.1.id', $last->id));
 });
 
 it('does not expose a banner route for a room without a display', function () {
