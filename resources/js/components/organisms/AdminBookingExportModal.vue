@@ -200,8 +200,18 @@ async function fetchExport(preview: boolean): Promise<BookingExportPayload> {
         query.year = exportYear.value;
     }
 
-    const response = await fetch(exportData.url({ query }), {
-        headers: { Accept: 'application/json' },
+    const route = exportData();
+    const response = await fetch(route.url, {
+        method: route.method.toUpperCase(),
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN':
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute('content') ?? '',
+        },
+        body: JSON.stringify(query),
     });
 
     if (!response.ok) {
