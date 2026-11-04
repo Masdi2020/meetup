@@ -31,8 +31,13 @@ function resizeGrid() {
         }
 
         const top = grid.value.getBoundingClientRect().top + window.scrollY;
+        const minCellHeight = props.readonly
+            ? 44
+            : window.matchMedia('(max-width: 768px)').matches
+              ? 64
+              : 90;
         gridHeight.value = Math.max(
-            (days.value.length / 7) * 44 + 30,
+            (days.value.length / 7) * (minCellHeight + 1) + 32,
             window.innerHeight - top - (props.readonly ? 104 : 48),
         );
     });

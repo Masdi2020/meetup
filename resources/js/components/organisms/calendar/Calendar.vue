@@ -161,19 +161,21 @@ const formattedSelectedDate = computed(() => {
         />
         <h2 v-else class="text-xl font-bold">{{ title }}</h2>
 
-        <div class="calendar-legend" aria-label="Keterangan kalender">
-            <span class="rounded border bg-white px-2 py-1">Kosong</span>
-            <span class="rounded bg-yellow-200 px-2 py-1 text-yellow-900"
-                >Ada booking</span
-            >
-            <span class="rounded bg-red-200 px-2 py-1 text-red-900"
-                >Penuh 07:30–16:00</span
-            >
-            <BookingStatusBadge appearance="calendar" status="PENDING" />
-            <span>Garis putus-putus: menunggu persetujuan</span>
-            <BookingStatusBadge appearance="calendar" status="APPROVED" />
-            <BookingStatusBadge appearance="calendar" status="FINISHED" />
-            <span class="today-label">Hari ini</span>
+        <div class="calendar-legends" aria-label="Keterangan kalender">
+            <slot name="room-legend" />
+            <div class="calendar-legend">
+                <span class="rounded border bg-white px-2 py-1">Kosong</span>
+                <span class="rounded bg-yellow-200 px-2 py-1 text-yellow-900"
+                    >Ada booking</span
+                >
+                <span class="rounded bg-red-200 px-2 py-1 text-red-900"
+                    >Penuh 07:30–16:00</span
+                >
+                <BookingStatusBadge appearance="calendar" status="PENDING" />
+                <BookingStatusBadge appearance="calendar" status="APPROVED" />
+                <BookingStatusBadge appearance="calendar" status="FINISHED" />
+                <span class="today-label">Hari ini</span>
+            </div>
         </div>
         <div
             class="calendar-scroll"
@@ -340,6 +342,14 @@ const formattedSelectedDate = computed(() => {
 </template>
 
 <style scoped>
+.calendar-legends {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+    background: var(--ui-surface-soft);
+    border-radius: var(--ui-radius);
+    border: 1px solid var(--ui-border);
+}
 .calendar-legend {
     display: flex;
     flex-wrap: wrap;
@@ -349,7 +359,7 @@ const formattedSelectedDate = computed(() => {
     font-size: 12px;
 }
 .calendar :deep(.pending-event) {
-    border: 2px dashed #92400e;
+    border: 2px dashed #7e22ce;
 }
 .calendar :deep(.today-label) {
     display: inline-block;
