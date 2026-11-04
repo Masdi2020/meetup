@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Dayjs } from 'dayjs';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { calendarOccupancy } from '@/lib/calendarOccupancy';
 import { eventStatusLabels } from '@/lib/eventStatusLabels';
 import { getRoomColor, getRoomTextColor } from '@/lib/roomColors';
 import type { CalendarEvent } from '@/types/calendar';
@@ -9,10 +10,11 @@ const props = defineProps<{
     date: Dayjs;
     now: Dayjs;
     events: CalendarEvent[];
+    roomIds: number[];
+    readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
-    select: [event: CalendarEvent];
     'open-day': [date: string];
 }>();
 
@@ -29,9 +31,14 @@ function resizeGrid() {
         }
 
         const top = grid.value.getBoundingClientRect().top + window.scrollY;
+        const minCellHeight = props.readonly
+            ? 44
+            : window.matchMedia('(max-width: 768px)').matches
+              ? 64
+              : 90;
         gridHeight.value = Math.max(
-            (days.value.length / 7) * 44 + 30,
-            window.innerHeight - top - 48,
+            (days.value.length / 7) * (minCellHeight + 1) + 32,
+            window.innerHeight - top - (props.readonly ? 104 : 48),
         );
     });
 }
@@ -111,18 +118,30 @@ function getEventsForDate(day: Dayjs) {
             v-for="day in days"
             :key="day.toString()"
             class="cell"
-            :class="{
-                other: day.month() !== props.date.month(),
-                today: day.isSame(now, 'day'),
-            }"
+            :class="[
+                calendarOccupancy(getEventsForDate(day), props.roomIds),
+                {
+                    other: day.month() !== props.date.month(),
+                    today: day.isSame(now, 'day'),
+                },
+            ]"
             :aria-current="day.isSame(now, 'day') ? 'date' : undefined"
+            @click.self="
+                !props.readonly && emit('open-day', day.format('YYYY-MM-DD'))
+            "
         >
-            <div class="number">
+            <button
+                type="button"
+                class="number"
+                :disabled="props.readonly"
+                :aria-label="`Lihat peminjaman ${day.format('DD/MM/YYYY')}`"
+                @click="emit('open-day', day.format('YYYY-MM-DD'))"
+            >
                 {{ day.date() }}
                 <span v-if="day.isSame(now, 'day')" class="today-label"
                     >Hari ini</span
                 >
-            </div>
+            </button>
 
             <div v-if="getEventsForDate(day).length" class="event-list">
                 <div
@@ -133,17 +152,21 @@ function getEventsForDate(day: Dayjs) {
                     :key="`${event.id}-${event.date}`"
                     class="event-pill"
                     :class="{ 'pending-event': event.status === 'PENDING' }"
-                    role="button"
-                    tabindex="0"
+                    :role="props.readonly ? undefined : 'button'"
+                    :tabindex="props.readonly ? undefined : 0"
                     :aria-label="`${event.title}, ${event.start_time}-${event.end_time}, ${eventStatusLabels[event.status]}`"
                     :title="`${event.title}, ${event.start_time}-${event.end_time}, ${eventStatusLabels[event.status]}`"
                     :style="{
                         backgroundColor: getRoomColor(event.room),
                         color: getRoomTextColor(),
                     }"
-                    @click="emit('select', event)"
-                    @keydown.enter="emit('select', event)"
-                    @keydown.space.prevent="emit('select', event)"
+                    @click="!props.readonly && emit('open-day', event.date)"
+                    @keydown.enter="
+                        !props.readonly && emit('open-day', event.date)
+                    "
+                    @keydown.space.prevent="
+                        !props.readonly && emit('open-day', event.date)
+                    "
                 >
                     <span class="event-title"
                         >{{ event.start_time }} {{ event.title }}</span
@@ -156,6 +179,7 @@ function getEventsForDate(day: Dayjs) {
                     v-if="getEventsForDate(day).length > visibleCount"
                     type="button"
                     class="event-more"
+                    :disabled="props.readonly"
                     :aria-label="`Lihat semua ${getEventsForDate(day).length} jadwal pada ${day.format('DD/MM/YYYY')}`"
                     @click="emit('open-day', day.format('YYYY-MM-DD'))"
                 >
@@ -202,6 +226,11 @@ function getEventsForDate(day: Dayjs) {
 }
 
 .number {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
     display: flex;
     white-space: nowrap;
     align-items: center;
@@ -211,12 +240,25 @@ function getEventsForDate(day: Dayjs) {
 
 .other {
     color: #bbb;
-    background: #fafafa;
 }
 
 .today {
     box-shadow: inset 0 0 0 2px #2563eb;
-    background: #eff6ff;
+}
+
+.cell.partial {
+    background: #fef08a;
+    color: #713f12;
+}
+
+.cell.full {
+    background: #fecaca;
+    color: #7f1d1d;
+}
+
+.number:disabled,
+.event-more:disabled {
+    cursor: default;
 }
 
 .event-list {

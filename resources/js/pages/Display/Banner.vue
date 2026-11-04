@@ -2,7 +2,9 @@
 import { router } from '@inertiajs/vue3';
 import { useEchoPublic } from '@laravel/echo-vue';
 import { ArrowLeft, Maximize, Minimize } from '@lucide/vue';
+import dayjs from 'dayjs';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import Calendar from '@/components/organisms/calendar/Calendar.vue';
 import { index } from '@/routes/display';
 import type { BannerPageProps } from '@/types/booking';
 
@@ -11,6 +13,12 @@ const props = defineProps<BannerPageProps>();
 const isFullscreen = ref(false);
 const isFullscreenChanging = ref(false);
 const currentTime = ref(new Date(props.now));
+const showCalendar = ref(false);
+const slideshowPaused = ref(false);
+let slideshow: number | undefined;
+
+const CALENDAR_SLIDE_DURATION = 15_000;
+const BANNER_SLIDE_DURATION = 30_000;
 
 let timer: number | undefined;
 let clock: number | undefined;
@@ -86,7 +94,7 @@ function reloadBanner() {
     }
 
     router.reload({
-        only: ['booking', 'next_change', 'now'],
+        only: ['booking', 'next_change', 'now', 'calendar'],
         onFinish: () => {
             if (isActive) {
                 scheduleReload();
@@ -109,11 +117,9 @@ function scheduleReload() {
         timer = undefined;
     }
 
-    if (!props.next_change) {
-        return;
-    }
-
-    const target = new Date(props.next_change).getTime();
+    const target = props.next_change
+        ? new Date(props.next_change).getTime()
+        : getServerNow() + 60_000;
 
     if (Number.isNaN(target)) {
         console.error('Invalid next_change:', props.next_change);
@@ -121,7 +127,8 @@ function scheduleReload() {
         return;
     }
 
-    const delay = Math.max(target - getServerNow(), 1000);
+    // Refresh future bookings and the calendar even without banner events.
+    const delay = Math.min(Math.max(target - getServerNow(), 1000), 60_000);
 
     timer = window.setTimeout(() => {
         if (isActive) {
@@ -134,6 +141,35 @@ function refreshWhenVisible() {
     if (isActive && !document.hidden) {
         reloadBanner();
     }
+}
+
+function scheduleSlideshow() {
+    if (slideshow) {
+        window.clearTimeout(slideshow);
+        slideshow = undefined;
+    }
+
+    if (
+        !isActive ||
+        slideshowPaused.value ||
+        (!showCalendar.value && !props.booking)
+    ) {
+        return;
+    }
+
+    const duration = showCalendar.value
+        ? CALENDAR_SLIDE_DURATION
+        : BANNER_SLIDE_DURATION;
+
+    slideshow = window.setTimeout(() => {
+        if (!slideshowPaused.value && isActive) {
+            showCalendar.value = !showCalendar.value;
+        }
+    }, duration);
+}
+
+function onVideoEnded() {
+    showCalendar.value = true;
 }
 
 async function toggleFullscreen() {
@@ -166,6 +202,7 @@ onMounted(() => {
     isActive = true;
 
     scheduleReload();
+    scheduleSlideshow();
 
     clock = window.setInterval(() => {
         currentTime.value = new Date(getServerNow());
@@ -193,8 +230,19 @@ watch(
     },
 );
 
+watch(showCalendar, scheduleSlideshow);
+
+watch(() => props.booking, scheduleSlideshow);
+
+watch(slideshowPaused, scheduleSlideshow);
+
 onUnmounted(() => {
     isActive = false;
+
+    if (slideshow) {
+        window.clearTimeout(slideshow);
+        slideshow = undefined;
+    }
 
     if (timer) {
         clearTimeout(timer);
@@ -212,67 +260,125 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <button
-        type="button"
-        class="back-btn"
-        aria-label="Kembali ke halaman display"
-        title="Kembali ke halaman display"
-        @click="backToDisplay"
-    >
-        <ArrowLeft :size="24" />
-    </button>
-    <button
-        type="button"
-        class="fullscreen-btn"
-        :aria-label="
-            isFullscreen ? 'Keluar dari layar penuh' : 'Tampilkan layar penuh'
-        "
-        :title="
-            isFullscreen ? 'Keluar dari layar penuh' : 'Tampilkan layar penuh'
-        "
-        :aria-busy="isFullscreenChanging"
-        @click="toggleFullscreen"
-    >
-        <Minimize v-if="isFullscreen" :size="24" aria-hidden="true" />
-        <Maximize v-else :size="24" aria-hidden="true" />
-    </button>
+    <div>
+        <button
+            type="button"
+            class="back-btn"
+            aria-label="Kembali ke halaman display"
+            title="Kembali ke halaman display"
+            @click="backToDisplay"
+        >
+            <ArrowLeft :size="24" />
+        </button>
+        <button
+            type="button"
+            class="fullscreen-btn"
+            :aria-label="
+                isFullscreen
+                    ? 'Keluar dari layar penuh'
+                    : 'Tampilkan layar penuh'
+            "
+            :title="
+                isFullscreen
+                    ? 'Keluar dari layar penuh'
+                    : 'Tampilkan layar penuh'
+            "
+            :aria-busy="isFullscreenChanging"
+            @click="toggleFullscreen"
+        >
+            <Minimize v-if="isFullscreen" :size="24" aria-hidden="true" />
+            <Maximize v-else :size="24" aria-hidden="true" />
+        </button>
 
-    <div class="screen">
-        <img
-            v-if="booking?.attachments?.length"
-            :src="`/storage/${booking.attachments[0].path}`"
-            class="banner"
-        />
+        <div class="screen" :class="{ 'calendar-screen': showCalendar }">
+            <section v-if="showCalendar" class="display-calendar">
+                <h1 class="mb-3 text-2xl font-bold">
+                    Kalender Peminjaman · {{ calendar.room.name }}
+                </h1>
+                <Calendar
+                    :events="calendar.events"
+                    :room-ids="[calendar.room.id]"
+                    :date="calendar.date"
+                    :month="dayjs(calendar.date).month() + 1"
+                    :year="dayjs(calendar.date).year()"
+                    view="month"
+                    readonly
+                />
+            </section>
+            <img
+                v-else-if="booking?.attachments?.length"
+                :src="`/storage/${booking.attachments[0].path}`"
+                class="banner"
+                :alt="booking.title"
+            />
 
-        <div v-else-if="booking" class="meeting-info">
-            <h1 class="title" :style="{ fontSize: titleFontSize }">
-                {{ booking.title }}
-            </h1>
+            <div v-else-if="booking" class="meeting-info">
+                <h1 class="title" :style="{ fontSize: titleFontSize }">
+                    {{ booking.title }}
+                </h1>
 
-            <p class="time">
-                {{ booking.start_time.slice(0, 5) }} -
-                {{ booking.end_time.slice(0, 5) }}
-            </p>
+                <p class="time">
+                    {{ booking.start_time.slice(0, 5) }} -
+                    {{ booking.end_time.slice(0, 5) }}
+                </p>
 
-            <p class="clock">
-                {{ currentClock }}
-            </p>
+                <p class="clock">
+                    {{ currentClock }}
+                </p>
 
-            <p class="remaining">Berakhir dalam {{ remainingTime }}</p>
+                <p class="remaining">Berakhir dalam {{ remainingTime }}</p>
+            </div>
+
+            <video
+                v-else
+                class="display-video"
+                src="/storage/videos/Video tampilan kosong.mp4"
+                autoplay
+                muted
+                playsinline
+                @ended="onVideoEnded"
+            />
         </div>
-
-        <video
-            v-else
-            src="/storage/videos/Video tampilan kosong.mp4"
-            autoplay
-            muted
-            loop
-            playsinline
-        />
+        <div class="slideshow-controls">
+            <button type="button" @click="showCalendar = !showCalendar">
+                {{ showCalendar ? 'Lihat banner' : 'Lihat kalender' }}
+            </button>
+            <button
+                type="button"
+                :aria-pressed="slideshowPaused"
+                @click="slideshowPaused = !slideshowPaused"
+            >
+                {{ slideshowPaused ? 'Lanjutkan slideshow' : 'Jeda slideshow' }}
+            </button>
+        </div>
     </div>
 </template>
 
 <style>
+.screen.calendar-screen {
+    background: white;
+    color: #1e293b;
+    align-items: flex-start;
+}
+.display-calendar {
+    width: 100%;
+    padding: 88px 24px 80px;
+}
+.slideshow-controls {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    display: flex;
+    gap: 8px;
+    z-index: 20;
+}
+.slideshow-controls button {
+    border-radius: 8px;
+    background: #0f172a;
+    color: white;
+    padding: 10px 12px;
+    cursor: pointer;
+}
 .back-btn {
     position: fixed;
     top: 24px;
@@ -313,7 +419,8 @@ onUnmounted(() => {
     align-items: center;
 }
 
-.banner {
+.banner,
+.display-video {
     width: 100%;
     height: 100%;
 

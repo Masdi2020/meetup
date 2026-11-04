@@ -28,9 +28,15 @@ const selectedDetailRoom = ref<RoomDetails | null>(null);
 const filteredRooms = computed(() =>
     rooms.filter((room) => selectedRoomIds.value.includes(room.id)),
 );
-const roomFilter = computed(() =>
-    selectedRoomIds.value.length ? selectedRoomIds.value : [0],
-);
+const roomFilter = computed(() => {
+    if (!selectedRoomIds.value.length) {
+        return 'none';
+    }
+
+    return selectedRoomIds.value.length === rooms.length
+        ? 'all'
+        : selectedRoomIds.value.join(',');
+});
 
 function loadCalendar(date: string, view = props.view) {
     router.get(
@@ -75,26 +81,6 @@ watch(selectedRoomIds, () => {
                 @detail="selectedDetailRoom = $event"
             />
 
-            <div class="room-legend" v-if="filteredRooms.length">
-                <span class="legend-title">Legenda Ruangan</span>
-
-                <div class="legend-items">
-                    <div
-                        class="legend-item"
-                        v-for="room in filteredRooms"
-                        :key="room.id"
-                    >
-                        <span
-                            class="legend-swatch"
-                            :style="{
-                                backgroundColor: getRoomColor(room.name),
-                            }"
-                        ></span>
-                        <span>{{ room.name }}</span>
-                    </div>
-                </div>
-            </div>
-
             <div class="calendar-card">
                 <Calendar
                     :events="events"
@@ -102,10 +88,33 @@ watch(selectedRoomIds, () => {
                     :year="year"
                     :date="date"
                     :view="view"
-                    @open-day="loadCalendar($event, 'day')"
+                    :room-ids="props.selectedRoomIds"
                     @navigate="loadCalendar"
                     @change-view="changeView"
-                />
+                >
+                    <template #room-legend>
+                        <div class="room-legend" v-if="filteredRooms.length">
+                            <span class="legend-title">Legenda Ruangan</span>
+                            <div class="legend-items">
+                                <div
+                                    class="legend-item"
+                                    v-for="room in filteredRooms"
+                                    :key="room.id"
+                                >
+                                    <span
+                                        class="legend-swatch"
+                                        :style="{
+                                            backgroundColor: getRoomColor(
+                                                room.name,
+                                            ),
+                                        }"
+                                    ></span>
+                                    <span>{{ room.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </Calendar>
             </div>
         </div>
     </div>
@@ -127,10 +136,6 @@ watch(selectedRoomIds, () => {
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
-    padding: 12px;
-    background: var(--ui-surface-soft);
-    border-radius: var(--ui-radius);
-    border: 1px solid var(--ui-border);
 }
 
 .legend-title {

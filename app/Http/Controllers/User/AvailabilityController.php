@@ -19,7 +19,7 @@ class AvailabilityController extends Controller
             $request->integer('year', now()->year),
             $request->string('view')->toString(),
             $request->filled('date') ? $request->string('date')->toString() : null,
-            $request->input('room'),
+            $request->input('room', 'all'),
         ));
     }
 }

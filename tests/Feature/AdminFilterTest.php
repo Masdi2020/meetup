@@ -32,7 +32,7 @@ function filterRoom(string $name, string $location = 'Lantai 1'): Room
     ]);
 }
 
-it('filters availability by multiple rooms and supports clearing the selection', function () {
+it('filters availability by multiple rooms and supports clearing the selection', function (bool $commaSeparated) {
     $user = filterUser('Pengguna', 'availability-user', 'user');
     $rooms = collect(['Anggrek', 'Melati', 'Mawar'])->map(fn ($name) => filterRoom($name));
     $status = BookingStatus::create(['code' => 'APPROVED', 'label' => 'Approved']);
@@ -54,7 +54,7 @@ it('filters availability by multiple rooms and supports clearing the selection',
         $query = http_build_query([
             'date' => '2026-09-08',
             'view' => $view,
-            'room' => [$rooms[0]->id, $rooms[2]->id],
+            'room' => $commaSeparated ? "{$rooms[0]->id},{$rooms[2]->id}" : [$rooms[0]->id, $rooms[2]->id],
         ]);
         $this->actingAs($user)->get('/availability?'.$query)
             ->assertOk()
@@ -65,8 +65,17 @@ it('filters availability by multiple rooms and supports clearing the selection',
                 ->where('events', fn ($events) => collect($events)->pluck('room')->sort()->values()->all() === ['Anggrek', 'Mawar']));
     }
 
-    foreach ([null, 0, $rooms[1]->id, [0]] as $filter) {
-        $expected = is_array($filter) ? [] : ($filter ? [$filter] : $rooms->pluck('id')->all());
+    foreach ([
+        [null, $rooms->pluck('id')->all()],
+        ['', []],
+        ['all', $rooms->pluck('id')->all()],
+        [0, $rooms->pluck('id')->all()],
+        [$rooms[1]->id, [$rooms[1]->id]],
+        [[0], []],
+        ['none', []],
+        ['unknown,999999', []],
+        ["{$rooms[1]->id},{$rooms[1]->id},999999", [$rooms[1]->id]],
+    ] as [$filter, $expected]) {
         $query = http_build_query(['date' => '2026-09-08', 'room' => $filter]);
         $this->actingAs($user)->get('/availability?'.$query)
             ->assertOk()
@@ -74,7 +83,7 @@ it('filters availability by multiple rooms and supports clearing the selection',
                 ->where('selectedRoomIds', $expected)
                 ->has('events', count($expected)));
     }
-});
+})->with(['array' => false, 'comma-separated' => true]);
 
 it('filters rooms on the server', function () {
     $admin = filterUser('Admin', 'filter-admin', 'admin');

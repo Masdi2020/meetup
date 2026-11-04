@@ -71,4 +71,9 @@ const code = computed(() => props.status.toUpperCase() as BookingStatusCode);
     background: #e2e8f0;
     color: #334155;
 }
+.booking-status--calendar.booking-status--pending {
+    border: 1px dashed #7e22ce;
+    background: #f3e8ff;
+    color: #7e22ce;
+}
 </style>

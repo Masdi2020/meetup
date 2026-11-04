@@ -30,11 +30,11 @@ class AvailabilityService
         }
 
         $rooms = Room::with('facilities')->get();
-        $roomIds = $roomValue === null || $roomValue === '' || $roomValue === '0' || $roomValue === 0
+        $roomIds = $roomValue === 'all' || $roomValue === '0' || $roomValue === 0
             ? $rooms->pluck('id')->all()
             : array_values(array_intersect(
                 $rooms->pluck('id')->all(),
-                array_map('intval', (array) $roomValue),
+                array_map('intval', is_string($roomValue) ? explode(',', $roomValue) : (array) $roomValue),
             ));
 
         // Include complete edge weeks so cross-month week views stay complete.
