@@ -18,7 +18,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/', AdminDashboardController::class)->name('dashboard');
 
         Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
-        Route::get('/bookings/export-data', [AdminBookingController::class, 'exportData'])->name('bookings.export-data');
+        Route::query('/bookings/export-data', [AdminBookingController::class, 'exportData'])->name('bookings.export-data');
         Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
         Route::put('/bookings/{booking}', [AdminBookingController::class, 'update'])->middleware('booking.action:update')->name('bookings.update');
         Route::put('/bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->middleware('booking.action:cancel')->name('bookings.cancel');
