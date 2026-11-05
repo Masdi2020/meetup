@@ -57,7 +57,7 @@ function removeUsernameWhitespace(event: Event) {
         <p v-if="!user" class="mb-5 text-sm text-gray-500">
             Password akan dibuat secara otomatis oleh sistem.
         </p>
-        <form class="space-y-4" @submit.prevent="submit">
+        <form class="space-y-field" @submit.prevent="submit">
             <FormField
                 label="Nama"
                 appearance="admin"
@@ -123,7 +123,7 @@ function removeUsernameWhitespace(event: Event) {
                     kali.
                 </p>
             </div>
-            <div class="flex justify-end gap-3 pt-2">
+            <div class="flex justify-end gap-action pt-2">
                 <AppButton
                     type="button"
                     variant="neutral"

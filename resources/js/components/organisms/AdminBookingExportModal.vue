@@ -301,7 +301,7 @@ watch(
         max-width="3xl"
         @close="closeExportModal"
     >
-        <div class="space-y-6">
+        <div class="space-y-section">
             <div>
                 <p class="mb-3 text-sm font-semibold text-gray-800">
                     Pilih format file
@@ -621,7 +621,7 @@ watch(
                 {{ exportError }}
             </p>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex justify-end gap-action">
                 <AppButton
                     type="button"
                     variant="neutral"

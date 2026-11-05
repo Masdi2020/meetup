@@ -51,12 +51,12 @@ defineProps<{
                 size="large"
             />
             <StatCard
-                label="Total Booking"
+                label="Total Peminjaman"
                 :value="stats.bookings"
                 size="large"
             />
             <StatCard
-                label="Pending Approval"
+                label="Menunggu Persetujuan"
                 :value="stats.pending"
                 tone="warning"
                 size="large"
@@ -64,11 +64,11 @@ defineProps<{
             />
         </div>
         <div
-            class="grid grid-cols-1 gap-6"
+            class="grid grid-cols-1 gap-section"
             :class="{ 'xl:grid-cols-2': activities }"
         >
             <div class="ui-card ui-card-body">
-                <h2 class="mb-4 text-lg font-semibold">Booking Hari Ini</h2>
+                <h2 class="mb-4 text-lg font-semibold">Peminjaman Hari Ini</h2>
 
                 <div class="space-y-3">
                     <div
@@ -90,20 +90,28 @@ defineProps<{
                         </span>
                     </div>
 
-                    <p v-if="todayBookings.length === 0" class="text-gray-500">
-                        Tidak ada booking hari ini.
-                    </p>
+                    <div
+                        v-if="todayBookings.length === 0"
+                        class="rounded-xl border border-dashed bg-slate-50 px-5 py-10 text-center"
+                    >
+                        <p class="font-medium text-slate-700">
+                            Belum ada peminjaman hari ini
+                        </p>
+                        <p class="mt-1 text-sm text-slate-500">
+                            Jadwal peminjaman hari ini akan muncul di sini.
+                        </p>
+                    </div>
                 </div>
             </div>
 
             <div v-if="activities" class="ui-card ui-card-body">
                 <h2 class="mb-4 text-lg font-semibold">Aktivitas Terbaru</h2>
 
-                <div class="space-y-4">
+                <div class="space-y-field">
                     <div
                         v-for="activity in activities"
                         :key="activity.id"
-                        class="flex gap-4 border-b pb-4 last:border-0"
+                        class="flex gap-field border-b pb-4 last:border-0"
                     >
                         <!-- Icon -->
                         <div

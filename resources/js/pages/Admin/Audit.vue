@@ -133,6 +133,7 @@ function formatValue(value: unknown) {
             <template #filters>
                 <AppSelect
                     v-model="roleFilter"
+                    aria-label="Filter peran pengguna"
                     class="rounded-lg border px-4 py-2"
                 >
                     <option value="">Semua Role</option>
@@ -294,7 +295,7 @@ function formatValue(value: unknown) {
                 {{ formatDate(selectedAudit.created_at) }}
             </p>
             <div class="space-y-5">
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="grid gap-field md:grid-cols-2">
                     <div>
                         <p class="text-sm text-gray-500">Pengguna</p>
 

@@ -157,7 +157,7 @@ const roleLabel = computed(
     border-right: 1px solid rgb(255 255 255 / 9%);
     background: linear-gradient(180deg, #173b7a 0%, #102a5c 52%, #091a3d 100%);
     color: #fff;
-    box-shadow: 12px 0 36px rgb(15 23 42 / 18%);
+    box-shadow: 4px 0 20px rgb(15 23 42 / 6%);
     transition:
         width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
         transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -228,9 +228,9 @@ const roleLabel = computed(
 
 .brand-lockup__copy strong {
     overflow: hidden;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 750;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.01em;
     text-overflow: ellipsis;
     white-space: nowrap;
 }

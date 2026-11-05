@@ -48,6 +48,7 @@ const password = computed({
             />
             <button
                 type="button"
+                tabindex="-1"
                 class="password-field__toggle"
                 :aria-label="
                     visible ? 'Sembunyikan password' : 'Tampilkan password'

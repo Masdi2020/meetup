@@ -27,7 +27,7 @@ function save() {
 </script>
 
 <template>
-    <div class="app-page settings-page">
+    <div class="app-page">
         <PageHeader
             title="Pengaturan"
             description="Konfigurasi aplikasi peminjaman ruangan."
@@ -40,13 +40,19 @@ function save() {
                 <h2 class="text-lg font-semibold">Informasi Sistem</h2>
             </div>
 
-            <div class="ui-card-body grid gap-4">
-                <FormField label="Nama Aplikasi" appearance="admin"
-                    ><AppInput v-model="form.appName" appearance="admin"
+            <div class="ui-card-body grid gap-field">
+                <FormField
+                    label="Nama Aplikasi"
+                    for-id="app-name"
+                    appearance="admin"
+                    ><AppInput
+                        id="app-name"
+                        v-model="form.appName"
+                        appearance="admin"
                 /></FormField>
 
-                <FormField label="Logo" appearance="admin"
-                    ><input type="file" class="ui-control"
+                <FormField label="Logo" for-id="app-logo" appearance="admin"
+                    ><input id="app-logo" type="file" class="ui-control"
                 /></FormField>
             </div>
         </div>
@@ -59,8 +65,12 @@ function save() {
             </div>
 
             <div class="ui-card-body">
-                <FormField label="Session Timeout (Menit)" appearance="admin"
+                <FormField
+                    label="Batas Waktu Sesi (Menit)"
+                    for-id="session-timeout"
+                    appearance="admin"
                     ><AppInput
+                        id="session-timeout"
                         v-model="form.sessionTimeout"
                         type="number"
                         appearance="admin"
@@ -75,11 +85,3 @@ function save() {
         </div>
     </div>
 </template>
-
-<style scoped>
-.settings-page > .ui-card,
-.settings-page > .flex {
-    width: 100%;
-    max-width: var(--ui-form-width);
-}
-</style>

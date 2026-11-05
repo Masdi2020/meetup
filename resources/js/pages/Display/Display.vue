@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { ActionIconButton } from '@/components/atoms';
+import { AppButton } from '@/components/atoms';
 import { PageHeader } from '@/components/molecules';
 import { banner } from '@/routes/display';
 import type { DisplayRoom } from '@/types/room';
@@ -21,7 +21,7 @@ const openRoomBanner = (room: DisplayRoom) => {
         <!-- Header -->
         <PageHeader
             title="Ruangan"
-            description="Lihat daftar ruangan yang tersedia."
+            description="Pilih ruangan untuk menampilkan banner rapat atau kalender di layar."
         />
 
         <!-- Total Ruangan -->
@@ -39,7 +39,7 @@ const openRoomBanner = (room: DisplayRoom) => {
                 <div
                     v-for="room in props.rooms"
                     :key="room.id"
-                    class="flex items-center justify-between px-5 py-4 transition hover:bg-gray-50"
+                    class="flex flex-wrap items-center justify-between gap-field px-5 py-4 transition hover:bg-gray-50"
                 >
                     <!-- Room Information -->
                     <div class="min-w-0">
@@ -73,17 +73,21 @@ const openRoomBanner = (room: DisplayRoom) => {
                     </div>
 
                     <!-- Detail Button -->
-                    <ActionIconButton
-                        action="detail"
+                    <AppButton
+                        type="button"
+                        variant="outline"
                         :disabled="!room.has_display"
-                        :label="
+                        :aria-label="
                             room.has_display
-                                ? 'Lihat banner rapat'
-                                : 'Banner tidak tersedia'
+                                ? `Buka display ${room.name}`
+                                : `Display tidak tersedia untuk ${room.name}`
                         "
-                        class="ml-4"
                         @click="openRoomBanner(room)"
-                    />
+                    >
+                        {{
+                            room.has_display ? 'Buka Display' : 'Tanpa Display'
+                        }}
+                    </AppButton>
                 </div>
             </div>
 

@@ -30,7 +30,7 @@ const gridClass = computed(() => {
 <template>
     <section class="ui-card ui-card-body" aria-label="Pencarian">
         <form
-            class="grid gap-4"
+            class="grid gap-field"
             :class="gridClass"
             role="search"
             @submit.prevent="emit('search')"
@@ -40,6 +40,7 @@ const gridClass = computed(() => {
                 appearance="admin"
                 type="search"
                 :placeholder="placeholder"
+                :aria-label="placeholder"
                 class="rounded-lg border px-4 py-2 outline-none focus:border-blue-500"
             />
 

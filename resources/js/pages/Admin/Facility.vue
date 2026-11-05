@@ -220,7 +220,7 @@ function deleteFacility() {
             max-width="md"
             @close="closeAddModal"
         >
-            <div class="space-y-4">
+            <div class="space-y-field">
                 <FormField label="Nama fasilitas" appearance="admin" required
                     ><AppInput
                         v-model="addFacilityForm.name"
@@ -229,7 +229,7 @@ function deleteFacility() {
                         required
                         @keyup.enter="submitAddFacility"
                 /></FormField>
-                <div class="flex justify-end gap-3 pt-2">
+                <div class="flex justify-end gap-action pt-2">
                     <AppButton
                         variant="neutral"
                         size="sm"
@@ -253,7 +253,7 @@ function deleteFacility() {
             title="Detail Fasilitas"
             @close="closeDetailModal"
         >
-            <div class="space-y-4">
+            <div class="space-y-field">
                 <div class="rounded-lg bg-gray-50 p-4">
                     <p class="text-sm text-gray-500">Nama fasilitas</p>
                     <p class="mt-1 text-lg font-semibold">
@@ -287,7 +287,7 @@ function deleteFacility() {
             max-width="md"
             @close="closeEditModal"
         >
-            <div class="space-y-4">
+            <div class="space-y-field">
                 <FormField label="Nama fasilitas" appearance="admin" required
                     ><AppInput
                         v-model="editFacilityForm.name"
@@ -295,7 +295,7 @@ function deleteFacility() {
                         required
                         @keyup.enter="submitEditFacility"
                 /></FormField>
-                <div class="flex justify-end gap-3 pt-2">
+                <div class="flex justify-end gap-action pt-2">
                     <AppButton
                         variant="neutral"
                         size="sm"

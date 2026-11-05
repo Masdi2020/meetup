@@ -337,6 +337,10 @@ onUnmounted(() => {
                 muted
                 playsinline
                 @ended="onVideoEnded"
+                @error="
+                    slideshowPaused = true;
+                    showCalendar = true;
+                "
             />
         </div>
         <div class="slideshow-controls">
@@ -354,7 +358,7 @@ onUnmounted(() => {
     </div>
 </template>
 
-<style>
+<style scoped>
 .screen.calendar-screen {
     background: white;
     color: #1e293b;
@@ -368,11 +372,14 @@ onUnmounted(() => {
     position: fixed;
     bottom: 24px;
     left: 24px;
+    right: 88px;
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     z-index: 20;
 }
 .slideshow-controls button {
+    min-height: var(--ui-control-height);
     border-radius: 8px;
     background: #0f172a;
     color: white;

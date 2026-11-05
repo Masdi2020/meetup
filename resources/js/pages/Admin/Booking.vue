@@ -286,7 +286,7 @@ function confirmFinish() {
 <template>
     <div class="app-page">
         <PageHeader
-            title="Booking"
+            title="Peminjaman"
             description="Kelola seluruh peminjaman ruangan."
         >
             <div class="flex flex-wrap gap-3">
@@ -296,7 +296,7 @@ function confirmFinish() {
                     size="sm"
                     @click="openModal('export')"
                 >
-                    Export Data
+                    Ekspor Data
                 </AppButton>
                 <AppButton
                     variant="primary"
@@ -338,7 +338,7 @@ function confirmFinish() {
             max-width="3xl"
             @close="closeDetailModal"
         >
-            <div class="grid gap-4 md:grid-cols-2">
+            <div class="grid gap-field md:grid-cols-2">
                 <div>
                     <p class="text-sm text-gray-500">ID Booking</p>
                     <p class="mt-1 font-medium">{{ detailBooking?.id }}</p>
@@ -425,7 +425,7 @@ function confirmFinish() {
             max-width="lg"
             @close="closeRejectModal"
         >
-            <div class="space-y-4">
+            <div class="space-y-field">
                 <FormField
                     label="Alasan Penolakan"
                     appearance="admin"
@@ -434,7 +434,7 @@ function confirmFinish() {
                     ><AppTextarea v-model="rejectReason" rows="4"
                 /></FormField>
 
-                <div class="flex justify-end gap-3">
+                <div class="flex justify-end gap-action">
                     <AppButton
                         type="button"
                         variant="neutral"
@@ -487,6 +487,7 @@ function confirmFinish() {
             <template #filters>
                 <AppSelect
                     v-model="statusFilter"
+                    aria-label="Filter status peminjaman"
                     class="rounded-lg border px-4 py-2"
                 >
                     <option value="">Semua Status</option>
@@ -501,6 +502,7 @@ function confirmFinish() {
 
                 <AppSelect
                     v-model="roomFilter"
+                    aria-label="Filter ruangan"
                     class="rounded-lg border px-4 py-2"
                 >
                     <option value="">Semua Ruangan</option>

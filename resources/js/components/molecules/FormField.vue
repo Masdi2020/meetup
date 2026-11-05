@@ -29,11 +29,11 @@ withDefaults(
     text-align: left;
 }
 .form-field--default {
-    margin-bottom: var(--ui-gap);
+    margin-bottom: var(--ui-field-gap);
 }
 .form-field__label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: var(--ui-label-gap);
     color: #2c3e50;
     font-size: 14px;
     font-weight: 600;
@@ -47,7 +47,7 @@ withDefaults(
 }
 .form-field__error,
 .form-field__hint {
-    margin: 6px 0 0;
+    margin: var(--ui-copy-gap) 0 0;
     font-size: 13px;
 }
 .form-field__hint {

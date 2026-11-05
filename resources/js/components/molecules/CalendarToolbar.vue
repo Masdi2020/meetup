@@ -100,12 +100,13 @@ button:hover {
 }
 @container (max-width: 760px) {
     .calendar-toolbar {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 6px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
     }
     .calendar-toolbar h2 {
         font-size: 16px;
-        text-align: center;
+        text-align: left;
+        font-weight: 600;
     }
     .navigation {
         margin-left: 0;
@@ -114,7 +115,11 @@ button:hover {
         justify-content: center;
     }
     .view-switch {
-        justify-self: center;
+        grid-column: 1 / -1;
+        justify-self: stretch;
+    }
+    .view-switch button {
+        flex: 1;
     }
     button {
         min-height: var(--ui-control-height);

@@ -312,7 +312,7 @@ function toggleAvailability() {
             max-width="xl"
             @close="closeFormModal"
         >
-            <form @submit.prevent="submitRoomForm" class="space-y-4">
+            <form @submit.prevent="submitRoomForm" class="space-y-field">
                 <FormField label="Nama Ruangan" appearance="admin" required
                     ><AppInput
                         v-model="roomForm.name"
@@ -320,7 +320,7 @@ function toggleAvailability() {
                         required
                 /></FormField>
 
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="grid gap-field md:grid-cols-2">
                     <FormField label="Kapasitas" appearance="admin" required
                         ><AppInput
                             v-model="roomForm.capacity"
@@ -349,7 +349,7 @@ function toggleAvailability() {
                     label="Aktif tersedia untuk booking"
                 />
 
-                <div class="flex justify-end gap-3 pt-2">
+                <div class="flex justify-end gap-action pt-2">
                     <AppButton
                         type="button"
                         @click="closeFormModal"

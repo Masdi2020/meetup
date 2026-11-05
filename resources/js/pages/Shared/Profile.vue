@@ -166,7 +166,7 @@ function changePassword() {
 <style scoped>
 .content form {
     display: grid;
-    gap: var(--ui-gap);
+    gap: var(--ui-field-gap);
 }
 .content :deep(.form-field) {
     margin-bottom: 0;
@@ -174,7 +174,7 @@ function changePassword() {
 
 .tabs {
     display: flex;
-    gap: 12px;
+    gap: var(--ui-action-gap);
     flex-wrap: wrap;
     margin: 0 0 var(--ui-gap);
 }
@@ -197,12 +197,12 @@ function changePassword() {
 
 .content {
     display: grid;
-    gap: 16px;
+    gap: var(--ui-field-gap);
 }
 
 .field {
     display: grid;
-    gap: 8px;
+    gap: var(--ui-label-gap);
 }
 
 .field label {

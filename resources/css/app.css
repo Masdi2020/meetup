@@ -4,6 +4,9 @@
 @source '../../storage/framework/views/*.php';
 
 @theme inline {
+    --spacing-field: var(--ui-field-gap);
+    --spacing-action: var(--ui-action-gap);
+    --spacing-section: var(--ui-gap);
     --color-blue-50: #eff6ff;
     --color-blue-100: #dbeafe;
     --color-blue-500: #3b82f6;
@@ -31,19 +34,23 @@ html {
     --ui-heading: #173b7a;
     --ui-text: #1e293b;
     --ui-muted: #64748b;
-    --ui-background: #f8fafc;
+    --ui-background: #f4f7fb;
     --ui-surface: #fff;
     --ui-surface-soft: #f1f5f9;
     --ui-border: #e2e8f0;
-    --ui-radius: 8px;
-    --ui-card-radius: 12px;
+    --ui-radius: 10px;
+    --ui-card-radius: 16px;
     --ui-control-height: 44px;
+    --ui-copy-gap: 4px;
+    --ui-label-gap: 8px;
+    --ui-action-gap: 12px;
+    --ui-field-gap: 16px;
     --ui-page-padding: 24px;
     --ui-card-padding: 24px;
     --ui-gap: 24px;
     --ui-content-width: 1440px;
     --ui-form-width: 768px;
-    --ui-shadow: 0 1px 3px rgb(15 23 42 / 5%);
+    --ui-shadow: 0 2px 8px rgb(15 23 42 / 4%);
 }
 body {
     margin: 0;
@@ -93,7 +100,7 @@ button:disabled {
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: var(--ui-field-gap);
 }
 .page-heading {
     min-width: 0;
@@ -108,9 +115,10 @@ button:disabled {
     font-size: 26px;
     font-weight: 700;
     line-height: 1.3;
+    letter-spacing: -0.025em;
 }
 .page-header p {
-    margin-top: 4px;
+    margin-top: var(--ui-copy-gap);
     color: var(--ui-muted);
 }
 .ui-card,
@@ -126,13 +134,13 @@ button:disabled {
     padding: var(--ui-card-padding);
 }
 .ui-card-header {
-    padding: 16px var(--ui-card-padding);
+    padding: var(--ui-field-gap) var(--ui-card-padding);
     border-bottom: 1px solid var(--ui-border);
 }
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
-    gap: 16px;
+    gap: var(--ui-field-gap);
 }
 .stat-card {
     overflow-wrap: anywhere;
@@ -142,7 +150,7 @@ button:disabled {
     min-height: var(--ui-control-height);
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--ui-label-gap);
     padding: 10px 16px;
     border: 1px solid var(--ui-border);
     border-radius: var(--ui-radius);
@@ -228,8 +236,7 @@ button:disabled {
         font-size: 22px;
     }
     .page-heading {
-        min-height: 44px;
-        padding-left: 60px;
+        min-height: 0;
     }
     .page-header.page-heading {
         display: flex;
@@ -249,7 +256,7 @@ button:disabled {
         flex: 1;
     }
     .stats-grid {
-        gap: 12px;
+        gap: var(--ui-action-gap);
     }
     input:not([type='checkbox']):not([type='radio']),
     select,
@@ -287,6 +294,9 @@ div.calendar-input.calendar-input--disabled {
     padding: 10px 12px;
     background: white;
     outline: none;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
 }
 @media (max-width: 768px) {
     .app-control {
@@ -297,11 +307,13 @@ div.calendar-input.calendar-input--disabled {
 .room-options {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--ui-label-gap);
 }
 .profile-card,
 .booking-card {
     width: 100%;
+}
+.profile-card {
     max-width: var(--ui-form-width);
 }
 .page-grid {

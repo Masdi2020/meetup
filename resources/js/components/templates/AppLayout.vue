@@ -86,6 +86,11 @@ const activeMenuTo = computed(() => {
 
 <template>
     <div class="layout">
+        <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+        <header class="mobile-header">
+            <img src="/favicon.svg" alt="" width="28" height="28" />
+            <span>{{ page.props.name }}</span>
+        </header>
         <button
             v-if="isMobile && !isOpen"
             class="mobile-menu-button"
@@ -118,7 +123,12 @@ const activeMenuTo = computed(() => {
         </Sidebar>
 
         <ForceChangePasswordModal />
-        <main class="content" :class="{ collapsed: !isOpen }">
+        <main
+            id="main-content"
+            class="content"
+            :class="{ collapsed: !isOpen }"
+            tabindex="-1"
+        >
             <div class="content-inner"><slot /></div>
         </main>
     </div>
@@ -151,15 +161,43 @@ const activeMenuTo = computed(() => {
 .mobile-menu-button {
     display: none;
 }
+.mobile-header {
+    display: none;
+}
+.skip-link {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 1100;
+    padding: 12px 16px;
+    border-radius: var(--ui-radius);
+    background: white;
+    color: var(--ui-primary);
+    transform: translateY(-150%);
+}
+.skip-link:focus {
+    transform: translateY(0);
+}
 
 @media (max-width: 768px) {
     .content,
     .content.collapsed {
         margin-left: 0;
-        padding-top: 14px;
+        padding-top: 16px;
+    }
+    .mobile-header {
+        display: flex;
+        min-height: 72px;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px 14px 76px;
+        border-bottom: 1px solid var(--ui-border);
+        background: var(--ui-surface);
+        color: var(--ui-heading);
+        font-weight: 700;
     }
     .mobile-menu-button {
-        position: fixed;
+        position: absolute;
         top: 14px;
         left: 16px;
         z-index: 900;

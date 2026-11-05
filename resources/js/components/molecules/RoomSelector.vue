@@ -79,7 +79,7 @@ const emit = defineEmits<{ detail: [room: RoomDetails] }>();
 }
 
 .toolbar legend {
-    margin-bottom: 8px;
+    margin-bottom: var(--ui-label-gap);
 }
 
 .room-filter-heading {
@@ -87,7 +87,7 @@ const emit = defineEmits<{ detail: [room: RoomDetails] }>();
     width: 100%;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--ui-action-gap);
 }
 
 .room-option--filter {

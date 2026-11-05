@@ -135,7 +135,7 @@ watch(selectedRoomHasDisplay, (hasDisplay) => {
             Peminjaman berhasil ditambahkan.
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-field md:grid-cols-2">
             <FormField
                 label="Nama Peminjam"
                 appearance="admin"
@@ -346,7 +346,7 @@ watch(selectedRoomHasDisplay, (hasDisplay) => {
                 :disabled="addBookingForm.processing"
                 @change="addBookingForm.clearErrors('banner')"
             />
-            <div class="flex justify-end gap-3 md:col-span-2">
+            <div class="flex justify-end gap-action md:col-span-2">
                 <AppButton
                     type="button"
                     variant="neutral"

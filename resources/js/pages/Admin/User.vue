@@ -212,6 +212,7 @@ function deleteUser() {
             <template #filters>
                 <AppSelect
                     v-model="roleFilter"
+                    aria-label="Filter peran pengguna"
                     class="rounded-lg border px-4 py-2"
                 >
                     <option value="">Semua Role</option>
@@ -322,7 +323,7 @@ function deleteUser() {
             title="Detail Pengguna"
             @close="closeDetail"
         >
-            <div class="space-y-4 text-sm text-gray-700">
+            <div class="space-y-field text-sm text-gray-700">
                 <div>
                     <p class="font-semibold text-gray-500">Nama</p>
                     <p>{{ selectedUser.name }}</p>

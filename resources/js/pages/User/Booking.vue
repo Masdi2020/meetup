@@ -430,13 +430,13 @@ watch(hasDisplay, (roomHasDisplay) => {
 <style scoped>
 .room-selector {
     min-width: 0;
-    margin: 0 0 var(--ui-gap);
+    margin: 0 0 var(--ui-field-gap);
     padding: 0;
     border: 0;
 }
 
 .room-selector legend {
-    margin-bottom: 8px;
+    margin-bottom: var(--ui-label-gap);
 }
 
 .room-option--booking {
@@ -455,18 +455,18 @@ watch(hasDisplay, (roomHasDisplay) => {
     display: flex;
     flex-direction: column;
     min-width: 0;
-    margin-bottom: var(--ui-gap);
+    margin-bottom: var(--ui-field-gap);
 }
 
 .booking-time-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: var(--ui-field-gap);
 }
 
 .form-group label {
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: var(--ui-label-gap);
     color: #2c2c2c;
 }
 
@@ -496,13 +496,13 @@ textarea {
 }
 
 .warning-text {
-    margin-top: 6px;
+    margin-top: var(--ui-copy-gap);
     color: #dc3545;
     font-size: 13px;
 }
 
 .availability-message {
-    margin: -8px 0 18px;
+    margin: 0 0 var(--ui-field-gap);
     color: #475569;
     font-size: 13px;
 }
@@ -540,7 +540,7 @@ button:hover {
 }
 
 .error {
-    margin-top: 5px;
+    margin-top: var(--ui-copy-gap);
     color: #dc3545;
     font-size: 13px;
 }
@@ -552,7 +552,7 @@ button:hover {
     background: #28a745;
     color: white;
 
-    margin: 0 auto 20px;
+    margin: 0 auto var(--ui-field-gap);
 
     display: flex;
     justify-content: center;

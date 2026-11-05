@@ -36,7 +36,7 @@ const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
                 :aria-label="title"
             >
                 <header
-                    class="mb-4 flex shrink-0 items-center justify-between gap-4"
+                    class="mb-4 flex shrink-0 items-center justify-between gap-field"
                 >
                     <h2 class="text-xl font-bold text-slate-900">
                         {{ title }}
@@ -56,7 +56,7 @@ const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
                 </div>
                 <footer
                     v-if="$slots.actions"
-                    class="mt-4 flex shrink-0 flex-col-reverse gap-3 sm:flex-row sm:justify-end"
+                    class="mt-4 flex shrink-0 flex-col-reverse gap-action sm:flex-row sm:justify-end"
                 >
                     <slot name="actions" />
                 </footer>

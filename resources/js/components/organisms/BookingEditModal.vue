@@ -47,7 +47,7 @@ function submit() {
 
 <template>
     <AppModal title="Edit Booking" max-width="2xl" @close="close">
-        <form class="grid gap-4 md:grid-cols-2" @submit.prevent="submit">
+        <form class="grid gap-field md:grid-cols-2" @submit.prevent="submit">
             <FormField
                 class="md:col-span-2"
                 label="Judul Kegiatan"
@@ -131,7 +131,7 @@ function submit() {
             <p v-if="bookingError" class="text-sm text-red-600 md:col-span-2">
                 {{ bookingError }}
             </p>
-            <div class="flex justify-end gap-3 md:col-span-2">
+            <div class="flex justify-end gap-action md:col-span-2">
                 <AppButton
                     type="button"
                     variant="neutral"
