@@ -186,7 +186,7 @@ watch(hasDisplay, (roomHasDisplay) => {
                         <label
                             v-for="room in rooms"
                             :key="room.id"
-                            class="room-option"
+                            class="room-option room-option--booking"
                         >
                             <input
                                 v-model="form.room_id"
@@ -439,35 +439,16 @@ watch(hasDisplay, (roomHasDisplay) => {
     margin-bottom: 8px;
 }
 
-.room-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.room-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    background: var(--ui-surface);
-    border: 1px solid var(--ui-border);
-    border-radius: 8px;
-    padding: 8px 12px;
+.room-option--booking {
     font-weight: 600;
     cursor: pointer;
 }
 
-.room-option input {
+.room-option--booking input {
     width: 18px;
     height: 18px;
     padding: 0;
     accent-color: #173b7a;
-}
-
-.booking-card {
-    width: 100%;
-    max-width: var(--ui-form-width);
 }
 
 .form-group {

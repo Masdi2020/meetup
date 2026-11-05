@@ -142,7 +142,8 @@ function openPicker() {
         border-color 0.2s,
         box-shadow 0.2s;
 }
-.app-input--default {
+.app-input--default,
+.app-picker--default {
     min-height: var(--ui-control-height);
     padding: 10px 12px;
     border-radius: var(--ui-radius);
@@ -153,10 +154,6 @@ function openPicker() {
     padding: 10px 12px;
     border-color: #d1d5db;
     border-radius: var(--ui-radius);
-}
-.app-input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgb(59 130 246 / 12%);
 }
 .app-picker {
     position: relative;
@@ -176,30 +173,11 @@ function openPicker() {
         border-color 0.2s,
         box-shadow 0.2s;
 }
-.app-picker--default {
-    min-height: var(--ui-control-height);
-    padding: 10px 12px;
-    border-radius: var(--ui-radius);
-    font-size: 15px;
-}
 .app-picker--admin {
     min-height: var(--ui-control-height);
     padding: 10px 12px;
     border-radius: var(--ui-radius);
     font-size: 14px;
-}
-.app-picker:focus-within {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgb(59 130 246 / 12%);
-}
-.app-picker--invalid {
-    border-color: #dc3545;
-    background: #fff5f5;
-}
-.app-picker--disabled {
-    cursor: not-allowed;
-    background: #f3f4f6;
-    opacity: 0.65;
 }
 .app-picker__value {
     overflow: hidden;

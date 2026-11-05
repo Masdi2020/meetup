@@ -74,7 +74,7 @@ watch(selectedRoomIds, () => {
     <div class="app-page availability">
         <PageHeader title="Ketersediaan Ruangan" />
 
-        <div class="page-card ui-card ui-card-body">
+        <div class="page-grid ui-card ui-card-body">
             <RoomSelector
                 v-model="selectedRoomIds"
                 :rooms="rooms"
@@ -126,11 +126,6 @@ watch(selectedRoomIds, () => {
 </template>
 
 <style scoped>
-.page-card {
-    display: grid;
-    gap: var(--ui-gap);
-}
-
 .room-legend {
     display: flex;
     flex-wrap: wrap;

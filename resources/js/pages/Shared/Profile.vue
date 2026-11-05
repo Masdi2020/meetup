@@ -164,10 +164,6 @@ function changePassword() {
 </template>
 
 <style scoped>
-.profile-card {
-    width: 100%;
-    max-width: var(--ui-form-width);
-}
 .content form {
     display: grid;
     gap: var(--ui-gap);

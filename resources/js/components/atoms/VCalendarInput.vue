@@ -208,11 +208,7 @@ const fallbackPlaceholder = computed(() =>
         box-shadow 0.2s;
 }
 
-.calendar-input--default {
-    min-height: var(--ui-control-height);
-    border-radius: var(--ui-radius);
-}
-
+.calendar-input--default,
 .calendar-input--admin {
     min-height: var(--ui-control-height);
     border-radius: var(--ui-radius);
@@ -237,22 +233,6 @@ const fallbackPlaceholder = computed(() =>
 .calendar-input__empty-time {
     color: #6b7280;
     font-size: 14px;
-}
-
-.calendar-input:focus-within {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgb(59 130 246 / 12%);
-}
-
-.calendar-input--invalid {
-    border-color: #dc3545;
-    background: #fff5f5;
-}
-
-.calendar-input--disabled {
-    cursor: not-allowed;
-    background: #f3f4f6;
-    opacity: 0.65;
 }
 
 .calendar-input__control {

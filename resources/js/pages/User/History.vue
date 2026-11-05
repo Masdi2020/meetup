@@ -199,7 +199,7 @@ const finishBooking = () => {
     <div class="app-page history-page">
         <PageHeader title="Riwayat Peminjaman Ruang Rapat" />
 
-        <div class="page-card">
+        <div class="page-grid">
             <div class="filter">
                 <select
                     v-model="filterStatus"
@@ -430,12 +430,6 @@ const finishBooking = () => {
 </template>
 
 <style scoped>
-.page-card {
-    display: grid;
-    min-width: 0;
-    gap: var(--ui-gap);
-}
-
 .filter {
     width: min(100%, 280px);
 }
@@ -462,7 +456,7 @@ td {
     color: var(--ui-text);
 }
 
-tbody tr:hover {
+tbody.history-tbody tr:hover {
     background: #f6f8fc;
 }
 

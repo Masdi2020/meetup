@@ -113,14 +113,16 @@ button:disabled {
     margin-top: 4px;
     color: var(--ui-muted);
 }
-.ui-card {
+.ui-card,
+.surface-card {
     min-width: 0;
     border: 1px solid var(--ui-border);
     border-radius: var(--ui-card-radius);
     background: var(--ui-surface);
     box-shadow: var(--ui-shadow);
 }
-.ui-card-body {
+.ui-card-body,
+.surface-card {
     padding: var(--ui-card-padding);
 }
 .ui-card-header {
@@ -190,6 +192,14 @@ button:disabled {
 .room-option {
     max-width: 100%;
     overflow-wrap: anywhere;
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+    background: var(--ui-surface);
+    padding: 8px 12px;
 }
 .room-option input {
     flex-shrink: 0;
@@ -255,4 +265,54 @@ button:disabled {
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
     }
+}
+/* Shared form controls, room options, and page containers. */
+div.app-picker.app-picker--invalid,
+div.calendar-input.calendar-input--invalid {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+div.app-picker.app-picker--disabled,
+div.calendar-input.calendar-input--disabled {
+    cursor: not-allowed;
+    background: #f3f4f6;
+    opacity: 0.65;
+}
+.app-control {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    padding: 10px 12px;
+    background: white;
+    outline: none;
+}
+@media (max-width: 768px) {
+    .app-control {
+        font-size: 16px;
+    }
+}
+
+.room-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.profile-card,
+.booking-card {
+    width: 100%;
+    max-width: var(--ui-form-width);
+}
+.page-grid {
+    min-width: 0;
+    display: grid;
+    gap: var(--ui-gap);
+}
+input.app-input:focus,
+div.app-picker:focus-within,
+.app-control:focus,
+div.calendar-input:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 12%);
 }

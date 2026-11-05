@@ -34,7 +34,11 @@ const emit = defineEmits<{ detail: [room: RoomDetails] }>();
             </button>
         </legend>
         <div class="room-options">
-            <div v-for="room in rooms" :key="room.id" class="room-option">
+            <div
+                v-for="room in rooms"
+                :key="room.id"
+                class="room-option room-option--filter"
+            >
                 <label
                     class="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
                 >
@@ -86,25 +90,11 @@ const emit = defineEmits<{ detail: [room: RoomDetails] }>();
     gap: 12px;
 }
 
-.room-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.room-option {
-    display: flex;
-    min-height: 44px;
+.room-option--filter {
     flex: 1 1 240px;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid var(--ui-border);
-    border-radius: 8px;
-    background: white;
-    padding: 8px 12px;
 }
 
-.room-option input {
+.room-option--filter input {
     width: 18px;
     height: 18px;
     accent-color: #2563eb;
