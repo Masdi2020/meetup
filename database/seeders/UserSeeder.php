@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
 class UserSeeder extends Seeder
 {
@@ -13,12 +14,16 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        $password = config('auth.default_password');
+
+        if (! is_string($password) || trim($password) === '') {
+            throw new RuntimeException('Isi DEFAULT_PASSWORD sebelum menjalankan UserSeeder.');
+        }
+
         $users = [
             [
                 'name' => 'Dimas',
                 'username' => 'masdi2005',
-                'password' => bcrypt('Kiwandim'),
-                'force_change_password' => false,
             ],
             [
                 'name' => 'admin',
@@ -28,9 +33,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'display',
                 'username' => 'display',
-                'password' => bcrypt('display123'),
                 'role' => 'display',
-                'force_change_password' => false,
             ],
             ['name' => 'A. Hambali, SE', 'username' => 'hambali.achmad'],
             ['name' => 'Asha Jyoti Alfiyah, S.Tr.Stat.', 'username' => 'ashajyoti'],
@@ -77,8 +80,8 @@ class UserSeeder extends Seeder
             User::create([
                 ...$user,
                 'role_id' => $roleId,
-                'force_change_password' => $user['force_change_password'] ?? true,
-                'password' => $user['password'] ?? bcrypt(config('auth.default_password')),
+                'force_change_password' => true,
+                'password' => bcrypt($password),
             ]);
         }
     }

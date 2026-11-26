@@ -56,6 +56,7 @@ class AdminBookingQueryService
                 'date' => $booking->date->format('d/m/Y'),
                 'start' => $booking->start_time->format('H:i'),
                 'end' => $booking->end_time->format('H:i'),
+                'participants' => $booking->participants_count,
                 'status' => strtolower($booking->status->code),
                 'request' => $booking->notes,
                 'processed_notes' => $booking->processed_notes,

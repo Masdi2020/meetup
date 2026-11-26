@@ -12,6 +12,9 @@ export interface BookingHistory {
     room: string;
     date: string;
     time: string;
+    start_time: string;
+    end_time: string;
+    participants: number;
     title: string;
     status: BookingHistoryStatus;
     results_available: boolean;
@@ -63,4 +66,5 @@ export interface BookingEdit {
     date: string;
     start_time: string;
     end_time: string;
+    participants: number;
 }

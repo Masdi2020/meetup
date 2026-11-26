@@ -31,12 +31,6 @@ const submit = async () => {
         return;
     }
 
-    const { token } = await response.json();
-
-    document
-        .querySelector('meta[name="csrf-token"]')
-        ?.setAttribute('content', token);
-
     form.post(store.url());
 };
 

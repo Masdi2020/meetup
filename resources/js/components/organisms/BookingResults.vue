@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { FileText, ImagePlus, Upload, X } from '@lucide/vue';
+import { FileText, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { ActionIconButton } from '@/components/atoms';
+import BookingFilePicker from '@/components/molecules/BookingFilePicker.vue';
 import ConfirmModal from '@/components/organisms/ConfirmModal.vue';
 import type { BookingResultFile } from '@/types/booking';
 
@@ -19,8 +20,6 @@ const props = defineProps<{
     editable: boolean;
 }>();
 const emit = defineEmits<{ busy: [value: boolean] }>();
-const documentationInput = ref<HTMLInputElement | null>(null);
-const minutesInput = ref<HTMLInputElement | null>(null);
 const documentationForm = useForm({ documentation: [] as File[] });
 const minutesForm = useForm({ meeting_minutes: null as File | null });
 const previews = ref<Array<{ file: File; url: string }>>([]);
@@ -49,11 +48,7 @@ function clearMinutes() {
     minutesForm.reset();
     minutesForm.clearErrors();
 }
-function selectDocumentation(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
-    input.value = '';
-
+function selectDocumentation(files: File[]) {
     if (!files.length || busy.value) {
         return;
     }
@@ -96,11 +91,7 @@ function removePreview(index: number) {
     documentationForm.documentation = previews.value.map(({ file }) => file);
     documentationForm.clearErrors();
 }
-function selectMinutes(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-
+function selectMinutes([file]: File[]) {
     if (!file || busy.value) {
         return;
     }
@@ -199,32 +190,15 @@ onBeforeUnmount(() => {
             class="space-y-3 rounded-xl border border-slate-200 p-4"
             :aria-busy="documentationForm.processing"
         >
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h3 class="font-semibold text-slate-800">Dokumentasi</h3>
-                    <p class="mt-1 text-xs text-slate-500">
-                        JPG atau PNG <strong> Maks. 5 MB per foto </strong> 10
-                        foto per unggahan
-                    </p>
-                </div>
-                <button
-                    v-if="editable"
-                    type="button"
-                    class="ui-button"
-                    :disabled="busy"
-                    @click="documentationInput?.click()"
-                >
-                    <ImagePlus :size="16" aria-hidden="true" />Tambah foto
-                </button>
-            </div>
-            <input
-                ref="documentationInput"
-                type="file"
+            <h3 class="font-semibold text-slate-800">Dokumentasi</h3>
+            <BookingFilePicker
+                v-if="editable"
+                label="Pilih foto dokumentasi"
+                hint="JPG atau PNG · Maks. 5 MB per foto · Hingga 10 foto"
                 accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                 multiple
-                class="hidden"
-                :disabled="busy || !editable"
-                @change="selectDocumentation"
+                :disabled="busy"
+                @select="selectDocumentation"
             />
             <div
                 v-if="documentations.length || previews.length"
@@ -306,7 +280,7 @@ onBeforeUnmount(() => {
                 </div>
             </div>
             <p
-                v-else
+                v-else-if="!editable"
                 class="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-500"
             >
                 Belum ada dokumentasi.
@@ -359,35 +333,18 @@ onBeforeUnmount(() => {
             class="space-y-3 rounded-xl border border-slate-200 p-4"
             :aria-busy="minutesForm.processing"
         >
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h3 class="font-semibold text-slate-800">Notulensi</h3>
-                    <p class="mt-1 text-xs text-slate-500">
-                        PDF, DOC, atau DOCX <strong> Maks. 10 MB </strong> 1
-                        file
-                    </p>
-                </div>
-                <button
-                    v-if="editable"
-                    type="button"
-                    class="ui-button"
-                    :disabled="busy"
-                    @click="minutesInput?.click()"
-                >
-                    <Upload :size="16" aria-hidden="true" />{{
-                        meetingMinutes || minutesForm.meeting_minutes
-                            ? 'Ganti file'
-                            : 'Pilih file'
-                    }}
-                </button>
-            </div>
-            <input
-                ref="minutesInput"
-                type="file"
+            <h3 class="font-semibold text-slate-800">Notulensi</h3>
+            <BookingFilePicker
+                v-if="editable"
+                :label="
+                    meetingMinutes || minutesForm.meeting_minutes
+                        ? 'Ganti file notulensi'
+                        : 'Pilih file notulensi'
+                "
+                hint="PDF, DOC, atau DOCX · Maks. 10 MB"
                 accept=".pdf,.doc,.docx"
-                class="hidden"
-                :disabled="busy || !editable"
-                @change="selectMinutes"
+                :disabled="busy"
+                @select="selectMinutes"
             />
             <div
                 v-if="meetingMinutes"
@@ -425,7 +382,7 @@ onBeforeUnmount(() => {
                 />
             </div>
             <p
-                v-else-if="!minutesForm.meeting_minutes"
+                v-else-if="!editable"
                 class="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-500"
             >
                 Belum ada notulensi.

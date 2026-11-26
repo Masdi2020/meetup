@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 #[Fillable(['name', 'username', 'password', 'role_id', 'force_change_password'])]
-#[Hidden(['password', 'active_username', 'assignedRole'])]
+#[Hidden(['password', 'remember_token', 'active_username', 'assignedRole'])]
 class User extends Authenticatable
 {
     use SoftDeletes;

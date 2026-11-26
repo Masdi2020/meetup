@@ -50,6 +50,7 @@ export interface AdminBooking {
     date: string;
     start: string;
     end: string;
+    participants: number;
     status: BookingStatus;
     request?: string;
     processed_notes?: string;

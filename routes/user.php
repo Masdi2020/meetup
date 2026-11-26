@@ -11,13 +11,18 @@ Route::middleware(['auth', 'role:user'])->group(function () {
 
     Route::get('/riwayat', [HistoryController::class, 'index'])->name('history.index');
 
-    Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');
-    Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
-    Route::put('/booking/{booking}', [BookingController::class, 'update'])->middleware('booking.action:update')->name('booking.update');
     Route::put('/booking/{booking}/cancel', [BookingController::class, 'cancel'])->middleware('booking.action:cancel')->name('booking.cancel');
     Route::patch('/booking/{booking}/finish', [BookingController::class, 'finish'])->middleware('booking.action:finish')->name('booking.finish');
     Route::post('/booking/{booking}/results/documentation', [BookingResultController::class, 'storeDocumentation'])->name('booking.results.documentation');
     Route::post('/booking/{booking}/results/meeting-minutes', [BookingResultController::class, 'storeMeetingMinutes'])->name('booking.results.meeting-minutes');
-    Route::get('/booking/{booking}/attachments/{attachment}', [BookingResultController::class, 'show'])->name('booking.results.show');
-    Route::delete('/booking/{booking}/attachments/{attachment}', [BookingResultController::class, 'destroy'])->name('booking.results.destroy');
+    Route::resource('booking.attachments', BookingResultController::class)
+        ->only(['show', 'destroy'])
+        ->names([
+            'show' => 'booking.results.show',
+            'destroy' => 'booking.results.destroy',
+        ]);
+
+    Route::resource('booking', BookingController::class)
+        ->only(['index', 'store', 'update'])
+        ->middlewareFor('update', 'booking.action:update');
 });

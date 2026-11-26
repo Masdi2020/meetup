@@ -52,6 +52,7 @@ const { applyFilters, resetFilters } = useAdminFilters(index.url(), {
 const selectedUser = ref<User | null>(null);
 const userToConfirm = ref<User | null>(null);
 const confirmAction = ref<'reset' | 'delete' | null>(null);
+const deleteError = ref('');
 const showDetailModal = computed(() => isModalOpen('detail'));
 const showEditModal = computed(() => isModalOpen('edit'));
 function initials(name: string) {
@@ -146,6 +147,7 @@ function openDeleteModal(user: User) {
 }
 
 function closeConfirmModal() {
+    deleteError.value = '';
     userToConfirm.value = null;
     confirmAction.value = null;
 }
@@ -158,6 +160,9 @@ function deleteUser() {
     router.delete(destroy.url(userToConfirm.value.id), {
         preserveScroll: true,
         onSuccess: () => closeConfirmModal(),
+        onError: (errors) => {
+            deleteError.value = errors.role_id ?? 'Pengguna gagal dihapus.';
+        },
     });
 }
 </script>
@@ -367,6 +372,7 @@ function deleteUser() {
 
         <ConfirmModal
             v-if="userToConfirm && confirmAction"
+            :error="deleteError"
             :title="
                 confirmAction === 'reset' ? 'Reset Password' : 'Hapus Pengguna'
             "

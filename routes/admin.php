@@ -17,37 +17,39 @@ Route::middleware(['auth', 'role:admin'])
     ->group(function () {
         Route::get('/', AdminDashboardController::class)->name('dashboard');
 
-        Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
-        Route::query('/bookings/export-data', [AdminBookingController::class, 'exportData'])->name('bookings.export-data');
+        Route::post('/bookings/export-data', [AdminBookingController::class, 'exportData'])->name('bookings.export-data');
         Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
-        Route::put('/bookings/{booking}', [AdminBookingController::class, 'update'])->middleware('booking.action:update')->name('bookings.update');
         Route::put('/bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->middleware('booking.action:cancel')->name('bookings.cancel');
         Route::patch('/bookings/{booking}/approve', [AdminBookingController::class, 'approve'])->middleware('booking.action:approve')->name('bookings.approve');
         Route::patch('/bookings/{booking}/reject', [AdminBookingController::class, 'reject'])->middleware('booking.action:reject')->name('bookings.reject');
         Route::patch('/bookings/{booking}/finish', [AdminBookingController::class, 'finish'])->middleware('booking.action:finish')->name('bookings.finish');
         Route::post('/bookings/{booking}/results/documentation', [BookingResultController::class, 'storeDocumentation'])->name('bookings.results.documentation');
         Route::post('/bookings/{booking}/results/meeting-minutes', [BookingResultController::class, 'storeMeetingMinutes'])->name('bookings.results.meeting-minutes');
-        Route::get('/bookings/{booking}/attachments/{attachment}', [BookingResultController::class, 'show'])->name('bookings.results.show');
-        Route::delete('/bookings/{booking}/attachments/{attachment}', [BookingResultController::class, 'destroy'])->name('bookings.results.destroy');
+        Route::resource('bookings.attachments', BookingResultController::class)
+            ->only(['show', 'destroy'])
+            ->names([
+                'show' => 'bookings.results.show',
+                'destroy' => 'bookings.results.destroy',
+            ]);
 
-        Route::get('/facilities', [AdminFacilityController::class, 'index'])->name('facilities.index');
-        Route::post('/facilities', [AdminFacilityController::class, 'store'])->name('facilities.store');
-        Route::put('/facilities/{facility}', [AdminFacilityController::class, 'update'])->name('facilities.update');
-        Route::delete('/facilities/{facility}', [AdminFacilityController::class, 'destroy'])->name('facilities.destroy');
+        Route::resource('bookings', AdminBookingController::class)
+            ->only(['index', 'update', 'destroy'])
+            ->middlewareFor('update', 'booking.action:update')
+            ->middlewareFor('destroy', 'role:super_admin');
 
-        Route::get('/rooms', [AdminRoomController::class, 'index'])->name('rooms.index');
-        Route::post('/rooms', [AdminRoomController::class, 'store'])->name('rooms.store');
-        Route::put('/rooms/{room}', [AdminRoomController::class, 'update'])->name('rooms.update');
+        Route::resource('facilities', AdminFacilityController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
+
         Route::patch('/rooms/{room}/toggle-availability', [AdminRoomController::class, 'toggleAvailability'])->name('rooms.toggle-availability');
+        Route::resource('rooms', AdminRoomController::class)
+            ->only(['index', 'store', 'update']);
 
-        Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
+        Route::resource('users', AdminUserController::class)
+            ->only(['index', 'store', 'update', 'destroy'])
+            ->middlewareFor(['store', 'update', 'destroy'], 'role:super_admin');
 
         Route::middleware('role:super_admin')->group(function () {
-            Route::delete('/bookings/{booking}', [AdminBookingController::class, 'destroy'])->name('bookings.destroy');
-            Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
-            Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
-            Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
             Route::get('/audits', [AdminAuditController::class, 'index'])->name('audits.index');
             Route::get('/settings', [AdminSettingController::class, 'edit'])->name('settings');
             Route::put('/settings', [AdminSettingController::class, 'update'])->name('settings.update');

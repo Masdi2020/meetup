@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { http } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { AppButton, AppInput, AppSelect } from '@/components/atoms';
 import AppModal from '@/components/organisms/AppModal.vue';
@@ -200,25 +201,13 @@ async function fetchExport(preview: boolean): Promise<BookingExportPayload> {
         query.year = exportYear.value;
     }
 
-    const route = exportData();
-    const response = await fetch(route.url, {
-        method: route.method.toUpperCase(),
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN':
-                document
-                    .querySelector('meta[name="csrf-token"]')
-                    ?.getAttribute('content') ?? '',
-        },
-        body: JSON.stringify(query),
+    const response = await http.getClient().request({
+        ...exportData(),
+        headers: { Accept: 'application/json' },
+        data: query,
     });
 
-    if (!response.ok) {
-        throw new Error('Data export tidak dapat dimuat.');
-    }
-
-    return (await response.json()) as BookingExportPayload;
+    return JSON.parse(response.data) as BookingExportPayload;
 }
 
 async function loadExportPreview() {

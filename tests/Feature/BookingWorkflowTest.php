@@ -9,15 +9,39 @@ use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
 use App\Services\BookingWorkflowService;
+use Illuminate\Contracts\Broadcasting\Broadcaster;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+
+it('preserves a successful approval and reports a failed banner broadcast', function () {
+    $admin = bookingUser('admin', 'admin');
+    $booking = bookingRecord(bookingUser(), bookingRoom(), 'PENDING');
+    $failure = new RuntimeException('Broadcast server unavailable');
+    Exceptions::fake();
+    $broadcaster = Mockery::mock(Broadcaster::class);
+    $broadcaster->shouldReceive('broadcast')->once()
+        ->with(Mockery::any(), 'banner.updated', Mockery::any())->andThrow($failure);
+    Broadcast::extend('unavailable', fn () => $broadcaster);
+    config([
+        'broadcasting.default' => 'unavailable',
+        'broadcasting.connections.unavailable' => ['driver' => 'unavailable'],
+    ]);
+
+    $this->actingAs($admin)->patch(route('admin.bookings.approve', $booking))
+        ->assertRedirect()->assertSessionHas('success');
+
+    expect($booking->fresh()->status->code)->toBe('APPROVED');
+    Exceptions::assertReported(fn (RuntimeException $exception) => $exception->getMessage() === 'Broadcast server unavailable');
+});
 
 it('deletes meeting results only when the attachment is eligible', function (string $role, BookingAttachmentType $type, bool $differentBooking, int $expectedStatus) {
     $this->withoutMiddleware(PreventRequestForgery::class);
@@ -120,6 +144,53 @@ afterEach(function () {
     Carbon::setTestNow();
 });
 
+it('rejects a past start today for new user bookings but permits admin historical entry', function (string $role, string $start, bool $allowed) {
+    $this->travelTo(Carbon::parse('2026-09-01 12:00:00'));
+    $user = bookingUser('time-test', $role);
+    $room = bookingRoom();
+    $isAdmin = $user->isAdmin();
+    $data = [
+        'room_id' => $room->id, 'date' => '2026-09-01', 'start_time' => $start,
+        'end_time' => '13:00', 'title' => 'Time validation', 'participants' => 2,
+    ];
+    if ($isAdmin) {
+        $data += ['user_id' => $user->id, 'status' => 'APPROVED'];
+    }
+
+    $response = $this->actingAs($user)->post(route($isAdmin ? 'admin.bookings.store' : 'booking.store'), $data);
+
+    if ($allowed) {
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('bookings', ['title' => 'Time validation']);
+    } else {
+        $response->assertSessionHasErrors('start_time');
+        $this->assertDatabaseMissing('bookings', ['title' => 'Time validation']);
+    }
+})->with([
+    ['user', '11:45', false], ['user', '12:00', true], ['user', '12:15', true], ['admin', '11:45', true],
+]);
+
+it('preserves an unchanged past start but rejects rescheduling to another past time', function (string $start, bool $allowed) {
+    $this->travelTo(Carbon::parse('2026-09-01 12:00:00'));
+    $user = bookingUser();
+    $booking = bookingRecord($user, bookingRoom(), 'APPROVED', [
+        'date' => '2026-09-01', 'start_time' => '11:00', 'end_time' => '13:00',
+    ]);
+
+    $response = $this->actingAs($user)->put(route('booking.update', $booking), [
+        'title' => 'Updated ongoing meeting', 'date' => '2026-09-01',
+        'start_time' => $start, 'end_time' => '13:00',
+    ]);
+
+    if ($allowed) {
+        $response->assertSessionHasNoErrors();
+        expect($booking->fresh()->title)->toBe('Updated ongoing meeting');
+    } else {
+        $response->assertSessionHasErrors('start_time');
+        expect($booking->fresh()->title)->toBe('Rapat awal');
+    }
+})->with([['11:00', true], ['11:15', false], ['12:15', true]]);
+
 it('returns only active intervals for the requested room and date', function () {
     $user = bookingUser();
     $room = bookingRoom();
@@ -150,26 +221,69 @@ it('allows an owner to edit an approved booking', function () {
     $response = $this->actingAs($user)->put("/booking/{$booking->id}", [
         'title' => 'Rapat yang diperbarui',
         'date' => '2026-09-03',
-        'start_time' => '13:00',
-        'end_time' => '14:00',
+        'start_time' => '13:15',
+        'end_time' => '14:45',
+        'participants' => 8,
     ]);
 
-    $response->assertRedirect();
+    $response->assertRedirect()->assertSessionHasNoErrors();
     $booking->refresh();
 
     expect($booking->title)->toBe('Rapat yang diperbarui')
         ->and($booking->date->format('Y-m-d'))->toBe('2026-09-03')
-        ->and($booking->start_time->format('H:i'))->toBe('13:00')
-        ->and($booking->end_time->format('H:i'))->toBe('14:00')
+        ->and($booking->start_time->format('H:i'))->toBe('13:15')
+        ->and($booking->end_time->format('H:i'))->toBe('14:45')
+        ->and($booking->participants_count)->toBe(8)
         ->and($booking->status->code)->toBe('APPROVED');
 
-    $this->assertDatabaseHas('audits', [
-        'entity_type' => 'Booking',
-        'entity_id' => $booking->id,
-        'action' => 'updated',
-        'changed_by' => $user->id,
-    ]);
+    $audit = Audit::where('entity_type', 'Booking')->where('entity_id', $booking->id)
+        ->where('action', 'updated')->where('changed_by', $user->id)->sole();
+    expect($audit->old_values['participants_count'])->toBe(5)
+        ->and($audit->new_values['participants_count'])->toBe(8);
 });
+
+it('rejects an invalid participant count without changing the booking', function () {
+    $user = bookingUser();
+    $booking = bookingRecord($user, bookingRoom(), 'APPROVED');
+
+    $this->actingAs($user)->put(route('booking.update', $booking), [
+        'title' => $booking->title,
+        'date' => '2026-09-03',
+        'start_time' => '13:15',
+        'end_time' => '14:45',
+        'participants' => 0,
+    ])->assertSessionHasErrors('participants');
+
+    expect($booking->refresh()->participants_count)->toBe(5)
+        ->and($booking->start_time->format('H:i'))->toBe('09:00');
+});
+
+it('only lets administrators reschedule a booking to a past date', function (string $role, bool $allowed) {
+    $actor = bookingUser('editor', $role);
+    $booking = bookingRecord($actor, bookingRoom(), 'APPROVED');
+    $route = $allowed ? 'admin.bookings.update' : 'booking.update';
+
+    $response = $this->actingAs($actor)->put(route($route, $booking), [
+        'title' => $booking->title,
+        'date' => '2026-08-31',
+        'start_time' => '13:15',
+        'end_time' => '14:45',
+    ]);
+
+    if (! $allowed) {
+        $response->assertSessionHasErrors('date');
+        expect($booking->refresh()->date->format('Y-m-d'))->toBe('2026-09-02');
+
+        return;
+    }
+
+    $response->assertRedirect()->assertSessionHasNoErrors();
+    $booking->refresh();
+
+    expect($booking->date->format('Y-m-d'))->toBe('2026-08-31')
+        ->and($booking->start_time->format('H:i'))->toBe('13:15')
+        ->and($booking->end_time->format('H:i'))->toBe('14:45');
+})->with([['admin', true], ['super_admin', true], ['user', false]]);
 
 it('allows an owner to cancel an approved booking', function () {
     $user = bookingUser();
@@ -215,10 +329,13 @@ it('lets an admin update an approved booking owned by another user', function ()
             'date' => '2026-09-03',
             'start_time' => '13:00',
             'end_time' => '14:00',
+            'participants' => 9,
         ])
-        ->assertRedirect();
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
 
     expect($booking->refresh()->title)->toBe('Diubah oleh admin')
+        ->and($booking->participants_count)->toBe(9)
         ->and($booking->user_id)->toBe($owner->id)
         ->and($booking->status->code)->toBe('APPROVED');
 
@@ -292,6 +409,7 @@ it('enforces action and status permissions through booking middleware', function
         ->patch("/admin/bookings/{$approved->id}/approve")
         ->assertForbidden();
 
+    session()->flush();
     $this->actingAs($owner)
         ->patch("/booking/{$pending->id}/finish")
         ->assertForbidden();
@@ -511,6 +629,8 @@ it('validates new passwords consistently for normal and forced changes', functio
         expect($user->refresh()->password)->toBe($originalPassword);
     }
 })->with([false, true])->with([
+    ['abcdefgh', 'abcdefgh', true],
+    ['abcdefg', 'abcdefg', false],
     ['new-password', 'new-password', true],
     ['short', 'short', false],
     ['new password', 'new password', false],

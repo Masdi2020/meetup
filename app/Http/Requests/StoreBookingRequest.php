@@ -6,6 +6,7 @@ use App\Models\Role;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreBookingRequest extends FormRequest
 {
@@ -63,6 +64,14 @@ class StoreBookingRequest extends FormRequest
             'status' => $isAdmin
                 ? ['required', 'string', Rule::exists('booking_statuses', 'code')]
                 : ['prohibited'],
+        ];
+    }
+
+    /** @return list<\Closure(Validator): void> */
+    public function after(): array
+    {
+        return $this->isAdminBooking() ? [] : [
+            fn (Validator $validator) => BookingTimeRules::validateFutureStart($validator),
         ];
     }
 

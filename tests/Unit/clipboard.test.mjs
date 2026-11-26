@@ -9,6 +9,10 @@ function clipboardEnvironment(t, clipboard, result = true) {
     );
     const calls = [];
     class Element {
+        closest() {
+            return null;
+        }
+
         focus() {
             calls.push('focus');
         }
@@ -95,5 +99,19 @@ test('falls back when the Clipboard API rejects access', async (t) => {
 test('reports failure and cleans up when fallback copying fails', async (t) => {
     const { calls } = clipboardEnvironment(t, undefined, false);
     await assert.rejects(copyText('test-password'), /Copy failed/);
+    assert.deepEqual(calls.slice(-2), ['remove', 'focus']);
+});
+
+test('keeps the fallback field inside a modal so it can receive focus', async (t) => {
+    const { calls } = clipboardEnvironment(t, undefined);
+    document.activeElement.closest = (selector) => {
+        assert.equal(selector, 'dialog');
+
+        return { appendChild: () => calls.push('append inside dialog') };
+    };
+
+    await copyText('test-password');
+    assert.equal(calls[0], 'append inside dialog');
+    assert.ok(calls.includes('copy'));
     assert.deepEqual(calls.slice(-2), ['remove', 'focus']);
 });

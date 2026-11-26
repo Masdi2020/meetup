@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
-import { computed, toRef } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
+import { computed, toRef, useId } from 'vue';
 import { AppButton, AppInput, VCalendarInput } from '@/components/atoms';
 import { FormField } from '@/components/molecules';
 import AppModal from '@/components/organisms/AppModal.vue';
@@ -13,12 +13,17 @@ const props = defineProps<{
     updateUrl: (id: number) => string;
 }>();
 const emit = defineEmits<{ close: [] }>();
+const role = usePage().props.auth.user.role;
+const allowPast = role === 'admin' || role === 'super_admin';
 const today = localDateString();
+const originalDate = bookingDateForInput(props.booking.date);
+const id = useId();
 const form = useForm({
     title: props.booking.title,
-    date: bookingDateForInput(props.booking.date),
+    date: originalDate,
     start_time: props.booking.start_time,
     end_time: props.booking.end_time,
+    participants: props.booking.participants as number | string | null,
 });
 const bookingError = computed(
     () => (form.errors as Record<string, string>).booking,
@@ -29,8 +34,9 @@ const availability = useBookingAvailability({
     startTime: toRef(form, 'start_time'),
     endTime: toRef(form, 'end_time'),
     ignoreBookingId: computed(() => props.booking.id),
+    allowPast,
+    originalStart: { date: originalDate, time: props.booking.start_time },
 });
-
 function close() {
     if (!form.processing) {
         emit('close');
@@ -67,13 +73,28 @@ function submit() {
                     v-model="form.date"
                     appearance="admin"
                     mode="date"
-                    :min-date="today"
+                    :min-date="allowPast ? undefined : today"
                 />
             </FormField>
-            <div class="hidden md:block" />
+            <FormField
+                label="Jumlah Peserta"
+                :for-id="`${id}-participants`"
+                appearance="admin"
+                required
+                :error="form.errors.participants"
+            >
+                <AppInput
+                    :id="`${id}-participants`"
+                    v-model="form.participants"
+                    appearance="admin"
+                    type="number"
+                    min="1"
+                    required
+                />
+            </FormField>
             <div class="grid min-w-0 grid-cols-2 gap-3 md:col-span-2">
                 <FormField
-                    label="Dari Jam"
+                    label="Jam Mulai"
                     appearance="admin"
                     required
                     :error="form.errors.start_time"
@@ -82,6 +103,7 @@ function submit() {
                         v-model="form.start_time"
                         appearance="admin"
                         mode="time"
+                        aria-label="Jam Mulai"
                         :rules="availability.startRules.value"
                         :disabled="
                             availability.isLoading.value ||
@@ -91,7 +113,7 @@ function submit() {
                     />
                 </FormField>
                 <FormField
-                    label="Sampai Jam"
+                    label="Jam Selesai"
                     appearance="admin"
                     required
                     :error="form.errors.end_time"
@@ -100,6 +122,7 @@ function submit() {
                         v-model="form.end_time"
                         appearance="admin"
                         mode="time"
+                        aria-label="Jam Selesai"
                         :rules="availability.endRules.value"
                         :disabled="
                             !form.start_time ||
@@ -145,7 +168,7 @@ function submit() {
                     type="submit"
                     variant="primary"
                     size="sm"
-                    :disabled="form.processing"
+                    :disabled="form.processing || availability.isLoading.value"
                 >
                     {{ form.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
                 </AppButton>

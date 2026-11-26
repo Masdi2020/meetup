@@ -8,11 +8,13 @@ withDefaults(
         confirmLabel?: string;
         tone?: 'danger' | 'primary';
         processing?: boolean;
+        error?: string;
     }>(),
     {
         confirmLabel: 'Konfirmasi',
         tone: 'danger',
         processing: false,
+        error: '',
     },
 );
 
@@ -22,6 +24,9 @@ const emit = defineEmits<{ close: []; confirm: [] }>();
 <template>
     <AppModal :title="title" max-width="md" @close="emit('close')">
         <p class="text-sm leading-6 text-slate-600">{{ message }}</p>
+        <p v-if="error" role="alert" class="mt-3 text-sm text-red-600">
+            {{ error }}
+        </p>
 
         <template #actions>
             <button

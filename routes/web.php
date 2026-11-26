@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -16,7 +17,15 @@ Route::get('/', function () {
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
-    Route::post('/login', [LoginController::class, 'store'])->name('login.store');
+    Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:login')->name('login.store');
+
+    Route::get('/csrf-token', function (Request $request) {
+        $request->session()->regenerateToken();
+
+        return response()->json([
+            'token' => csrf_token(),
+        ])->header('Cache-Control', 'no-store, private');
+    })->middleware('throttle:10,1')->name('csrf-token');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -31,6 +40,5 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/admin.php';
-require __DIR__.'/api.php';
 require __DIR__.'/display.php';
 require __DIR__.'/user.php';

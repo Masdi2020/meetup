@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class UserService
 {
@@ -63,6 +64,7 @@ class UserService
     public function update(User $user, array $data, int $actorId): void
     {
         DB::transaction(function () use ($user, $data, $actorId) {
+            $this->protectLastSuperAdmin($user, (int) $data['role_id']);
             $oldValues = $user->only(['name', 'username', 'role_id', 'role']);
             $user->update($data);
             $user->load('assignedRole');
@@ -102,10 +104,11 @@ class UserService
             );
 
             $oldForceChangePassword = (bool) $user->force_change_password;
-            $user->update([
+            $user->forceFill([
                 'password' => Hash::make($password),
                 'force_change_password' => true,
-            ]);
+                'remember_token' => Str::random(60),
+            ])->save();
 
             $this->audits->record(
                 'User',
@@ -124,6 +127,7 @@ class UserService
     public function delete(User $user, int $actorId): void
     {
         DB::transaction(function () use ($user, $actorId) {
+            $this->protectLastSuperAdmin($user);
             $oldValues = $user->only(['name', 'username', 'role_id', 'role']);
             $user->delete();
 
@@ -137,5 +141,24 @@ class UserService
                 'pengguna dihapus oleh admin',
             );
         });
+    }
+
+    private function protectLastSuperAdmin(User $user, ?int $newRoleId = null): void
+    {
+        // Serialize role changes and deletions, including on SQLite where FOR UPDATE is ignored.
+        DB::table('roles')->where('code', 'super_admin')->update(['code' => DB::raw('code')]);
+        $user->refresh();
+
+        if (! $user->isSuperAdmin() || $newRoleId === $user->role_id) {
+            return;
+        }
+
+        $superAdmins = User::where('role_id', $user->role_id)->lockForUpdate()->get(['id']);
+
+        if ($superAdmins->count() === 1) {
+            throw ValidationException::withMessages([
+                'role_id' => 'Super admin terakhir tidak dapat dihapus atau diubah rolenya.',
+            ]);
+        }
     }
 }

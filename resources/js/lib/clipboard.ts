@@ -16,7 +16,7 @@ export async function copyText(text: string): Promise<void> {
     input.readOnly = true;
     input.style.position = 'fixed';
     input.style.opacity = '0';
-    document.body.appendChild(input);
+    (previousFocus?.closest('dialog') ?? document.body).appendChild(input);
 
     try {
         input.focus();

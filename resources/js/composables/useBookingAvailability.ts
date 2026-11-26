@@ -1,3 +1,4 @@
+import { useIntervalFn, useNow } from '@vueuse/core';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { Ref } from 'vue';
 import type { VCalendarTimeRules } from '@/components/atoms/VCalendarInput.vue';
@@ -21,6 +22,7 @@ interface BookingAvailabilityOptions {
     endTime: Ref<string>;
     ignoreBookingId?: Ref<number | null>;
     allowPast?: boolean;
+    originalStart?: { date: string; time: string };
 }
 
 const SLOT_INTERVAL = 15;
@@ -61,17 +63,19 @@ export function useBookingAvailability(options: BookingAvailabilityOptions) {
     const ignoreBookingId = options.ignoreBookingId ?? ref<number | null>(null);
     let requestController: AbortController | null = null;
 
+    const now = useNow({ scheduler: (update) => useIntervalFn(update, 1000) });
+
     const minimumStartMinute = computed(() => {
         if (options.allowPast) {
             return FIRST_SLOT;
         }
 
-        if (options.date.value !== localDateString()) {
+        if (options.date.value !== localDateString(now.value)) {
             return FIRST_SLOT;
         }
 
-        const now = new Date();
-        const currentMinute = now.getHours() * 60 + now.getMinutes();
+        const currentMinute =
+            now.value.getHours() * 60 + now.value.getMinutes();
 
         return Math.max(
             FIRST_SLOT,
@@ -88,12 +92,24 @@ export function useBookingAvailability(options: BookingAvailabilityOptions) {
 
     const availableStartTimes = computed(() => {
         const slots: string[] = [];
+        const originalStart = options.originalStart;
+        const originalMinute =
+            originalStart?.date === options.date.value
+                ? timeToMinutes(originalStart.time)
+                : null;
 
         for (
-            let minute = minimumStartMinute.value;
+            let minute = Math.min(FIRST_SLOT, originalMinute ?? FIRST_SLOT);
             minute <= LAST_SLOT - SLOT_INTERVAL;
             minute += SLOT_INTERVAL
         ) {
+            if (
+                minute < minimumStartMinute.value &&
+                minute !== originalMinute
+            ) {
+                continue;
+            }
+
             const overlaps = bookedMinuteRanges.value.some(
                 (booking) =>
                     minute < booking.end &&

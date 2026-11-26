@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
-import { computed, inject, ref } from 'vue';
-import type { Ref } from 'vue';
+import { computed } from 'vue';
 import { PasswordField } from '@/components/molecules';
+import AppModal from '@/components/organisms/AppModal.vue';
 import { forcedPassword } from '@/routes/profile';
 import type { Auth } from '@/types';
 
@@ -11,7 +11,6 @@ const isRequired = computed(
     () => page.props.auth.user?.force_change_password === true,
 );
 const form = useForm({ password: '', password_confirmation: '' });
-const sidebarOffset = inject<Ref<string>>('sidebarOffset', ref('0px'));
 
 function submit() {
     form.put(forcedPassword.url(), {
@@ -22,18 +21,13 @@ function submit() {
 </script>
 
 <template>
-    <div
+    <AppModal
         v-if="isRequired"
-        class="fixed inset-y-0 right-0 z-[1150] flex items-center justify-center bg-slate-950/40 p-4 transition-[left] duration-200"
-        :style="{ left: sidebarOffset }"
-        role="dialog"
-        aria-modal="true"
+        title="Buat password baru"
+        max-width="md"
+        :closable="false"
     >
-        <form
-            class="ui-card-body max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-xl bg-white shadow-xl"
-            @submit.prevent="submit"
-        >
-            <h2 class="text-xl font-bold">Buat password baru</h2>
+        <form @submit.prevent="submit">
             <p class="mt-2 text-sm text-gray-600">
                 Password Anda telah direset oleh admin. Buat password baru untuk
                 melanjutkan.
@@ -63,5 +57,5 @@ function submit() {
                 Simpan password
             </button>
         </form>
-    </div>
+    </AppModal>
 </template>

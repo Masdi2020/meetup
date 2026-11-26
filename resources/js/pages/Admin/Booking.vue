@@ -111,6 +111,7 @@ function openEditBookingModal(booking: Booking) {
         date: booking.date,
         start_time: booking.start,
         end_time: booking.end,
+        participants: booking.participants,
     };
     openModal('edit');
 }

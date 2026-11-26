@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { X } from '@lucide/vue';
 import { useObjectUrl } from '@vueuse/core';
-import { ref, useId, watch } from 'vue';
+import { useId } from 'vue';
+import BookingFilePicker from '@/components/molecules/BookingFilePicker.vue';
 import FormField from '@/components/molecules/FormField.vue';
 
 withDefaults(
@@ -15,12 +16,11 @@ withDefaults(
 
 const file = defineModel<File | null>({ required: true });
 const emit = defineEmits<{ change: [] }>();
-const input = ref<HTMLInputElement | null>(null);
 const id = useId();
 const preview = useObjectUrl(file);
 
-function selectFile(event: Event) {
-    file.value = (event.target as HTMLInputElement).files?.[0] ?? null;
+function selectFile([selected]: File[]) {
+    file.value = selected;
     emit('change');
 }
 
@@ -28,12 +28,6 @@ function clearFile() {
     file.value = null;
     emit('change');
 }
-
-watch(file, (value) => {
-    if (!value && input.value) {
-        input.value.value = '';
-    }
-});
 </script>
 
 <template>
@@ -42,21 +36,19 @@ watch(file, (value) => {
         :for-id="id"
         :appearance="appearance"
         :error="error"
-        hint="Format yang didukung: JPG, JPEG, PNG"
     >
-        <input
+        <BookingFilePicker
             :id="id"
-            ref="input"
-            type="file"
+            :label="file ? 'Ganti banner' : 'Pilih gambar banner'"
+            hint="JPG atau PNG · Maks. 5 MB"
             accept=".jpg,.jpeg,.png"
-            class="w-full"
             :disabled="disabled"
-            @change="selectFile"
+            @select="selectFile"
         />
         <div v-if="preview" class="relative mt-3 w-fit max-w-[350px]">
             <img
                 :src="preview"
-                alt="Preview Banner"
+                alt="Pratinjau banner rapat"
                 class="block w-full rounded-lg border object-cover"
             />
             <button
@@ -69,5 +61,12 @@ watch(file, (value) => {
                 <X :size="18" :stroke-width="2.5" aria-hidden="true" />
             </button>
         </div>
+        <p
+            v-if="file"
+            class="mt-2 text-sm break-words text-slate-600"
+            role="status"
+        >
+            {{ file.name }}
+        </p>
     </FormField>
 </template>

@@ -114,7 +114,7 @@ class BookingWorkflowService
         return $booking;
     }
 
-    /** @param array{title: string, date: string, start_time: string, end_time: string} $data */
+    /** @param array{title: string, date: string, start_time: string, end_time: string, participants_count?: int} $data */
     public function update(
         Booking $booking,
         array $data,
@@ -140,8 +140,10 @@ class BookingWorkflowService
                 'date' => $booking->date->format('Y-m-d'),
                 'start_time' => $booking->start_time->format('H:i'),
                 'end_time' => $booking->end_time->format('H:i'),
+                'participants_count' => $booking->participants_count,
             ];
 
+            $data += ['participants_count' => $booking->participants_count];
             $booking->update($data);
             $this->audits->record(
                 'Booking',

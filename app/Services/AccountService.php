@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AccountService
@@ -51,10 +53,11 @@ class AccountService
     private function savePassword(User $user, string $password, bool $wasForced): void
     {
         DB::transaction(function () use ($user, $password, $wasForced) {
-            $user->update([
+            $user->forceFill([
                 'password' => Hash::make($password),
                 'force_change_password' => false,
-            ]);
+                'remember_token' => Str::random(60),
+            ])->save();
 
             $this->audits->record(
                 'User',
@@ -66,5 +69,9 @@ class AccountService
                 $wasForced ? 'password awal dibuat oleh pengguna' : 'password diubah oleh pengguna',
             );
         });
+
+        if ($user->role === 'display') {
+            Auth::login($user, remember: true);
+        }
     }
 }

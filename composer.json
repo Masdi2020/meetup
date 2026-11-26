@@ -15,8 +15,7 @@
         "laravel/reverb": "*",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
-        "predis/predis": "*",
-        "tightenco/ziggy": "*"
+        "predis/predis": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",

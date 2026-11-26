@@ -171,6 +171,7 @@ it('filters bookings by search status and room on the server', function () {
             ->component('Admin/Booking')
             ->has('bookings.data', 1)
             ->where('bookings.data.0.room', 'Ruang Cadangan')
+            ->where('bookings.data.0.participants', 5)
             ->where('bookings.data.0.status', 'approved')
             ->where('rooms', fn ($rooms) => collect($rooms)->pluck('has_display', 'id')->sortKeys()->all() === [
                 $firstRoom->id => false,
@@ -261,7 +262,7 @@ it('exports an automatic number column followed by the selected ID column', func
     });
 
     $response = $this->actingAs($admin)
-        ->json('QUERY', '/admin/bookings/export-data', $query)
+        ->json('POST', '/admin/bookings/export-data', $query)
         ->assertOk()
         ->assertJsonPath('columns.0.key', 'number')
         ->assertJsonPath('columns.0.label', 'No')
@@ -285,7 +286,7 @@ it('rejects unsupported booking export options through its form request', functi
     ];
 
     $this->actingAs($admin)
-        ->json('QUERY', '/admin/bookings/export-data', $query)
+        ->json('POST', '/admin/bookings/export-data', $query)
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['columns.0', 'statuses.0', 'period']);
 });
@@ -293,10 +294,10 @@ it('rejects unsupported booking export options through its form request', functi
 it('restricts booking export queries to administrators', function () {
     $query = ['columns' => ['id'], 'period' => 'all'];
 
-    $this->json('QUERY', '/admin/bookings/export-data', $query)->assertUnauthorized();
+    $this->json('POST', '/admin/bookings/export-data', $query)->assertUnauthorized();
 
     $user = filterUser('Pengguna', 'export-forbidden-user', 'user');
-    $this->actingAs($user)->json('QUERY', '/admin/bookings/export-data', $query)->assertForbidden();
+    $this->actingAs($user)->json('POST', '/admin/bookings/export-data', $query)->assertForbidden();
 });
 
 it('requires a csrf token for booking export queries without a trusted origin', function () {
@@ -306,12 +307,29 @@ it('requires a csrf token for booking export queries without a trusted origin', 
     $this->app->instance('env', 'local');
 
     $this->actingAs($admin)->withSession(['_token' => $token])
-        ->json('QUERY', '/admin/bookings/export-data', $query)
+        ->json('POST', '/admin/bookings/export-data', $query)
         ->assertStatus(419);
 
     $this->withSession(['_token' => $token])
-        ->json('QUERY', '/admin/bookings/export-data', $query, ['X-CSRF-TOKEN' => $token])
+        ->json('POST', '/admin/bookings/export-data', $query, ['X-CSRF-TOKEN' => $token])
         ->assertOk()->assertJsonCount(0, 'rows');
+});
+
+it('accepts the refreshed xsrf cookie for export after login rotates the csrf token', function () {
+    $admin = filterUser('Admin', 'export-login-admin', 'admin');
+    $this->app->instance('env', 'local');
+    $token = $this->get('/csrf-token')->json('token');
+    $login = $this->withHeader('X-CSRF-TOKEN', $token)->post('/login', [
+        'username' => $admin->username, 'password' => 'password',
+    ])->assertRedirect();
+    $cookie = $login->getCookie('XSRF-TOKEN', false);
+    expect($cookie)->not->toBeNull();
+    $query = ['columns' => ['id'], 'period' => 'all'];
+
+    $this->json('POST', '/admin/bookings/export-data', $query)->assertStatus(419);
+    $this->flushHeaders()->json('POST', '/admin/bookings/export-data', $query, [
+        'X-XSRF-TOKEN' => $cookie->getValue(),
+    ])->assertOk()->assertJsonCount(0, 'rows');
 });
 
 it('provides export choices that the export endpoint accepts', function () {
@@ -324,7 +342,7 @@ it('provides export choices that the export endpoint accepts', function () {
             ->where('exportOptions.columns.0.label', 'ID'));
     $options = $response->inertiaProps('exportOptions');
 
-    $this->json('QUERY', '/admin/bookings/export-data', [
+    $this->json('POST', '/admin/bookings/export-data', [
         'columns' => collect($options['columns'])->pluck('key')->all(),
         'statuses' => collect($options['statuses'])->pluck('value')->all(),
     ])->assertOk()->assertJsonCount(14, 'columns');
@@ -348,14 +366,14 @@ it('loads only twenty preview bookings but downloads all matching rows', functio
     $query = ['columns' => ['id', 'activity'], 'room' => $room->id, 'statuses' => ['APPROVED'], 'period' => 'date', 'date' => '2026-09-03'];
 
     try {
-        $this->actingAs($admin)->json('QUERY', '/admin/bookings/export-data', [...$query, 'preview' => 1])
+        $this->actingAs($admin)->json('POST', '/admin/bookings/export-data', [...$query, 'preview' => 1])
             ->assertOk()->assertJsonCount(20, 'rows')->assertJsonPath('meta.total', 25);
         expect($loaded)->toBe(20);
         $loaded = 0;
-        $this->json('QUERY', '/admin/bookings/export-data', [...$query, 'preview' => 0])
+        $this->json('POST', '/admin/bookings/export-data', [...$query, 'preview' => 0])
             ->assertOk()->assertJsonCount(25, 'rows')->assertJsonPath('meta.total', 25);
         expect($loaded)->toBe(25);
-        $this->json('QUERY', '/admin/bookings/export-data', [...$query, 'preview' => 1, 'date' => '2026-09-04'])
+        $this->json('POST', '/admin/bookings/export-data', [...$query, 'preview' => 1, 'date' => '2026-09-04'])
             ->assertOk()->assertJsonCount(0, 'rows')->assertJsonPath('meta.total', 0);
     } finally {
         Event::forget('eloquent.retrieved: '.Booking::class);

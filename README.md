@@ -56,7 +56,7 @@ Versi berikut mengikuti deklarasi dependensi proyek. Versi terpasang dikunci mel
 | Ekspor                          | jsPDF, jsPDF AutoTable, write-excel-file                        |
 | Pemeriksaan kualitas            | Pest, Laravel Pint, Larastan/PHPStan, ESLint, Prettier, vue-tsc |
 
-Konfigurasi awal menggunakan database untuk session, cache, dan queue. Redis/Predis tersedia bila diperlukan, tetapi tidak wajib untuk konfigurasi lokal ini.
+Session dan cache menggunakan Redis melalui Predis. Pastikan layanan Redis berjalan dan sesuaikan `REDIS_HOST`, `REDIS_PORT`, serta kredensialnya. Aplikasi belum memiliki pekerjaan antrean; `QUEUE_CONNECTION=sync` tidak memerlukan queue worker atau tabel jobs, failed_jobs, dan job_batches.
 
 ## Instalasi lokal
 
@@ -127,8 +127,7 @@ Driver PDO untuk database tersebut harus tersedia. Kompatibilitas SQL migrasi
 dan rollback diuji tanpa koneksi melalui `tests/Unit/MigrationCompatibilityTest.php`;
 pengujian ini tidak menggantikan pengujian pada server database sebenarnya.
 
-Username tetap unik termasuk untuk pengguna yang dihapus secara soft delete.
-Kolom turunan `active_username` yang redundan tidak dibuat pada instalasi baru.
+Username unik untuk pengguna aktif. Kolom turunan `active_username` mempertahankan keunikan tersebut sekaligus mengizinkan penggunaan ulang username setelah soft delete.
 Khusus SQL Server, foreign key `bookings.processed_by` menggunakan `NO ACTION`
 untuk menghindari beberapa jalur cascade: pengguna yang masih dirujuk sebagai
 pemroses tidak dapat dihapus permanen sebelum referensinya dikosongkan.
@@ -154,7 +153,7 @@ php artisan storage:link
 
 Seeder mengisi status peminjaman, fasilitas, ruangan, pengaturan, dan akun awal. Jalankan pada database baru; beberapa seeder membuat data langsung sehingga pengulangan dapat menyebabkan duplikasi atau kegagalan karena data sudah ada.
 
-Akun awal admin menggunakan username `admin`, memakai `DEFAULT_PASSWORD`, dan wajib mengganti password saat login pertama. Akun layar menggunakan username `display` dengan password awal yang tercantum di [UserSeeder](database/seeders/UserSeeder.php). Ganti password akun bawaan sebelum digunakan di lingkungan operasional. Akun umum dari seeder memakai `DEFAULT_PASSWORD`, kecuali yang memiliki password khusus.
+Semua akun awal, termasuk `admin` dan `display`, menggunakan `DEFAULT_PASSWORD` dan wajib menggantinya saat login pertama. Isi nilai tersebut sebelum menjalankan seeder; seeder menolak password awal yang kosong. Akun display menggunakan remember cookie agar dapat masuk kembali setelah sesi berakhir. Password baru minimal 8 karakter tanpa spasi.
 
 ## Menjalankan aplikasi
 
@@ -166,7 +165,6 @@ Untuk menjalankan setiap layanan secara eksplisit, buka terminal terpisah untuk 
 | 2        | `npm run dev`               | Server aset frontend dan pembaruan saat pengembangan       |
 | 3        | `php artisan reverb:start`  | Server WebSocket                                           |
 | 4        | `php artisan schedule:work` | Menjalankan tugas terjadwal, termasuk penyelesaian booking |
-| 5        | `php artisan queue:work`    | Memproses pekerjaan antrean                                |
 
 Buka **http://localhost:8000** di browser, lalu login. Aplikasi juga menyediakan `composer run dev` sebagai pemanggil `php artisan dev`; pastikan Reverb dan scheduler tetap berjalan bila tidak dijalankan oleh proses tersebut.
 
@@ -178,7 +176,7 @@ Untuk menyiapkan aset tanpa server Vite:
 npm run build
 ```
 
-Pada deployment, arahkan document root web server ke `public/`, gunakan `APP_DEBUG=false`, pastikan direktori `storage/` dan `bootstrap/cache/` dapat ditulis, serta kelola Reverb dan queue worker sebagai layanan. Jalankan `php artisan schedule:run` setiap menit melalui penjadwal sistem untuk mengaktifkan tugas otomatis.
+Pada deployment, arahkan document root web server ke `public/`, gunakan `APP_DEBUG=false`, pastikan direktori `storage/` dan `bootstrap/cache/` dapat ditulis, serta kelola Reverb sebagai layanan. Jalankan `php artisan schedule:run` setiap menit melalui penjadwal sistem untuk mengaktifkan tugas otomatis.
 
 ## Tata cara penggunaan
 

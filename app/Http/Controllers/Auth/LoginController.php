@@ -39,7 +39,7 @@ class LoginController extends Controller
 
         return back()->withErrors([
             'username' => 'Username atau password salah',
-        ])->withInput();
+        ])->withInput($request->only('username'));
     }
 
     public function destroy(Request $request): RedirectResponse

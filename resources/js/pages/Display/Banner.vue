@@ -5,6 +5,7 @@ import { ArrowLeft, Maximize, Minimize } from '@lucide/vue';
 import dayjs from 'dayjs';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Calendar from '@/components/organisms/calendar/Calendar.vue';
+import { remainingBookingTime } from '@/lib/dates';
 import { index } from '@/routes/display';
 import type { BannerPageProps } from '@/types/booking';
 
@@ -63,29 +64,11 @@ const titleFontSize = computed(() => {
 });
 
 const remainingTime = computed(() => {
-    if (!props.booking) {
+    if (!props.booking || !props.next_change) {
         return '';
     }
 
-    const end = new Date(
-        `${currentTime.value.toISOString().slice(0, 10)}T${props.booking.end_time}`,
-    );
-
-    const diff = end.getTime() - currentTime.value.getTime();
-
-    if (diff <= 0) {
-        return 'Selesai';
-    }
-
-    const hours = Math.floor(diff / 3600000);
-    const minutes = Math.floor((diff % 3600000) / 60000);
-    const seconds = Math.floor((diff % 60000) / 1000);
-
-    if (hours > 0) {
-        return `${hours} jam ${minutes} menit`;
-    }
-
-    return `${minutes} menit ${seconds} detik`;
+    return remainingBookingTime(props.next_change, currentTime.value);
 });
 
 function reloadBanner() {

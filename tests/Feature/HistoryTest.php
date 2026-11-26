@@ -85,6 +85,9 @@ it('paginates only the owners bookings and loads attachments only for the curren
         ->where('histories.last_page', 3)
         ->where('histories.data.0.id', $bookings[10]->id)
         ->where('histories.data.0.room_id', $bookings[10]->room_id)
+        ->where('histories.data.0.start_time', '09:00')
+        ->where('histories.data.0.end_time', '10:00')
+        ->where('histories.data.0.participants', 2)
         ->has('histories.data.0.documentations', 1)
         ->where('histories.data.0.meeting_minutes', null));
 

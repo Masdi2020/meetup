@@ -20,7 +20,7 @@ class UpdateProfileRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'username' => [
-                'required', 'string', 'max:50', 'regex:/^\S+$/u',
+                'required', 'string', 'max:255', 'regex:/^\S+$/u',
                 Rule::unique('users', 'username')->withoutTrashed()->ignore($this->user()->id),
             ],
         ];

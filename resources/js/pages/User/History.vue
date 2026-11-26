@@ -55,15 +55,7 @@ const { goToPage } = useAdminFilters(historyIndex.url(), {
 });
 
 const openEditModal = (booking: BookingHistory) => {
-    const [start, end] = booking.time.split(' - ');
-    editingBooking.value = {
-        id: booking.id,
-        room_id: booking.room_id,
-        title: booking.title,
-        date: booking.date,
-        start_time: start,
-        end_time: end,
-    };
+    editingBooking.value = booking;
 };
 
 const closeEditModal = () => {
