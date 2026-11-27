@@ -2,11 +2,11 @@
 
 ## Generate migrations with Artisan
 
-Use `vendor\bin\sail artisan make:migration` to generate the timestamped filename and migration structure.
+Use `vendor/bin/sail artisan make:migration` to generate the timestamped filename and migration structure.
 
 ```bash
-vendor\bin\sail artisan make:migration create_posts_table
-vendor\bin\sail artisan make:migration add_slug_to_posts_table
+vendor/bin/sail artisan make:migration create_posts_table
+vendor/bin/sail artisan make:migration add_slug_to_posts_table
 ```
 
 ## Define foreign-key constraints deliberately
